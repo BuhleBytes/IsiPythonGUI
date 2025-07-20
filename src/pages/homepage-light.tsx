@@ -60,7 +60,7 @@ export function HomepageLight() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 text-gray-900">
       {/* Header */}
       <header className="border-b border-gray-200/80 bg-white/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
-        <div className="w-full mx-auto px-6 py-4">
+        <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center shadow-lg">
@@ -114,7 +114,7 @@ export function HomepageLight() {
         <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-br from-cyan-200/30 to-blue-200/30 rounded-full blur-2xl"></div>
         <div className="absolute bottom-20 right-10 w-24 h-24 bg-gradient-to-br from-purple-200/30 to-pink-200/30 rounded-full blur-xl"></div>
 
-        <div className="w-full mx-auto px-6 relative">
+        <div className="container mx-auto px-6 relative">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-8">
               <div className="space-y-4">
@@ -219,7 +219,7 @@ export function HomepageLight() {
 
       {/* Features Section */}
       <section className="py-20 bg-gradient-to-br from-white to-gray-50">
-        <div className="w-full mx-auto px-6">
+        <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
               Why Choose IsiPython?
@@ -264,7 +264,7 @@ export function HomepageLight() {
 
       {/* Practice Section */}
       <section className="py-20 bg-gradient-to-br from-gray-50 to-white">
-        <div className="w-full mx-auto px-6">
+        <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
               Practice IsiXhosa Based Programming
@@ -341,7 +341,7 @@ export function HomepageLight() {
 
       {/* Resources Section */}
       <section className="py-20 bg-gradient-to-br from-white to-gray-50">
-        <div className="w-full mx-auto px-6">
+        <div className="container mx-auto px-6">
           <Card className="bg-white/80 border-gray-200/80 shadow-xl">
             <CardHeader>
               <div className="flex items-center gap-4">
@@ -396,7 +396,7 @@ export function HomepageLight() {
 
       {/* CTA Section */}
       <section className="py-20 bg-gradient-to-br from-gray-50 to-white">
-        <div className="w-full mx-auto px-6">
+        <div className="container mx-auto px-6">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-6">
               <h2 className="text-4xl font-bold text-gray-900">
@@ -481,7 +481,7 @@ export function HomepageLight() {
 
       {/* Footer */}
       <footer className="border-t border-gray-200 bg-white py-12">
-        <div className="w-full mx-auto px-6">
+        <div className="container mx-auto px-6">
           <div className="text-center space-y-4">
             <div className="flex items-center justify-center gap-3">
               <div className="w-8 h-8 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center shadow-lg">
