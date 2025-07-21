@@ -8,14 +8,12 @@ import {
   ArrowRight,
   BookOpen,
   Code,
-  Download,
   FileText,
   Languages,
   Lightbulb,
   Play,
   Rocket,
   Sparkles,
-  Star,
   Terminal,
   Users,
 } from "lucide-react";
@@ -59,7 +57,7 @@ export function HomepageLight() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-gray-100 text-gray-900">
       {/* Header */}
-      <header className="border-b border-gray-200/80 bg-white/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
+      <header className="border-b border-gray-200/80 bg-white/80 backdrop-blur-sm sticky top-0 z-50 shadow-sm px-20">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -108,7 +106,7 @@ export function HomepageLight() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative py-20 overflow-hidden">
+      <section className="relative py-20 px-20 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-cyan-100/50 via-transparent to-blue-100/50"></div>
         {/* Floating elements */}
         <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-br from-cyan-200/30 to-blue-200/30 rounded-full blur-2xl"></div>
@@ -122,7 +120,7 @@ export function HomepageLight() {
                   <Sparkles className="w-3 h-3 mr-1" />
                   Revolutionary Programming Education
                 </Badge>
-                <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
+                <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 leading-normal">
                   IsiPython
                   <span className="block text-transparent bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text">
                     Learn to Code in Your Language
@@ -217,8 +215,8 @@ export function HomepageLight() {
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-20 bg-gradient-to-br from-white to-gray-50">
+      {/* Features Section Why Choose IsiPython*/}
+      <section className="py-20 px-20 bg-gradient-to-br from-white to-gray-50">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
@@ -263,7 +261,7 @@ export function HomepageLight() {
       </section>
 
       {/* Practice Section */}
-      <section className="py-20 bg-gradient-to-br from-gray-50 to-white">
+      <section className="py-20 px-20 bg-gradient-to-br from-gray-50 to-white">
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
@@ -302,10 +300,13 @@ export function HomepageLight() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="text-gray-700">
+                <p className="text-gray-700 leading-relaxed mb-6">
                   Write, compile, and execute IsiXhosa-based Python code
                   directly in your browser. No installation required - just
-                  start coding and see immediate results.
+                  start coding and see immediate results. start coding and see
+                  immediate results.
+                  <br />
+                  <br />
                 </p>
                 <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg">
                   <Play className="w-4 h-4 mr-2" />
@@ -314,24 +315,26 @@ export function HomepageLight() {
               </CardContent>
             </Card>
 
-            <Card className="bg-gradient-to-br from-yellow-50 to-orange-50 border-yellow-200 hover:border-yellow-300 transition-colors group shadow-lg">
+            <Card className="bg-gradient-to-br from-green-50 to-emarald-50 border-emarald-200 hover:border-green-300 transition-colors group shadow-lg">
               <CardHeader>
-                <div className="w-12 h-12 bg-gradient-to-br from-yellow-100 to-orange-100 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-sm">
-                  <Code className="w-6 h-6 text-yellow-600" />
+                <div className="w-12 h-12 bg-gradient-to-br from-green-100 to-emarald-100 rounded-lg flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-sm">
+                  <BookOpen className="w-6 h-6 text-green-600" />
                 </div>
                 <CardTitle className="text-xl font-semibold text-gray-900">
-                  IsiPython Code Editor
+                  Resources & Tutorials
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="text-gray-700">
-                  A powerful, feature-rich code editor designed specifically for
-                  IsiPython development with syntax highlighting,
-                  auto-completion, and debugging tools.
+                <p className="text-gray-700 leading-relaxed mb-6">
+                  Access our extensive library of tutorials, documentation, and
+                  community resources. Whether you're a complete beginner or
+                  looking to advance your skills, we have materials designed
+                  specifically for IsiXhosa speakers learning programming
+                  concepts.
                 </p>
-                <Button className="bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-700 hover:to-orange-700 text-white shadow-lg">
-                  <Download className="w-4 h-4 mr-2" />
-                  Download Editor
+                <Button className="bg-gradient-to-r from-green-600 to-lime-600 hover:from-green-700 hover:to-emarald-700 text-white shadow-lg">
+                  <FileText className="w-4 h-4 mr-2" />
+                  Documentation
                 </Button>
               </CardContent>
             </Card>
@@ -340,7 +343,7 @@ export function HomepageLight() {
       </section>
 
       {/* Resources Section */}
-      <section className="py-20 bg-gradient-to-br from-white to-gray-50">
+      {/* <section className="py-20 bg-gradient-to-br from-white to-gray-50">
         <div className="container mx-auto px-6">
           <Card className="bg-white/80 border-gray-200/80 shadow-xl">
             <CardHeader>
@@ -392,10 +395,10 @@ export function HomepageLight() {
             </CardContent>
           </Card>
         </div>
-      </section>
+      </section> */}
 
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-br from-gray-50 to-white">
+      <section className="py-20 px-20 bg-gradient-to-br from-gray-50 to-white">
         <div className="container mx-auto px-6">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-6">
@@ -415,14 +418,6 @@ export function HomepageLight() {
                 >
                   <Rocket className="w-5 h-5 mr-2" />
                   Start Learning
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="border-gray-300 text-gray-700 hover:bg-gray-50 bg-white shadow-sm"
-                >
-                  <Download className="w-5 h-5 mr-2" />
-                  Download Now
                 </Button>
               </div>
             </div>
