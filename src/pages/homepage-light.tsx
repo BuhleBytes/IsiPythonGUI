@@ -18,6 +18,7 @@ import {
   Users,
 } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const navigationLinks = [
   { name: "Loops", icon: ArrowRight },
@@ -32,6 +33,8 @@ const navigationLinks = [
 
 export function HomepageLight() {
   const [activeFeature, setActiveFeature] = useState(0);
+
+  const navigate = useNavigate();
 
   const features = [
     {
@@ -97,7 +100,10 @@ export function HomepageLight() {
               >
                 Login
               </a>
-              <Button className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white shadow-lg">
+              <Button
+                className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white shadow-lg"
+                onClick={() => navigate("/signup")}
+              >
                 Sign Up
               </Button>
             </nav>
