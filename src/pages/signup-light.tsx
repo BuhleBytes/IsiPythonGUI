@@ -304,7 +304,7 @@ export function SignUpLight() {
                   <div className="text-sm text-gray-600">Exercises</div>
                 </div>
                 <div className="text-center p-4 bg-white/60 rounded-lg border border-gray-200/50 shadow-sm backdrop-blur-sm">
-                  <div className="text-2xl font-bold text-green-600">6</div>
+                  <div className="text-2xl font-bold text-green-600">1</div>
                   <div className="text-sm text-gray-600">Languages</div>
                 </div>
               </div>
