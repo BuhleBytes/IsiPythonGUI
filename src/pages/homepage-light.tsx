@@ -348,61 +348,6 @@ export function HomepageLight() {
         </div>
       </section>
 
-      {/* Resources Section */}
-      {/* <section className="py-20 bg-gradient-to-br from-white to-gray-50">
-        <div className="container mx-auto px-6">
-          <Card className="bg-white/80 border-gray-200/80 shadow-xl">
-            <CardHeader>
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-green-100 to-emerald-100 rounded-lg flex items-center justify-center shadow-sm">
-                  <BookOpen className="w-6 h-6 text-green-600" />
-                </div>
-                <div>
-                  <CardTitle className="text-2xl font-bold text-gray-900">
-                    Resources & Tutorials
-                  </CardTitle>
-                  <p className="text-gray-600">
-                    Comprehensive learning materials and community support
-                  </p>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-700 leading-relaxed mb-6">
-                Access our extensive library of tutorials, documentation, and
-                community resources. Whether you're a complete beginner or
-                looking to advance your skills, we have materials designed
-                specifically for IsiXhosa speakers learning programming
-                concepts.
-              </p>
-              <div className="flex flex-wrap gap-4">
-                <Button
-                  variant="outline"
-                  className="border-gray-300 text-gray-700 hover:bg-gray-50 bg-white shadow-sm"
-                >
-                  <FileText className="w-4 h-4 mr-2" />
-                  Documentation
-                </Button>
-                <Button
-                  variant="outline"
-                  className="border-gray-300 text-gray-700 hover:bg-gray-50 bg-white shadow-sm"
-                >
-                  <Users className="w-4 h-4 mr-2" />
-                  Community Forum
-                </Button>
-                <Button
-                  variant="outline"
-                  className="border-gray-300 text-gray-700 hover:bg-gray-50 bg-white shadow-sm"
-                >
-                  <Star className="w-4 h-4 mr-2" />
-                  Examples
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </section> */}
-
       {/* CTA Section */}
       <section className="py-20 px-20 bg-gradient-to-br from-gray-50 to-white">
         <div className="container mx-auto px-6">

@@ -1,7 +1,4 @@
 "use client";
-
-import type React from "react";
-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,7 +34,9 @@ import {
   ThumbsUp,
   User,
 } from "lucide-react";
+import type React from "react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface FormData {
   firstName: string;
@@ -71,6 +70,8 @@ export function SignUpLight() {
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Partial<FormData>>({});
   const [currentStep, setCurrentStep] = useState(1);
+
+  const navigate = useNavigate();
 
   const languages = [{ value: "isixhosa", label: "IsiXhosa", flag: "🇿🇦" }];
 
@@ -220,6 +221,7 @@ export function SignUpLight() {
               <Button
                 variant="outline"
                 className="border-gray-300 text-gray-700 hover:bg-gray-50 bg-white shadow-sm"
+                onClick={() => navigate("/login")}
               >
                 Sign In
               </Button>
