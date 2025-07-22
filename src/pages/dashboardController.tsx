@@ -1,15 +1,19 @@
 "use client";
 import { useState } from "react";
+import { ChallengesLight } from "./Dashboard Light Mode/challenges-light";
 import { DashboardLight } from "./Dashboard Light Mode/dashboard-light";
-// import { ChallengesLight } from "./challenges-light";
 // import { DocumentationLight } from "./documentation_light";
 // import { EditorLight } from "./editor-light"; // Import your other components
-// import { QuizzesLight } from "./quizzes-light";
+import { useLocation } from "react-router-dom";
+import { QuizzesLight } from "./Dashboard Light Mode/quizzes-light";
 import { SidebarLight } from "./Dashboard Light Mode/sidebar-light";
 
 export default function DashboardLightPage() {
+  const location = useLocation();
+  const activeViewFromState = location.state?.activeView || "home";
+
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [activeView, setActiveView] = useState("home");
+  const [activeView, setActiveView] = useState(activeViewFromState);
   const [editorData, setEditorData] = useState(null); // For imported files
 
   const handleToggleSidebar = () => {
@@ -37,9 +41,9 @@ export default function DashboardLightPage() {
           <DashboardLight sidebarOpen={sidebarOpen} importedData={editorData} />
         );
       case "challenges":
-        return <DashboardLight sidebarOpen={sidebarOpen} />;
+        return <ChallengesLight />;
       case "quizzes":
-        return <DashboardLight sidebarOpen={sidebarOpen} />;
+        return <QuizzesLight />;
       case "documentation":
         return <DashboardLight sidebarOpen={sidebarOpen} />;
       case "templates":
