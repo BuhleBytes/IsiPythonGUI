@@ -11,6 +11,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import Editor from "@monaco-editor/react";
+import { registerIsiPython } from "../../languages/isiPython";
+
 import {
   Activity,
   ChevronRight,
@@ -20,7 +23,6 @@ import {
   Play,
   RotateCcw,
   Save,
-  Settings,
   Square,
   Terminal,
   Zap,
@@ -33,21 +35,24 @@ interface CodeEditorLightProps {
   onSave?: (code: string, fileName: string) => void;
 }
 
-const defaultCode = `# Write your Python code here...
-# Welcome to PyNexus IDE - Your futuristic coding environment!
+const defaultCode = `# Bhala ikhowudi ka IsiPython apha...
+# Ngxatsho Mxhosa, Ndiyakwamkela ku IsiPython!
 
-def hello_world():
-    print("Hello, PyNexus IDE!")
-    print("Ready to code something amazing? 🚀")
+chaza molo_hlabathi():
+    print("Niyabulisa, IsiPython IDE!")
+    print("Ndiyabulisa mzi ontsundi? ")
 
-# Uncomment the line below to run the function
-# hello_world()`;
+hello_world()`;
 
 export function CodeEditorLight({
   initialCode,
   fileName,
   onSave,
 }: CodeEditorLightProps) {
+  const handleEditorWillMount = (monaco) => {
+    registerIsiPython(monaco);
+  };
+
   const [code, setCode] = useState(initialCode || defaultCode);
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
@@ -76,25 +81,26 @@ export function CodeEditorLight({
     setHasUnsavedChanges(true);
   };
 
+  // <<<<<<<<<<<<<<<<<<<<<<<<<<<          For Running Code                                    >>>>>>>>>>>>>>>
   const handleRunCode = async () => {
     setIsRunning(true);
     setOutput(
-      "🚀 Initializing PyNexus execution environment...\n⚡ Loading Python interpreter...\n🔥 Running your code...\n\n"
+      "🚀 Initializing IsiPython execution environment...\n⚡ Loading IsiPython interpreter...\n🔥 Running your code...\n\n"
     );
 
     setTimeout(() => {
       try {
         if (code.includes("print(")) {
           setOutput(
-            `🚀 PyNexus IDE - Python ${pythonVersion} Execution\n${"=".repeat(
+            `🚀 IsiPython IDE - Python ${pythonVersion} Execution\n${"=".repeat(
               50
-            )}\n\n✨ Output from your code:\n\nHello, PyNexus IDE!\nReady to code something amazing? 🚀\n\n${"=".repeat(
+            )}\n\n✨ Output from your code:\n\nHello, IsiPython IDE!\nReady to code something amazing? 🚀\n\n${"=".repeat(
               50
             )}\n✅ Process completed successfully (exit code: 0)\n💫 Execution time: 0.142s`
           );
         } else {
           setOutput(
-            `🚀 PyNexus IDE - Python ${pythonVersion} Execution\n${"=".repeat(
+            `🚀 IsiPython IDE - Python ${pythonVersion} Execution\n${"=".repeat(
               50
             )}\n\n📝 No output generated\n💡 Tip: Add some print() statements to see output!\n\n${"=".repeat(
               50
@@ -140,8 +146,6 @@ export function CodeEditorLight({
     );
   };
 
-  const lineNumbers = code.split("\n").map((_, index) => index + 1);
-
   return (
     <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30 text-gray-900 flex flex-col relative">
       {/* Fixed Animated Background Elements - Lower z-index */}
@@ -172,13 +176,11 @@ export function CodeEditorLight({
                 <SelectValue placeholder="Python" />
               </SelectTrigger>
               <SelectContent className="bg-white/95 backdrop-blur-xl border-gray-200 z-50">
-                <SelectItem value="3.11">Python 3.11</SelectItem>
-                <SelectItem value="3.10">Python 3.10</SelectItem>
-                <SelectItem value="3.9">Python 3.9</SelectItem>
+                <SelectItem value="3.11">IsiPython 1.0</SelectItem>
               </SelectContent>
             </Select>
             <Badge className="bg-gradient-to-r from-purple-500 to-pink-600 text-white border-0 shadow-md">
-              PyNexus IDE
+              IsiPython IDE
             </Badge>
           </div>
 
@@ -211,14 +213,6 @@ export function CodeEditorLight({
               <Copy className="w-4 h-4" />
             </Button>
             <Button
-              variant="ghost"
-              size="icon"
-              className="text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200"
-              title="Settings"
-            >
-              <Settings className="w-4 h-4" />
-            </Button>
-            <Button
               onClick={handleRunCode}
               disabled={isRunning}
               className={`px-6 py-2 font-semibold shadow-md transition-all duration-300 ${
@@ -248,66 +242,24 @@ export function CodeEditorLight({
         {/* Code Editor Panel - Takes remaining space */}
         <div className="flex-1 flex flex-col border-r border-gray-200/50 min-w-0">
           <div className="flex-1 flex min-h-0">
-            {/* Line Numbers */}
-            <div className="bg-gradient-to-b from-gray-100/80 to-gray-200/80 px-4 py-4 border-r border-gray-200/50 select-none backdrop-blur-sm flex-shrink-0">
-              <div className="font-mono text-sm text-gray-500 space-y-1">
-                {lineNumbers.map((num) => (
-                  <div
-                    key={num}
-                    className="h-6 flex items-center justify-end pr-2 min-w-[2rem]"
-                  >
-                    {num}
-                  </div>
-                ))}
-              </div>
-            </div>
-
             {/* Code Area - Takes remaining space */}
             <div className="flex-1 relative min-w-0">
-              <Textarea
+              <Editor
+                height="100%"
+                language="isipython"
                 value={code}
-                onChange={(e) => handleCodeChange(e.target.value)}
-                className="w-full h-full bg-white/60 backdrop-blur-sm border-0 resize-none font-mono text-sm text-gray-900 placeholder-gray-500 focus:ring-0 focus:outline-none p-4"
-                placeholder="# Write your Python code here..."
-                style={{
-                  lineHeight: "1.5",
+                onChange={(value) => handleCodeChange(value || "")}
+                theme="isipython-theme"
+                beforeMount={handleEditorWillMount}
+                options={{
+                  minimap: { enabled: false },
+                  fontSize: 14,
+                  lineNumbers: "on",
+                  scrollBeyondLastLine: false,
+                  automaticLayout: true,
+                  wordWrap: "on",
                 }}
               />
-
-              {/* Enhanced syntax highlighting overlay */}
-              <div className="absolute inset-0 pointer-events-none p-4 font-mono text-sm leading-6 overflow-hidden">
-                <div className="whitespace-pre-wrap">
-                  {code.split("\n").map((line, index) => (
-                    <div key={index} className="h-6 relative">
-                      {line.startsWith("#") && (
-                        <span className="text-green-600 font-medium">
-                          {line}
-                        </span>
-                      )}
-                      {line.includes("def ") && (
-                        <span className="text-purple-600 font-semibold">
-                          {line.match(/def\s+\w+/g)?.[0]}
-                        </span>
-                      )}
-                      {line.includes("print") && (
-                        <span className="text-cyan-600 font-medium">
-                          {line.match(/print/g)?.[0]}
-                        </span>
-                      )}
-                      {line.match(/"[^"]*"/g) && (
-                        <span className="text-orange-600">
-                          {line.match(/"[^"]*"/g)?.[0]}
-                        </span>
-                      )}
-                      {line.match(/'[^']*'/g) && (
-                        <span className="text-orange-600">
-                          {line.match(/'[^']*'/g)?.[0]}
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -360,8 +312,7 @@ export function CodeEditorLight({
             <CardContent className="flex-1 min-h-0">
               <div className="bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700 rounded-lg p-4 h-full overflow-y-auto">
                 <pre className="font-mono text-sm text-green-400 whitespace-pre-wrap">
-                  {output ||
-                    "🚀 PyNexus IDE Terminal\n💫 Output will appear here after running your code...\n\n✨ Ready to execute some amazing Python code!"}
+                  {output || "🚀Output will appear here \n  \n  \n  \n  \n  \n"}
                 </pre>
               </div>
             </CardContent>
@@ -394,11 +345,6 @@ export function CodeEditorLight({
               ></div>
               {isRunning ? "Executing" : "Ready"}
             </span>
-            {hasUnsavedChanges && (
-              <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white border-0 text-xs">
-                Unsaved changes
-              </Badge>
-            )}
           </div>
         </div>
       </div>
