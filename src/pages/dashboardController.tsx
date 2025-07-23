@@ -5,6 +5,7 @@ import { DashboardLight } from "./Dashboard Light Mode/dashboard-light";
 import Component from "./Dashboard Light Mode/glossary";
 // import { EditorLight } from "./editor-light"; // Import your other components
 import { useLocation } from "react-router-dom";
+import EditorLightPage from "./Dashboard Light Mode/editor-light-page";
 import { QuizzesLight } from "./Dashboard Light Mode/quizzes-light";
 import { SidebarLight } from "./Dashboard Light Mode/sidebar-light";
 
@@ -37,9 +38,7 @@ export default function DashboardLightPage() {
           />
         );
       case "editor":
-        return (
-          <DashboardLight sidebarOpen={sidebarOpen} importedData={editorData} />
-        );
+        return <EditorLightPage />;
       case "challenges":
         return <ChallengesLight />;
       case "quizzes":
