@@ -2,10 +2,8 @@
 
 import { Button } from "@/components/ui/button";
 import {
-  BookOpen,
   ChevronLeft,
   Code,
-  FileCode,
   FileText,
   GraduationCap,
   HelpCircle,
@@ -35,8 +33,6 @@ const mainItems = [
 ];
 
 const exploreItems = [
-  { title: "Templates", url: "#", icon: FileCode, key: "templates" },
-  { title: "Learn", url: "#", icon: BookOpen, key: "learn" },
   {
     title: "Documentation",
     url: "/documentation-light",
