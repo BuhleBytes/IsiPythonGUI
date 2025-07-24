@@ -86,6 +86,7 @@ export function SidebarLight({
       content: file.content,
       filename: file.name,
     });
+    console.log(file.content);
     setShowFileImport(false);
   };
 

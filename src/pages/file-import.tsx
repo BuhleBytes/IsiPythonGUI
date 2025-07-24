@@ -1,154 +1,168 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useRef } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
-import { Upload, FileText, X, CheckCircle, AlertCircle, Code, File, ArrowRight, Folder } from "lucide-react"
+import { useState, useRef } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import {
+  Upload,
+  FileText,
+  X,
+  CheckCircle,
+  AlertCircle,
+  Code,
+  File,
+  ArrowRight,
+  Folder,
+} from "lucide-react";
 
 interface UploadedFile {
-  name: string
-  size: number
-  type: string
-  content: string
-  lastModified: Date
+  name: string;
+  size: number;
+  type: string;
+  content: string;
+  lastModified: Date;
 }
 
 interface FileImportProps {
-  onFileImported: (file: UploadedFile) => void
-  onClose: () => void
+  onFileImported: (file: UploadedFile) => void;
+  onClose: () => void;
 }
 
 export function FileImport({ onFileImported, onClose }: FileImportProps) {
-  const [dragActive, setDragActive] = useState(false)
-  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
-  const [uploading, setUploading] = useState(false)
-  const [uploadProgress, setUploadProgress] = useState(0)
-  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [dragActive, setDragActive] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const supportedExtensions = [".py", ".txt", ".md", ".json", ".csv", ".html", ".css", ".js", ".xml"]
-  const maxFileSize = 5 * 1024 * 1024 // 5MB
+  const supportedExtensions = [".isi"];
+  const maxFileSize = 5 * 1024 * 1024; // 5MB
 
   const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return "0 Bytes"
-    const k = 1024
-    const sizes = ["Bytes", "KB", "MB", "GB"]
-    const i = Math.floor(Math.log(bytes) / Math.log(k))
-    return Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
-  }
+    if (bytes === 0) return "0 Bytes";
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB", "GB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return (
+      Number.parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i]
+    );
+  };
 
   const getFileIcon = (fileName: string) => {
-    const extension = fileName.toLowerCase().split(".").pop()
+    const extension = fileName.toLowerCase().split(".").pop();
     switch (extension) {
-      case "py":
-        return <Code className="w-5 h-5 text-cyan-400" />
+      case "isi":
+        return <Code className="w-5 h-5 text-cyan-400" />;
       case "txt":
       case "md":
-        return <FileText className="w-5 h-5 text-green-400" />
+        return <FileText className="w-5 h-5 text-green-400" />;
       case "json":
       case "xml":
-        return <File className="w-5 h-5 text-yellow-400" />
+        return <File className="w-5 h-5 text-yellow-400" />;
       default:
-        return <File className="w-5 h-5 text-slate-400" />
+        return <File className="w-5 h-5 text-slate-400" />;
     }
-  }
+  };
 
   const validateFile = (file: File): string | null => {
     // Check file size
     if (file.size > maxFileSize) {
-      return `File size exceeds ${formatFileSize(maxFileSize)} limit`
+      return `File size exceeds ${formatFileSize(maxFileSize)} limit`;
     }
 
     // Check file extension
-    const extension = "." + file.name.toLowerCase().split(".").pop()
+    const extension = "." + file.name.toLowerCase().split(".").pop();
     if (!supportedExtensions.includes(extension)) {
-      return `Unsupported file type. Supported: ${supportedExtensions.join(", ")}`
+      return `Unsupported file type. Supported: ${supportedExtensions.join(
+        ", "
+      )}`;
     }
 
-    return null
-  }
+    return null;
+  };
 
   const processFiles = async (files: FileList) => {
-    setUploading(true)
-    setUploadProgress(0)
+    setUploading(true);
+    setUploadProgress(0);
 
-    const validFiles: UploadedFile[] = []
-    const totalFiles = files.length
+    const validFiles: UploadedFile[] = [];
+    const totalFiles = files.length;
 
     for (let i = 0; i < files.length; i++) {
-      const file = files[i]
-      const error = validateFile(file)
+      const file = files[i];
+      const error = validateFile(file);
 
       if (!error) {
         try {
-          const content = await readFileContent(file)
+          const content = await readFileContent(file);
           validFiles.push({
             name: file.name,
             size: file.size,
             type: file.type || "text/plain",
             content,
             lastModified: new Date(file.lastModified),
-          })
+          });
         } catch (err) {
-          console.error(`Error reading file ${file.name}:`, err)
+          console.error(`Error reading file ${file.name}:`, err);
         }
       }
 
-      setUploadProgress(((i + 1) / totalFiles) * 100)
+      setUploadProgress(((i + 1) / totalFiles) * 100);
     }
 
     setTimeout(() => {
-      setUploadedFiles(validFiles)
-      setUploading(false)
-      setUploadProgress(0)
-    }, 500)
-  }
+      setUploadedFiles(validFiles);
+      setUploading(false);
+      setUploadProgress(0);
+    }, 500);
+  };
 
   const readFileContent = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = (e) => resolve(e.target?.result as string)
-      reader.onerror = (e) => reject(e)
-      reader.readAsText(file)
-    })
-  }
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target?.result as string);
+      reader.onerror = (e) => reject(e);
+      reader.readAsText(file);
+    });
+  };
 
   const handleDrag = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
+    e.preventDefault();
+    e.stopPropagation();
     if (e.type === "dragenter" || e.type === "dragover") {
-      setDragActive(true)
+      setDragActive(true);
     } else if (e.type === "dragleave") {
-      setDragActive(false)
+      setDragActive(false);
     }
-  }
+  };
 
   const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setDragActive(false)
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
 
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      processFiles(e.dataTransfer.files)
+      processFiles(e.dataTransfer.files);
     }
-  }
+  };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      processFiles(e.target.files)
+      processFiles(e.target.files);
     }
-  }
+  };
 
   const handleOpenFile = (file: UploadedFile) => {
-    onFileImported(file)
-  }
+    onFileImported(file);
+  };
 
   const handleRemoveFile = (index: number) => {
-    setUploadedFiles(uploadedFiles.filter((_, i) => i !== index))
-  }
+    setUploadedFiles(uploadedFiles.filter((_, i) => i !== index));
+  };
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
@@ -160,8 +174,12 @@ export function FileImport({ onFileImported, onClose }: FileImportProps) {
                 <Upload className="w-5 h-5 text-white" />
               </div>
               <div>
-                <CardTitle className="text-xl font-bold text-white">Import Files</CardTitle>
-                <p className="text-sm text-slate-400">Upload files to open in the code editor</p>
+                <CardTitle className="text-xl font-bold text-white">
+                  Import Files
+                </CardTitle>
+                <p className="text-sm text-slate-400">
+                  Upload files to open in the code editor
+                </p>
               </div>
             </div>
             <Button
@@ -219,23 +237,35 @@ export function FileImport({ onFileImported, onClose }: FileImportProps) {
 
           {/* Supported Formats */}
           <div className="bg-slate-800/30 rounded-lg p-4">
-            <h4 className="text-sm font-medium text-white mb-2">Supported Formats</h4>
+            <h4 className="text-sm font-medium text-white mb-2">
+              Supported Formats
+            </h4>
             <div className="flex flex-wrap gap-2">
               {supportedExtensions.map((ext) => (
-                <Badge key={ext} variant="secondary" className="bg-slate-700 text-slate-300 text-xs">
+                <Badge
+                  key={ext}
+                  variant="secondary"
+                  className="bg-slate-700 text-slate-300 text-xs"
+                >
                   {ext}
                 </Badge>
               ))}
             </div>
-            <p className="text-xs text-slate-400 mt-2">Maximum file size: {formatFileSize(maxFileSize)}</p>
+            <p className="text-xs text-slate-400 mt-2">
+              Maximum file size: {formatFileSize(maxFileSize)}
+            </p>
           </div>
 
           {/* Upload Progress */}
           {uploading && (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-300">Uploading files...</span>
-                <span className="text-sm text-cyan-400">{Math.round(uploadProgress)}%</span>
+                <span className="text-sm text-slate-300">
+                  Uploading files...
+                </span>
+                <span className="text-sm text-cyan-400">
+                  {Math.round(uploadProgress)}%
+                </span>
               </div>
               <Progress value={uploadProgress} className="h-2 bg-slate-800">
                 <div
@@ -264,11 +294,15 @@ export function FileImport({ onFileImported, onClose }: FileImportProps) {
                         <div className="flex items-center gap-3 flex-1 min-w-0">
                           {getFileIcon(file.name)}
                           <div className="flex-1 min-w-0">
-                            <h5 className="font-medium text-white truncate">{file.name}</h5>
+                            <h5 className="font-medium text-white truncate">
+                              {file.name}
+                            </h5>
                             <div className="flex items-center gap-3 text-xs text-slate-400">
                               <span>{formatFileSize(file.size)}</span>
                               <span>•</span>
-                              <span>{file.lastModified.toLocaleDateString()}</span>
+                              <span>
+                                {file.lastModified.toLocaleDateString()}
+                              </span>
                             </div>
                           </div>
                         </div>
@@ -317,12 +351,18 @@ export function FileImport({ onFileImported, onClose }: FileImportProps) {
               <span>Files are processed locally and not stored on servers</span>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="ghost" onClick={onClose} className="text-slate-400 hover:text-white">
+              <Button
+                variant="ghost"
+                onClick={onClose}
+                className="text-slate-400 hover:text-white"
+              >
                 Cancel
               </Button>
               {uploadedFiles.length > 0 && (
                 <Button
-                  onClick={() => uploadedFiles.length > 0 && handleOpenFile(uploadedFiles[0])}
+                  onClick={() =>
+                    uploadedFiles.length > 0 && handleOpenFile(uploadedFiles[0])
+                  }
                   className="bg-cyan-600 hover:bg-cyan-700 text-white"
                 >
                   Open First File
@@ -334,5 +374,5 @@ export function FileImport({ onFileImported, onClose }: FileImportProps) {
         </div>
       </Card>
     </div>
-  )
+  );
 }

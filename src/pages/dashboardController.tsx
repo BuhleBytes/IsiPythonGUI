@@ -1,11 +1,10 @@
 "use client";
 import { useState } from "react";
+import { useLocation } from "react-router-dom";
 import { ChallengesLight } from "./Dashboard Light Mode/challenges-light";
 import { DashboardLight } from "./Dashboard Light Mode/dashboard-light";
-import Component from "./Dashboard Light Mode/glossary";
-// import { EditorLight } from "./editor-light"; // Import your other components
-import { useLocation } from "react-router-dom";
 import EditorLightPage from "./Dashboard Light Mode/editor-light-page";
+import Component from "./Dashboard Light Mode/glossary";
 import { QuizzesLight } from "./Dashboard Light Mode/quizzes-light";
 import { SidebarLight } from "./Dashboard Light Mode/sidebar-light";
 
@@ -25,6 +24,8 @@ export default function DashboardLightPage() {
     setActiveView(view);
     if (data && view === "editor") {
       setEditorData(data);
+    } else if (view === "editor" && !data) {
+      setEditorData(null);
     }
   };
 
@@ -38,7 +39,12 @@ export default function DashboardLightPage() {
           />
         );
       case "editor":
-        return <EditorLightPage />;
+        return (
+          <EditorLightPage
+            initialCode={editorData?.content}
+            fileName={editorData?.filename}
+          />
+        );
       case "challenges":
         return <ChallengesLight />;
       case "quizzes":

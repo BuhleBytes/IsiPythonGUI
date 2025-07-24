@@ -1,4 +1,5 @@
-// Export the configuration function
+//=================================== Registering the language =======================================================
+// #region Registering IsiPython Language (Keywords & Suggestions)
 export const registerIsiPython = (monaco) => {
   monaco.languages.register({ id: "isipython" });
 
@@ -106,7 +107,6 @@ export const registerIsiPython = (monaco) => {
   });
 
   // Register completion provider
-
   monaco.languages.registerCompletionItemProvider("isipython", {
     provideCompletionItems: (model, position) => {
       // Get all text in the editor
@@ -367,11 +367,28 @@ export const registerIsiPython = (monaco) => {
     }
   });
 };
+// #endregion
+//=================================== Registering the language =======================================================
 
 // Syntax validation function
 function checkIsiPythonSyntax(code) {
   const errors = [];
   const lines = code.split("\n");
+
+  //Track Variable scopes
+  const scopeStack = [new Set()]; // Global scope
+  let currentScope = scopeStack[0];
+
+  // Built-in variables/functions that are always available
+  const builtins = new Set([
+    "chaza",
+    "buyisela",
+    "phakamisa",
+    "len",
+    "str",
+    "int",
+    "float",
+  ]);
 
   lines.forEach((line, index) => {
     const lineNumber = index + 1;

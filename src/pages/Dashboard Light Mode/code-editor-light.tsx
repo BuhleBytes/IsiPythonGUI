@@ -13,6 +13,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import Editor from "@monaco-editor/react";
 import { registerIsiPython } from "../../languages/isiPython";
+import { FileNameDialog } from "./FileNameDialog";
 
 import {
   Activity,
@@ -22,7 +23,6 @@ import {
   FileText,
   Play,
   RotateCcw,
-  Save,
   Square,
   Terminal,
   Zap,
@@ -59,7 +59,7 @@ export function CodeEditorLight({
   const [isRunning, setIsRunning] = useState(false);
   const [pythonVersion, setPythonVersion] = useState("3.11");
   const [currentFileName, setCurrentFileName] = useState(
-    fileName || "untitled.py"
+    fileName || "untitled.isi"
   );
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
@@ -116,13 +116,14 @@ export function CodeEditorLight({
     }, 2000);
   };
 
-  const handleSave = () => {
+  const handleSave = (newFileName: string) => {
+    setCurrentFileName(newFileName);
     if (onSave) {
-      onSave(code, currentFileName);
+      onSave(code, newFileName);
     }
     setHasUnsavedChanges(false);
     setOutput(
-      `💾 File saved successfully: ${currentFileName}\n✨ Your code is safe and sound!\n`
+      `💾 File saved successfully: ${newFileName}\n✨ Your code is safe and sound!\n`
     );
   };
 
@@ -185,15 +186,11 @@ export function CodeEditorLight({
           </div>
 
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleSave}
-              className="text-gray-600 hover:text-green-600 hover:bg-green-50 transition-all duration-200"
-              title="Save File"
-            >
-              <Save className="w-4 h-4" />
-            </Button>
+            <FileNameDialog
+              currentFileName={currentFileName}
+              onSave={handleSave}
+              hasUnsavedChanges={hasUnsavedChanges}
+            />
             <Button
               variant="ghost"
               size="icon"
