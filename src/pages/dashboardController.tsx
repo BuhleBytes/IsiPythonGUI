@@ -1,6 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
+import { loadState, saveCurrentRoute, saveCurrentView } from "../utils/storage";
 import { ChallengesLight } from "./Dashboard Light Mode/challenges-light";
 import { DashboardLight } from "./Dashboard Light Mode/dashboard-light";
 import EditorLightPage from "./Dashboard Light Mode/editor-light-page";
@@ -10,22 +11,53 @@ import { SidebarLight } from "./Dashboard Light Mode/sidebar-light";
 
 export default function DashboardLightPage() {
   const location = useLocation();
-  const activeViewFromState = location.state?.activeView || "home";
 
+  // Load persisted state on component mount
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [activeView, setActiveView] = useState(activeViewFromState);
-  const [editorData, setEditorData] = useState(null); // For imported files
+  const [activeView, setActiveView] = useState(() => {
+    // First check URL state (for programmatic navigation)
+    const urlActiveView = location.state?.activeView;
+    if (urlActiveView) return urlActiveView;
+
+    // Then check localStorage for persistence
+    const savedState = loadState();
+    return savedState.currentView || "home";
+  });
+
+  const [editorData, setEditorData] = useState(() => {
+    // Load editor data from localStorage on mount
+    const savedState = loadState();
+    return savedState.editorState
+      ? {
+          content: savedState.editorState.code,
+          filename: savedState.editorState.fileName,
+        }
+      : null;
+  });
+
+  // Save current route when component mounts or location changes
+  useEffect(() => {
+    saveCurrentRoute(location.pathname);
+  }, [location.pathname]);
+
+  // Save current view whenever it changes
+  useEffect(() => {
+    saveCurrentView(activeView);
+  }, [activeView]);
 
   const handleToggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
 
   const handleViewChange = (view, data = null) => {
+    // This stays the same - just change the view, no navigation
     setActiveView(view);
+
     if (data && view === "editor") {
       setEditorData(data);
     } else if (view === "editor" && !data) {
-      setEditorData(null);
+      // When switching to editor without new data, keep existing editorData
+      // The EditorLightPage will handle loading from localStorage
     }
   };
 
@@ -43,6 +75,8 @@ export default function DashboardLightPage() {
           <EditorLightPage
             initialCode={editorData?.content}
             fileName={editorData?.filename}
+            sidebarOpen={sidebarOpen}
+            onCloseSidebar={() => setSidebarOpen(false)}
           />
         );
       case "challenges":

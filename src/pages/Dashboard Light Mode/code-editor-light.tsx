@@ -27,12 +27,19 @@ import {
   Terminal,
   Zap,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 interface CodeEditorLightProps {
   initialCode?: string;
   fileName?: string;
   onSave?: (code: string, fileName: string) => void;
+  onCodeChange?: (
+    code: string,
+    fileName: string,
+    hasUnsavedChanges: boolean
+  ) => void;
+  sidebarOpen?: boolean;
+  onCloseSidebar?: () => void;
 }
 
 const defaultCode = `# Bhala ikhowudi ka IsiPython apha...
@@ -48,6 +55,9 @@ export function CodeEditorLight({
   initialCode,
   fileName,
   onSave,
+  onCodeChange,
+  sidebarOpen,
+  onCloseSidebar,
 }: CodeEditorLightProps) {
   const handleEditorWillMount = (monaco) => {
     registerIsiPython(monaco);
@@ -62,17 +72,96 @@ export function CodeEditorLight({
     fileName || "untitled.isi"
   );
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [waitingForInput, setWaitingForInput] = useState(false);
+  const [inputResolver, setInputResolver] = useState(null);
+  const [rightPanelWidth, setRightPanelWidth] = useState(384); // 384px = w-96
+  const [isResizing, setIsResizing] = useState(false);
+
+  // Auto-save effect - debounced to avoid too many saves
+  const debouncedCodeChange = useCallback(
+    (newCode: string) => {
+      if (onCodeChange) {
+        onCodeChange(newCode, currentFileName, hasUnsavedChanges);
+      }
+    },
+    [onCodeChange, currentFileName, hasUnsavedChanges]
+  );
 
   useEffect(() => {
-    if (initialCode) {
+    const timer = setTimeout(() => {
+      debouncedCodeChange(code);
+    }, 1000); // Auto-save after 1 second of inactivity
+
+    return () => clearTimeout(timer);
+  }, [code, debouncedCodeChange]);
+
+  // Resize functionality for right panel
+  const handleMouseDown = (e) => {
+    setIsResizing(true);
+    e.preventDefault();
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!isResizing) return;
+
+      const containerRect = document
+        .querySelector(".editor-container")
+        ?.getBoundingClientRect();
+      if (!containerRect) return;
+
+      const newWidth = containerRect.right - e.clientX;
+      const minWidth = 300; // Minimum width for right panel
+      const maxWidth = window.innerWidth * 0.7; // Maximum 70% of screen width
+
+      // Calculate the point where sidebar should auto-close (when editor gets too wide)
+      const editorWidth = window.innerWidth - newWidth;
+      const autoCloseSidebarThreshold = window.innerWidth * 0.75; // When editor takes 75% of screen
+
+      if (newWidth >= minWidth && newWidth <= maxWidth) {
+        setRightPanelWidth(newWidth);
+
+        // Auto-close sidebar if editor gets too wide and sidebar is open
+        if (
+          editorWidth >= autoCloseSidebarThreshold &&
+          sidebarOpen &&
+          onCloseSidebar
+        ) {
+          onCloseSidebar();
+        }
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsResizing(false);
+    };
+
+    if (isResizing) {
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "col-resize";
+      document.body.style.userSelect = "none";
+    }
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+  }, [isResizing, sidebarOpen, onCloseSidebar]);
+
+  useEffect(() => {
+    if (initialCode !== undefined && initialCode !== code) {
       setCode(initialCode);
       setHasUnsavedChanges(false);
     }
   }, [initialCode]);
 
   useEffect(() => {
-    if (fileName) {
+    if (fileName && fileName !== currentFileName) {
       setCurrentFileName(fileName);
+      setHasUnsavedChanges(false);
     }
   }, [fileName]);
 
@@ -81,39 +170,222 @@ export function CodeEditorLight({
     setHasUnsavedChanges(true);
   };
 
-  // <<<<<<<<<<<<<<<<<<<<<<<<<<<          For Running Code                                    >>>>>>>>>>>>>>>
   const handleRunCode = async () => {
     setIsRunning(true);
+    setWaitingForInput(false); // Reset input state
     setOutput(
       "🚀 Initializing IsiPython execution environment...\n⚡ Loading IsiPython interpreter...\n🔥 Running your code...\n\n"
     );
 
-    setTimeout(() => {
-      try {
-        if (code.includes("print(")) {
-          setOutput(
-            `🚀 IsiPython IDE - Python ${pythonVersion} Execution\n${"=".repeat(
-              50
-            )}\n\n✨ Output from your code:\n\nHello, IsiPython IDE!\nReady to code something amazing? 🚀\n\n${"=".repeat(
-              50
-            )}\n✅ Process completed successfully (exit code: 0)\n💫 Execution time: 0.142s`
-          );
-        } else {
-          setOutput(
-            `🚀 IsiPython IDE - Python ${pythonVersion} Execution\n${"=".repeat(
-              50
-            )}\n\n📝 No output generated\n💡 Tip: Add some print() statements to see output!\n\n${"=".repeat(
-              50
-            )}\n✅ Process completed successfully (exit code: 0)\n💫 Execution time: 0.089s`
-          );
+    let allOutput = [];
+    let allErrors = [];
+    let sessionId = null;
+
+    try {
+      // Initial request
+      let response = await fetch(
+        "https://isipython-dev.onrender.com/api/code",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            code: code,
+          }),
         }
-      } catch (error) {
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      let result = await response.json();
+      sessionId = result.session_id;
+
+      // Main execution loop
+      while (!result.completed) {
+        // Show any new output immediately
+        if (result.output) {
+          const currentOutput = result.output;
+          if (!allOutput.includes(currentOutput)) {
+            if (allOutput.length > 0) {
+              const lastOutput = allOutput[allOutput.length - 1];
+              if (currentOutput.startsWith(lastOutput)) {
+                const newPart = currentOutput
+                  .slice(lastOutput.length)
+                  .replace(/^\n+/, "");
+                if (newPart) {
+                  setOutput((prev) => prev + newPart + "\n");
+                }
+              }
+            } else {
+              setOutput((prev) => prev + currentOutput + "\n");
+            }
+            allOutput.push(currentOutput);
+          }
+        }
+
+        if (result.waiting_for_input) {
+          // Set the waiting state to activate the input UI
+          setWaitingForInput(true);
+
+          // Wait for user input through the UI
+          const userInput = await waitForUserInput();
+
+          if (userInput !== null) {
+            // Clear the waiting state
+            setWaitingForInput(false);
+
+            // Show the input in the output (like a real terminal)
+            setOutput((prev) => prev + `${userInput}\n`);
+
+            // Send the input to the API
+            response = await fetch(
+              "https://isipython-dev.onrender.com/api/code",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  session_id: sessionId,
+                  input: userInput,
+                }),
+              }
+            );
+
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            result = await response.json();
+          } else {
+            // User cancelled or timeout
+            setWaitingForInput(false);
+            break;
+          }
+        } else if (result.still_running) {
+          // Wait and poll for status
+          await new Promise((resolve) => setTimeout(resolve, 500));
+
+          response = await fetch(
+            "https://isipython-dev.onrender.com/api/code",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                session_id: sessionId,
+              }),
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          result = await response.json();
+        } else {
+          break;
+        }
+
+        // Collect any errors
+        if (result.error) {
+          allErrors.push(result.error);
+        }
+      }
+
+      // Show final output
+      if (result.output) {
+        const currentOutput = result.output;
+        if (
+          allOutput.length === 0 ||
+          currentOutput !== allOutput[allOutput.length - 1]
+        ) {
+          if (allOutput.length > 0) {
+            const lastOutput = allOutput[allOutput.length - 1];
+            if (currentOutput.startsWith(lastOutput)) {
+              const newPart = currentOutput
+                .slice(lastOutput.length)
+                .replace(/^\n+/, "");
+              if (newPart) {
+                setOutput((prev) => prev + newPart + "\n");
+              }
+            }
+          } else {
+            setOutput((prev) => prev + currentOutput + "\n");
+          }
+        }
+      }
+
+      // Show errors or success message
+      if (allErrors.length > 0) {
         setOutput(
-          `❌ Execution Error:\n${error}\n\n🔧 Check your code and try again!`
+          (prev) =>
+            prev +
+            `\n❌ Execution Error:\n${allErrors.join(
+              "\n"
+            )}\n\n🔧 Check your code and try again!`
+        );
+      } else if (result.completed) {
+        setOutput(
+          (prev) =>
+            prev +
+            `\n${"=".repeat(
+              50
+            )}\n✅ Process completed successfully\n💫 Execution finished`
         );
       }
+    } catch (error) {
+      setOutput(
+        (prev) =>
+          prev +
+          `\n❌ Network/Connection Error:\n${error.message}\n\n🔧 Please check your internet connection and try again!`
+      );
+    } finally {
       setIsRunning(false);
-    }, 2000);
+      setWaitingForInput(false);
+    }
+  };
+
+  // Helper function to wait for user input through the UI
+  const waitForUserInput = () => {
+    return new Promise((resolve) => {
+      // Create a ref to store the resolve function
+      const resolveRef = { current: resolve };
+
+      // Store the resolve function to be called when input is submitted
+      setInputResolver(() => resolveRef);
+
+      // Set a timeout to prevent infinite waiting
+      const timeout = setTimeout(() => {
+        resolve(null);
+        setInputResolver(null);
+      }, 300000); // 5 minutes timeout
+
+      // Store timeout to clear it later
+      resolveRef.timeout = timeout;
+    });
+  };
+
+  // Handler for when user submits input (call this when Enter is pressed or Submit button is clicked)
+  const handleInputSubmit = () => {
+    if (inputResolver && input.trim()) {
+      clearTimeout(inputResolver.current.timeout);
+      inputResolver.current(input.trim());
+      setInputResolver(null);
+      setInput(""); // Clear input after submission
+    }
+  };
+
+  // Add to your input field's onKeyPress handler
+  const handleInputKeyPress = (e) => {
+    if (e.key === "Enter" && waitingForInput) {
+      e.preventDefault();
+      handleInputSubmit();
+    }
   };
 
   const handleSave = (newFileName: string) => {
@@ -148,7 +420,8 @@ export function CodeEditorLight({
   };
 
   return (
-    <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30 text-gray-900 flex flex-col relative">
+    <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30 text-gray-900 flex flex-col relative editor-container">
+      {/* Added editor-container class for resize reference */}
       {/* Fixed Animated Background Elements - Lower z-index */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <div className="absolute top-10 right-20 w-64 h-64 bg-gradient-to-r from-cyan-200/15 to-blue-300/15 rounded-full blur-3xl animate-pulse"></div>
@@ -261,8 +534,20 @@ export function CodeEditorLight({
           </div>
         </div>
 
-        {/* Right Panel - Fixed width */}
-        <div className="w-96 flex flex-col flex-shrink-0">
+        {/* Right Panel - Resizable width */}
+        <div
+          className="flex flex-col flex-shrink-0 relative"
+          style={{ width: `${rightPanelWidth}px` }}
+        >
+          {/* Resize handle */}
+          <div
+            className="absolute left-0 top-0 bottom-0 w-1 bg-transparent hover:bg-cyan-400 cursor-col-resize z-10 transition-colors duration-200"
+            onMouseDown={handleMouseDown}
+            title="Drag to resize panel"
+          >
+            {/* Visual indicator on hover */}
+            <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-16 bg-gray-300 rounded-full opacity-0 hover:opacity-100 transition-opacity duration-200"></div>
+          </div>
           {/* Input Panel */}
           <Card className="bg-white/95 backdrop-blur-xl border-gray-200/50 rounded-none border-b shadow-sm">
             <CardHeader className="pb-3">
@@ -272,16 +557,59 @@ export function CodeEditorLight({
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Enter input for your program..."
-                className="bg-gradient-to-br from-gray-50 to-gray-100 border-gray-300/50 text-gray-900 placeholder-gray-500 resize-none h-20 focus:ring-2 focus:ring-cyan-400/30"
-              />
-              <p className="text-xs text-gray-600 bg-blue-50/50 p-2 rounded-lg border border-blue-200/50">
-                💡 If your code takes input, add it in the above box before
-                running
-              </p>
+              <div
+                className={`relative ${waitingForInput ? "input-waiting" : ""}`}
+              >
+                <Textarea
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleInputKeyPress}
+                  placeholder={
+                    waitingForInput
+                      ? "Program is waiting for input... Press Enter to submit"
+                      : "Enter input for your program..."
+                  }
+                  className={`relative z-10 resize-none h-20 focus:ring-2 transition-all duration-300 ${
+                    waitingForInput
+                      ? "bg-cyan-50 border-cyan-400 text-cyan-900 placeholder-cyan-600 focus:ring-cyan-400/50 shadow-lg shadow-cyan-400/20"
+                      : "bg-gradient-to-br from-gray-50 to-gray-100 border-gray-300/50 text-gray-900 placeholder-gray-500 focus:ring-cyan-400/30"
+                  }`}
+                  disabled={isRunning && !waitingForInput}
+                  autoFocus={waitingForInput}
+                />
+
+                {waitingForInput && (
+                  <>
+                    {/* Animated border effect - positioned behind textarea */}
+                    <div className="absolute inset-0 -z-10 rounded-md">
+                      <div className="absolute inset-0 rounded-md bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 opacity-30"></div>
+                    </div>
+
+                    {/* Submit button */}
+                    <button
+                      onClick={handleInputSubmit}
+                      className="absolute right-2 bottom-2 z-20 bg-cyan-500 hover:bg-cyan-600 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={!input.trim()}
+                    >
+                      Send
+                    </button>
+                  </>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between">
+                <p
+                  className={`text-xs p-2 rounded-lg border transition-all duration-300 flex-1 ${
+                    waitingForInput
+                      ? "text-cyan-700 bg-cyan-50/80 border-cyan-200"
+                      : "text-gray-600 bg-blue-50/50 border-blue-200/50"
+                  }`}
+                >
+                  {waitingForInput
+                    ? "⚡ Program is waiting for your input! Type above and press Enter to continue..."
+                    : "💡 If your code takes input, add it in the above box before running"}
+                </p>
+              </div>
             </CardContent>
           </Card>
 
@@ -307,8 +635,8 @@ export function CodeEditorLight({
               </div>
             </CardHeader>
             <CardContent className="flex-1 min-h-0">
-              <div className="bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700 rounded-lg p-4 h-full overflow-y-auto">
-                <pre className="font-mono text-sm text-green-400 whitespace-pre-wrap">
+              <div className="bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700 rounded-lg p-4 h-full overflow-y-auto max-h-full">
+                <pre className="font-mono text-sm text-green-400 whitespace-pre-wrap break-words">
                   {output || "🚀Output will appear here \n  \n  \n  \n  \n  \n"}
                 </pre>
               </div>

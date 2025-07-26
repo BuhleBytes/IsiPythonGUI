@@ -8,7 +8,7 @@ export const registerIsiPython = (monaco) => {
       root: [
         // Keywords - these will be highlighted
         [
-          /\b(Ubuxoki|Inyaniso|Akukho|kwaye|njenga|qinisekisa|nge-asynchronous|linda|yekisa|iklasi|qhubeka|chaza|cima|okanye|enye|ngaphandle|ekugqibeleni|jikelele|ukuba|ingenisa|ku|phakathi|umsebenzi|hayi-indawo|hayi|okanye|dlula|phakamisa|buyisela|zama|ngexesha|nge|velisa|printa|print|shicilela)\b/,
+          /\b(Ubuxoki|Inyaniso|Akukho|kwaye|njenga|qinisekisa|ngemva|linda|yekisa|iklasi|qhubeka|chaza|cima|okanye|enye|ngaphandle|ekugqibeleni|jikelele|ukuba|ngenisa|ku|phakathi|umsebenzi|ingaphandle|hayi|dlula|phakamisa|buyisela|zama|ngexesha|nge|velisa|ngokulandelelana|ukusuka|ngu|okanye_ukuba|printa|print|shicilela)\b/,
           "keyword",
         ],
 
@@ -123,18 +123,14 @@ export const registerIsiPython = (monaco) => {
       const userDefinedItems = extractUserDefinitions(allText);
 
       // Your static keyword suggestions
+
       const staticSuggestions = [
+        // Boolean values
         {
           label: "Ubuxoki",
           kind: monaco.languages.CompletionItemKind.Keyword,
           insertText: "Ubuxoki",
           detail: 'False - means "falsehood"',
-        },
-        {
-          label: "dlula",
-          kind: monaco.languages.CompletionItemKind.Keyword,
-          insertText: "dlula",
-          detail: 'pass - means "pass-through"',
         },
         {
           label: "Inyaniso",
@@ -148,29 +144,43 @@ export const registerIsiPython = (monaco) => {
           insertText: "Akukho",
           detail: 'None - means "nothing"',
         },
+
+        // Logical operators
         {
-          label: "ekugqibeleni",
+          label: "kwaye",
           kind: monaco.languages.CompletionItemKind.Keyword,
-          insertText: "ekugqibeleni",
-          detail: 'finally - means "finally"',
+          insertText: "kwaye",
+          detail: "and - Logical AND",
+        },
+        {
+          label: "okanye",
+          kind: monaco.languages.CompletionItemKind.Keyword,
+          insertText: "okanye",
+          detail: "or - Logical OR",
+        },
+        {
+          label: "hayi",
+          kind: monaco.languages.CompletionItemKind.Keyword,
+          insertText: "hayi",
+          detail: "not - Logical NOT",
         },
 
         // Control structures
         {
           label: "ukuba",
           kind: monaco.languages.CompletionItemKind.Keyword,
-          insertText: "ukuba ${1:condition}:\n\t$0",
+          insertText: "ukuba ${1:(imeko)}:\n\t$0",
           insertTextRules:
             monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-          detail: "if statement",
+          detail: "if - conditional statement",
         },
         {
-          label: "okanye",
+          label: "okanye_ukuba",
           kind: monaco.languages.CompletionItemKind.Keyword,
-          insertText: "okanye ${1:condition}:\n\t$0",
+          insertText: "okanye_ukuba ${1:(imeko)}:\n\t$0",
           insertTextRules:
             monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-          detail: "elif - alternative to if",
+          detail: "elif - else if statement",
         },
         {
           label: "enye",
@@ -181,49 +191,232 @@ export const registerIsiPython = (monaco) => {
           detail: 'else - means "another/else"',
         },
 
-        {
-          label: "hayi",
-          kind: monaco.languages.CompletionItemKind.Keyword,
-          insertText: "hayi:\n\t$0",
-          insertTextRules:
-            monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-          detail: 'not - means "Logical NOT"',
-        },
-
         // Loops
         {
           label: "ngexesha",
           kind: monaco.languages.CompletionItemKind.Keyword,
-          insertText: "ngexesha ${1:condition}:\n\t$0",
+          insertText: "ngexesha ${1:(imeko)}:\n\t$0",
           insertTextRules:
             monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-          detail: "while loop",
+          detail: "while - while loop",
+        },
+        {
+          label: "ngokulandelelana",
+          kind: monaco.languages.CompletionItemKind.Keyword,
+          insertText: "ngokulandelelana ${1:item} ku ${2:iterable}:\n\t$0",
+          insertTextRules:
+            monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          detail: "for - for loop",
         },
 
-        // Functions
+        // Functions and classes
         {
           label: "chaza",
           kind: monaco.languages.CompletionItemKind.Function,
           insertText: "chaza ${1:function_name}(${2:parameters}):\n\t$0",
           insertTextRules:
             monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-          detail: "def - define or explain",
+          detail: "def - define function",
         },
         {
           label: "iklasi",
-          kind: monaco.languages.CompletionItemKind.Function,
+          kind: monaco.languages.CompletionItemKind.Class,
           insertText: "iklasi ${1:class_name}:\n\t$0",
           insertTextRules:
             monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-          detail: "iklasi - borrowed word from 'class'",
+          detail: "class - define class",
         },
+        {
+          label: "umsebenzi",
+          kind: monaco.languages.CompletionItemKind.Function,
+          insertText: "umsebenzi ${1:parameters}: ${2:expression}",
+          insertTextRules:
+            monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          detail: "lambda - anonymous function",
+        },
+
+        // Exception handling
+        {
+          label: "zama",
+          kind: monaco.languages.CompletionItemKind.Keyword,
+          insertText: "zama:\n\t${1:code}\n",
+          insertTextRules:
+            monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          detail: "try - attempt code execution",
+        },
+        {
+          label: "ngaphandle",
+          kind: monaco.languages.CompletionItemKind.Keyword,
+          insertText: "ngaphandle ${1:Exception}:\n\t$0",
+          insertTextRules:
+            monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          detail: "except - handle exceptions",
+        },
+        {
+          label: "ekugqibeleni",
+          kind: monaco.languages.CompletionItemKind.Keyword,
+          insertText: "ekugqibeleni:\n\t$0",
+          insertTextRules:
+            monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          detail: "finally - final execution block",
+        },
+
+        // Control flow
+        {
+          label: "buyisela",
+          kind: monaco.languages.CompletionItemKind.Keyword,
+          insertText: "buyisela ${1:value}",
+          insertTextRules:
+            monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          detail: "return - return value from function",
+        },
+        {
+          label: "yekisa",
+          kind: monaco.languages.CompletionItemKind.Keyword,
+          insertText: "yekisa",
+          detail: "break - exit loop",
+        },
+        {
+          label: "qhubeka",
+          kind: monaco.languages.CompletionItemKind.Keyword,
+          insertText: "qhubeka",
+          detail: "continue - skip to next iteration",
+        },
+        {
+          label: "dlula",
+          kind: monaco.languages.CompletionItemKind.Keyword,
+          insertText: "dlula",
+          detail: "pass - do nothing placeholder",
+        },
+        {
+          label: "phakamisa",
+          kind: monaco.languages.CompletionItemKind.Keyword,
+          insertText: "phakamisa ${1:Exception}(${2:message})",
+          insertTextRules:
+            monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          detail: "raise - raise an exception",
+        },
+
+        // Import and context
+        {
+          label: "ngenisa",
+          kind: monaco.languages.CompletionItemKind.Keyword,
+          insertText: "ngenisa ${1:module}",
+          insertTextRules:
+            monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          detail: "import - import module",
+        },
+        {
+          label: "ukusuka",
+          kind: monaco.languages.CompletionItemKind.Keyword,
+          insertText: "ukusuka ${1:module} ngenisa ${2:item}",
+          insertTextRules:
+            monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          detail: "from - import from module",
+        },
+        {
+          label: "nge",
+          kind: monaco.languages.CompletionItemKind.Keyword,
+          insertText: "nge ${1:context}:\n\t$0",
+          insertTextRules:
+            monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          detail: "with - context manager",
+        },
+
+        // Async/await
+        {
+          label: "ngemva",
+          kind: monaco.languages.CompletionItemKind.Keyword,
+          insertText: "ngemva chaza ${1:function_name}(${2:parameters}):\n\t$0",
+          insertTextRules:
+            monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          detail: "async - asynchronous function",
+        },
+        {
+          label: "linda",
+          kind: monaco.languages.CompletionItemKind.Keyword,
+          insertText: "linda ${1:awaitable}",
+          insertTextRules:
+            monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          detail: "await - wait for async operation",
+        },
+
+        // Other keywords
+        {
+          label: "ku",
+          kind: monaco.languages.CompletionItemKind.Keyword,
+          insertText: "ku",
+          detail: "in - membership test",
+        },
+        {
+          label: "phakathi",
+          kind: monaco.languages.CompletionItemKind.Keyword,
+          insertText: "phakathi",
+          detail: 'in - alternative for "inside"',
+        },
+        {
+          label: "ngu",
+          kind: monaco.languages.CompletionItemKind.Keyword,
+          insertText: "ngu",
+          detail: "is - identity comparison",
+        },
+        {
+          label: "njenga",
+          kind: monaco.languages.CompletionItemKind.Keyword,
+          insertText: "njenga ${1:alias}",
+          insertTextRules:
+            monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          detail: "as - used in aliasing",
+        },
+        {
+          label: "jikelele",
+          kind: monaco.languages.CompletionItemKind.Keyword,
+          insertText: "jikelele ${1:variable}",
+          insertTextRules:
+            monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          detail: "global - declare global variable",
+        },
+        {
+          label: "ingaphandle",
+          kind: monaco.languages.CompletionItemKind.Keyword,
+          insertText: "ingaphandle ${1:variable}",
+          insertTextRules:
+            monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          detail: "nonlocal - access enclosing scope variable",
+        },
+        {
+          label: "qinisekisa",
+          kind: monaco.languages.CompletionItemKind.Keyword,
+          insertText: "qinisekisa ${1:condition}",
+          insertTextRules:
+            monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          detail: "assert - ensure condition is true",
+        },
+        {
+          label: "cima",
+          kind: monaco.languages.CompletionItemKind.Keyword,
+          insertText: "cima ${1:object}",
+          insertTextRules:
+            monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          detail: "del - delete object",
+        },
+        {
+          label: "velisa",
+          kind: monaco.languages.CompletionItemKind.Keyword,
+          insertText: "velisa ${1:value}",
+          insertTextRules:
+            monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          detail: "yield - generate value in iterator",
+        },
+
+        // Print functions
         {
           label: "print",
           kind: monaco.languages.CompletionItemKind.Function,
           insertText: "print(${1:message})",
           insertTextRules:
             monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-          detail: "print - means 'print' a message from screen",
+          detail: "print - print message to screen",
         },
         {
           label: "printa",
@@ -231,7 +424,7 @@ export const registerIsiPython = (monaco) => {
           insertText: "printa(${1:umlayezo})",
           insertTextRules:
             monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-          detail: "print - means 'print' a message to the screen",
+          detail: "print - print message to screen",
         },
         {
           label: "shicilela",
@@ -239,9 +432,8 @@ export const registerIsiPython = (monaco) => {
           insertText: "shicilela(${1:umlayezo})",
           insertTextRules:
             monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-          detail: "shicilela - mean 'print' a message to the screen screen",
+          detail: "print - print message to screen",
         },
-        // ... other keywords
       ];
 
       // Combine static and dynamic suggestions

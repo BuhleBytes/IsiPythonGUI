@@ -1,35 +1,42 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Activity,
+  Brain,
+  ChevronRight,
+  Clock,
+  Code,
+  Database,
+  Flame,
   Search,
+  Shield,
+  Sparkles,
+  Star,
+  Target,
+  TrendingUp,
   Trophy,
   Users,
-  Clock,
-  Star,
-  TrendingUp,
-  Code,
   Zap,
-  Target,
-  ChevronRight,
-  Flame,
-  Brain,
-  Database,
-  Shield,
-  Activity,
-  Sparkles,
-} from "lucide-react"
+} from "lucide-react";
+import { useState } from "react";
 
 const challenges = [
   {
     id: 1,
     title: "Hello World Mastery",
-    description: "Master the basics of Python with print statements and variable assignments.",
+    description:
+      "Master the basics of Python with print statements and variable assignments.",
     difficulty: "Low",
     category: "Basics",
     icon: Code,
@@ -45,7 +52,8 @@ const challenges = [
   {
     id: 2,
     title: "Loop Detective",
-    description: "Solve problems using for loops and while loops. Debug common loop errors.",
+    description:
+      "Solve problems using for loops and while loops. Debug common loop errors.",
     difficulty: "Low",
     category: "Control Flow",
     icon: Target,
@@ -77,7 +85,8 @@ const challenges = [
   {
     id: 4,
     title: "List Manipulator",
-    description: "Master Python lists with sorting, filtering, and advanced operations.",
+    description:
+      "Master Python lists with sorting, filtering, and advanced operations.",
     difficulty: "Medium",
     category: "Data Structures",
     icon: Database,
@@ -109,7 +118,8 @@ const challenges = [
   {
     id: 6,
     title: "Algorithm Architect",
-    description: "Implement classic algorithms like binary search and merge sort.",
+    description:
+      "Implement classic algorithms like binary search and merge sort.",
     difficulty: "High",
     category: "Algorithms",
     icon: Brain,
@@ -122,49 +132,62 @@ const challenges = [
     gradient: "from-red-400 to-pink-500",
     bgGradient: "from-red-50 to-pink-50",
   },
-]
+];
 
-const categories = ["All", "Basics", "Control Flow", "Functions", "Data Structures", "Algorithms", "Error Handling"]
+const categories = [
+  "All",
+  "Basics",
+  "Control Flow",
+  "Functions",
+  "Data Structures",
+  "Algorithms",
+  "Error Handling",
+];
 
 export function ChallengesLight() {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState("All")
-  const [selectedDifficulty, setSelectedDifficulty] = useState("All")
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedDifficulty, setSelectedDifficulty] = useState("All");
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case "Low":
-        return "bg-gradient-to-r from-green-500 to-emerald-600 text-white border-0"
+        return "bg-gradient-to-r from-green-500 to-emerald-600 text-white border-0";
       case "Medium":
-        return "bg-gradient-to-r from-yellow-500 to-orange-600 text-white border-0"
+        return "bg-gradient-to-r from-yellow-500 to-orange-600 text-white border-0";
       case "High":
-        return "bg-gradient-to-r from-red-500 to-pink-600 text-white border-0"
+        return "bg-gradient-to-r from-red-500 to-pink-600 text-white border-0";
       default:
-        return "bg-gradient-to-r from-gray-500 to-slate-600 text-white border-0"
+        return "bg-gradient-to-r from-gray-500 to-slate-600 text-white border-0";
     }
-  }
+  };
 
   const getPassRate = (passed: number, total: number) => {
-    return Math.round((passed / total) * 100)
-  }
+    return Math.round((passed / total) * 100);
+  };
 
   const getPassRateColor = (passRate: number) => {
-    if (passRate >= 70) return "from-green-400 to-emerald-500"
-    if (passRate >= 40) return "from-yellow-400 to-orange-500"
-    return "from-red-400 to-pink-500"
-  }
+    if (passRate >= 70) return "from-green-400 to-emerald-500";
+    if (passRate >= 40) return "from-yellow-400 to-orange-500";
+    return "from-red-400 to-pink-500";
+  };
 
   const filteredChallenges = challenges.filter((challenge) => {
     const matchesSearch =
       challenge.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      challenge.description.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesCategory = selectedCategory === "All" || challenge.category === selectedCategory
-    const matchesDifficulty = selectedDifficulty === "All" || challenge.difficulty === selectedDifficulty
-    return matchesSearch && matchesCategory && matchesDifficulty
-  })
+      challenge.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory =
+      selectedCategory === "All" || challenge.category === selectedCategory;
+    const matchesDifficulty =
+      selectedDifficulty === "All" ||
+      challenge.difficulty === selectedDifficulty;
+    return matchesSearch && matchesCategory && matchesDifficulty;
+  });
 
-  const completedChallenges = challenges.filter((c) => c.isCompleted).length
-  const totalPoints = challenges.filter((c) => c.isCompleted).reduce((sum, c) => sum + c.points, 0)
+  const completedChallenges = challenges.filter((c) => c.isCompleted).length;
+  const totalPoints = challenges
+    .filter((c) => c.isCompleted)
+    .reduce((sum, c) => sum + c.points, 0);
 
   return (
     <div className="h-full bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30 text-gray-900 flex flex-col relative overflow-hidden">
@@ -183,7 +206,9 @@ export function ChallengesLight() {
               <Trophy className="w-8 h-8 text-cyan-500" />
               Coding Challenges
             </h1>
-            <p className="text-gray-600">Test your Python skills with our curated challenges</p>
+            <p className="text-gray-600">
+              Test your Python skills with our curated challenges
+            </p>
           </div>
           <div className="flex items-center gap-2 text-cyan-600">
             <Flame className="w-4 h-4 animate-pulse" />
@@ -282,28 +307,47 @@ export function ChallengesLight() {
             </SelectTrigger>
             <SelectContent className="bg-white/95 backdrop-blur-xl border-gray-200/50 shadow-xl">
               {categories.map((category) => (
-                <SelectItem key={category} value={category} className="text-gray-900 hover:bg-cyan-50">
+                <SelectItem
+                  key={category}
+                  value={category}
+                  className="text-gray-900 hover:bg-cyan-50"
+                >
                   {category}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
 
-          <Select value={selectedDifficulty} onValueChange={setSelectedDifficulty}>
+          <Select
+            value={selectedDifficulty}
+            onValueChange={setSelectedDifficulty}
+          >
             <SelectTrigger className="w-32 bg-white/70 border-gray-300/50 text-gray-900 focus:border-cyan-400 focus:ring-cyan-400/30 backdrop-blur-sm shadow-sm">
               <SelectValue placeholder="All" />
             </SelectTrigger>
             <SelectContent className="bg-white/95 backdrop-blur-xl border-gray-200/50 shadow-xl">
-              <SelectItem value="All" className="text-gray-900 hover:bg-cyan-50">
+              <SelectItem
+                value="All"
+                className="text-gray-900 hover:bg-cyan-50"
+              >
                 All
               </SelectItem>
-              <SelectItem value="Low" className="text-gray-900 hover:bg-green-50">
+              <SelectItem
+                value="Low"
+                className="text-gray-900 hover:bg-green-50"
+              >
                 Low
               </SelectItem>
-              <SelectItem value="Medium" className="text-gray-900 hover:bg-yellow-50">
+              <SelectItem
+                value="Medium"
+                className="text-gray-900 hover:bg-yellow-50"
+              >
                 Medium
               </SelectItem>
-              <SelectItem value="High" className="text-gray-900 hover:bg-red-50">
+              <SelectItem
+                value="High"
+                className="text-gray-900 hover:bg-red-50"
+              >
                 High
               </SelectItem>
             </SelectContent>
@@ -314,13 +358,22 @@ export function ChallengesLight() {
               <SelectValue placeholder="Difficulty" />
             </SelectTrigger>
             <SelectContent className="bg-white/95 backdrop-blur-xl border-gray-200/50 shadow-xl">
-              <SelectItem value="difficulty" className="text-gray-900 hover:bg-cyan-50">
+              <SelectItem
+                value="difficulty"
+                className="text-gray-900 hover:bg-cyan-50"
+              >
                 Difficulty
               </SelectItem>
-              <SelectItem value="popularity" className="text-gray-900 hover:bg-cyan-50">
+              <SelectItem
+                value="popularity"
+                className="text-gray-900 hover:bg-cyan-50"
+              >
                 Popularity
               </SelectItem>
-              <SelectItem value="points" className="text-gray-900 hover:bg-cyan-50">
+              <SelectItem
+                value="points"
+                className="text-gray-900 hover:bg-cyan-50"
+              >
                 Points
               </SelectItem>
             </SelectContent>
@@ -332,8 +385,11 @@ export function ChallengesLight() {
       <div className="flex-1 p-6 overflow-y-auto relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredChallenges.map((challenge) => {
-            const IconComponent = challenge.icon
-            const passRate = getPassRate(challenge.passedStudents, challenge.totalAttempts)
+            const IconComponent = challenge.icon;
+            const passRate = getPassRate(
+              challenge.passedStudents,
+              challenge.totalAttempts
+            );
 
             return (
               <Card
@@ -354,7 +410,9 @@ export function ChallengesLight() {
                         <CardTitle className="text-lg font-semibold text-gray-900 group-hover:bg-gradient-to-r group-hover:from-cyan-600 group-hover:to-blue-600 group-hover:bg-clip-text group-hover:text-transparent transition-all duration-300">
                           {challenge.title}
                         </CardTitle>
-                        <p className="text-xs text-gray-600">{challenge.category}</p>
+                        <p className="text-xs text-gray-600">
+                          {challenge.category}
+                        </p>
                       </div>
                     </div>
                     {challenge.isCompleted && (
@@ -364,10 +422,16 @@ export function ChallengesLight() {
                       </Badge>
                     )}
                   </div>
-                  <p className="text-sm text-gray-700 line-clamp-2 mb-4">{challenge.description}</p>
+                  <p className="text-sm text-gray-700 line-clamp-2 mb-4">
+                    {challenge.description}
+                  </p>
 
                   <div className="flex items-center gap-2 flex-wrap">
-                    <Badge className={getDifficultyColor(challenge.difficulty) + " shadow-md"}>
+                    <Badge
+                      className={
+                        getDifficultyColor(challenge.difficulty) + " shadow-md"
+                      }
+                    >
                       {challenge.difficulty}
                     </Badge>
                     <Badge className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white border-0 shadow-md">
@@ -380,7 +444,9 @@ export function ChallengesLight() {
                   <div className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-2 text-gray-600">
                       <Users className="w-4 h-4" />
-                      <span>{challenge.passedStudents.toLocaleString()} passed</span>
+                      <span>
+                        {challenge.passedStudents.toLocaleString()} passed
+                      </span>
                     </div>
                     <div className="flex items-center gap-2 text-gray-600">
                       <Clock className="w-4 h-4" />
@@ -391,11 +457,15 @@ export function ChallengesLight() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-xs">
                       <span className="text-gray-600">Pass Rate</span>
-                      <span className="font-medium text-gray-800">{passRate}%</span>
+                      <span className="font-medium text-gray-800">
+                        {passRate}%
+                      </span>
                     </div>
                     <div className="w-full bg-gray-200/80 rounded-full h-2 overflow-hidden">
                       <div
-                        className={`h-2 rounded-full bg-gradient-to-r ${getPassRateColor(passRate)} shadow-sm`}
+                        className={`h-2 rounded-full bg-gradient-to-r ${getPassRateColor(
+                          passRate
+                        )} shadow-sm`}
                         style={{ width: `${passRate}%` }}
                       ></div>
                     </div>
@@ -421,7 +491,10 @@ export function ChallengesLight() {
                     } border-0 transition-all duration-300 hover:scale-105 hover:shadow-xl`}
                     asChild
                   >
-                    <a href={`/challenge/${challenge.id}`} className="flex items-center justify-center gap-2">
+                    <a
+                      href={`/challenge/${challenge.id}`}
+                      className="flex items-center justify-center gap-2"
+                    >
                       {challenge.isCompleted ? (
                         <>
                           <Activity className="w-4 h-4" />
@@ -438,7 +511,7 @@ export function ChallengesLight() {
                   </Button>
                 </CardContent>
               </Card>
-            )
+            );
           })}
         </div>
 
@@ -447,11 +520,15 @@ export function ChallengesLight() {
             <div className="w-16 h-16 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
               <Search className="w-8 h-8 text-gray-500" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No challenges found</h3>
-            <p className="text-gray-600">Try adjusting your search or filter criteria</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              No challenges found
+            </h3>
+            <p className="text-gray-600">
+              Try adjusting your search or filter criteria
+            </p>
           </div>
         )}
       </div>
     </div>
-  )
+  );
 }
