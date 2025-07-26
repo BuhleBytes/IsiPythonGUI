@@ -76,6 +76,8 @@ export function CodeEditorLight({
   const [inputResolver, setInputResolver] = useState(null);
   const [rightPanelWidth, setRightPanelWidth] = useState(384); // 384px = w-96
   const [isResizing, setIsResizing] = useState(false);
+  const [isEditingFileName, setIsEditingFileName] = useState(false);
+  const [tempFileName, setTempFileName] = useState(currentFileName);
 
   // Auto-save effect - debounced to avoid too many saves
   const debouncedCodeChange = useCallback(
@@ -151,6 +153,49 @@ export function CodeEditorLight({
     };
   }, [isResizing, sidebarOpen, onCloseSidebar]);
 
+  // Filename editing functions
+  const handleFileNameClick = () => {
+    setIsEditingFileName(true);
+    setTempFileName(currentFileName);
+  };
+
+  const handleFileNameChange = (e) => {
+    setTempFileName(e.target.value);
+  };
+
+  const handleFileNameKeyPress = (e) => {
+    if (e.key === "Enter") {
+      handleFileNameSave();
+    } else if (e.key === "Escape") {
+      handleFileNameCancel();
+    }
+  };
+
+  const handleFileNameSave = () => {
+    const newFileName = tempFileName.trim();
+    if (newFileName && newFileName !== currentFileName) {
+      setCurrentFileName(newFileName);
+      if (onSave) {
+        onSave(code, newFileName);
+      }
+      setHasUnsavedChanges(false);
+      setOutput(
+        `📝 File renamed to: ${newFileName}\n✨ Your file has been updated!\n`
+      );
+    }
+    setIsEditingFileName(false);
+  };
+
+  const handleFileNameCancel = () => {
+    setTempFileName(currentFileName);
+    setIsEditingFileName(false);
+  };
+
+  const handleFileNameBlur = () => {
+    // Save on blur (when clicking outside)
+    handleFileNameSave();
+  };
+
   useEffect(() => {
     if (initialCode !== undefined && initialCode !== code) {
       setCode(initialCode);
@@ -161,6 +206,7 @@ export function CodeEditorLight({
   useEffect(() => {
     if (fileName && fileName !== currentFileName) {
       setCurrentFileName(fileName);
+      setTempFileName(fileName);
       setHasUnsavedChanges(false);
     }
   }, [fileName]);
@@ -171,11 +217,10 @@ export function CodeEditorLight({
   };
 
   const handleRunCode = async () => {
+    setOutput("");
     setIsRunning(true);
     setWaitingForInput(false); // Reset input state
-    setOutput(
-      "🚀 Initializing IsiPython execution environment...\n⚡ Loading IsiPython interpreter...\n🔥 Running your code...\n\n"
-    );
+    setOutput("🚀 Initializing execution environment...\n \n");
 
     let allOutput = [];
     let allErrors = [];
@@ -436,9 +481,29 @@ export function CodeEditorLight({
               <div className="p-2 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-lg shadow-md">
                 <FileText className="w-4 h-4 text-white" />
               </div>
-              <span className="text-gray-900 font-semibold text-lg">
-                {currentFileName}
-              </span>
+
+              {/* Editable filename */}
+              {isEditingFileName ? (
+                <input
+                  type="text"
+                  value={tempFileName}
+                  onChange={handleFileNameChange}
+                  onKeyDown={handleFileNameKeyPress}
+                  onBlur={handleFileNameBlur}
+                  className="text-gray-900 font-semibold text-lg bg-white border-2 border-cyan-400 rounded px-2 py-1 focus:outline-none focus:border-cyan-600 min-w-0 max-w-xs"
+                  autoFocus
+                  placeholder="Enter filename..."
+                />
+              ) : (
+                <span
+                  className="text-gray-900 font-semibold text-lg cursor-pointer hover:bg-gray-100 px-2 py-1 rounded transition-colors duration-200 select-none"
+                  onClick={handleFileNameClick}
+                  title="Click to rename file"
+                >
+                  {currentFileName}
+                </span>
+              )}
+
               {hasUnsavedChanges && (
                 <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white border-0 shadow-sm animate-pulse">
                   Unsaved
@@ -635,8 +700,8 @@ export function CodeEditorLight({
               </div>
             </CardHeader>
             <CardContent className="flex-1 min-h-0">
-              <div className="bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-700 rounded-lg p-4 h-full overflow-y-auto max-h-full">
-                <pre className="font-mono text-sm text-green-400 whitespace-pre-wrap break-words">
+              <div className="bg-gradient-to-br from-slate-50 to-gray-100 rounded-lg p-4 h-full overflow-y-auto max-h-full">
+                <pre className="font-mono text-sm text-slate-700 whitespace-pre-wrap break-words">
                   {output || "🚀Output will appear here \n  \n  \n  \n  \n  \n"}
                 </pre>
               </div>
