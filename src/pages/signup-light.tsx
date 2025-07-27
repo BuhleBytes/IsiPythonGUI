@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,10 +13,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { UserAuth } from "@/context/AuthContext";
 import {
   AlertCircle,
   ArrowLeft,
-  BookOpen, // For "Programming Basics"
+  BookOpen,
   Bug,
   CheckCircle,
   Chrome,
@@ -24,18 +26,18 @@ import {
   Eye,
   EyeOff,
   GraduationCap,
-  Languages, // For "Error Handling"
+  Languages,
   LayoutDashboard,
   Lock,
   Mail,
   Rocket,
   Sparkles,
-  Target, // For "Exploring the IDE"
+  Target,
   ThumbsUp,
   User,
 } from "lucide-react";
 import type React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 interface FormData {
@@ -69,9 +71,18 @@ export function SignUpLight() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Partial<FormData>>({});
+  const [error, setError] = useState("");
   const [currentStep, setCurrentStep] = useState(1);
+  const { session, signUpNewUser } = UserAuth();
 
   const navigate = useNavigate();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (session) {
+      navigate("/dash");
+    }
+  }, [session, navigate]);
 
   const languages = [{ value: "isixhosa", label: "IsiXhosa", flag: "🇿🇦" }];
 
@@ -117,6 +128,10 @@ export function SignUpLight() {
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
+    // Clear general error
+    if (error) {
+      setError("");
+    }
   };
 
   const handleGoalToggle = (goalId: string) => {
@@ -136,14 +151,19 @@ export function SignUpLight() {
         newErrors.firstName = "First name is required";
       if (!formData.lastName.trim())
         newErrors.lastName = "Last name is required";
-      if (!formData.email.trim()) newErrors.email = "Email is required";
-      else if (!/\S+@\S+\.\S+/.test(formData.email))
+      if (!formData.email.trim()) {
+        newErrors.email = "Email is required";
+      } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
         newErrors.email = "Email is invalid";
-      if (!formData.password) newErrors.password = "Password is required";
-      else if (formData.password.length < 8)
+      }
+      if (!formData.password) {
+        newErrors.password = "Password is required";
+      } else if (formData.password.length < 8) {
         newErrors.password = "Password must be at least 8 characters";
-      if (formData.password !== formData.confirmPassword)
+      }
+      if (formData.password !== formData.confirmPassword) {
         newErrors.confirmPassword = "Passwords don't match";
+      }
     }
 
     if (step === 2) {
@@ -151,6 +171,12 @@ export function SignUpLight() {
         newErrors.language = "Please select your preferred language";
       if (!formData.experience)
         newErrors.experience = "Please select your experience level";
+    }
+
+    if (step === 3) {
+      if (!formData.agreeToTerms) {
+        newErrors.agreeToTerms = "You must agree to the terms";
+      }
     }
 
     setErrors(newErrors);
@@ -163,29 +189,48 @@ export function SignUpLight() {
     }
   };
 
+  const handlePreviousStep = () => {
+    setCurrentStep(currentStep - 1);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateStep(currentStep) || !formData.agreeToTerms) {
-      if (!formData.agreeToTerms) {
-        setErrors((prev) => ({
-          ...prev,
-          agreeToTerms: "You must agree to the terms",
-        }));
-      }
+
+    if (!validateStep(currentStep)) {
       return;
     }
 
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
+    setError("");
+
+    try {
+      const result = await signUpNewUser(formData.email, formData.password);
+
+      if (result.success) {
+        // Check if email confirmation is required
+        if (result.data?.user && !result.data.session) {
+          // Email confirmation required
+          alert(
+            "Please check your email and click the confirmation link to complete your registration."
+          );
+        } else {
+          // Direct sign-in successful or email confirmation not required
+          navigate("/dash");
+        }
+      } else {
+        setError(result.error || "Failed to create account");
+      }
+    } catch (err) {
+      console.error("Signup error:", err);
+      setError("An unexpected error occurred. Please try again.");
+    } finally {
       setIsLoading(false);
-      console.log("Form submitted:", formData);
-      // Handle successful registration
-    }, 2000);
+    }
   };
 
   const handleSocialSignUp = (provider: string) => {
     console.log(`Sign up with ${provider}`);
+    // Implement social signup if needed
   };
 
   return (
@@ -199,7 +244,7 @@ export function SignUpLight() {
                 variant="ghost"
                 size="icon"
                 className="text-gray-600 hover:text-cyan-600 hover:bg-gray-100"
-                onClick={() => window.history.back()}
+                onClick={() => navigate("/")}
               >
                 <ArrowLeft className="w-4 h-4" />
               </Button>
@@ -340,6 +385,16 @@ export function SignUpLight() {
               </CardHeader>
 
               <CardContent>
+                {/* Error Message */}
+                {error && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-red-600 text-sm flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4" />
+                      {error}
+                    </p>
+                  </div>
+                )}
+
                 <form onSubmit={handleSubmit} className="space-y-6">
                   {/* Step 1: Basic Information */}
                   {currentStep === 1 && (
@@ -629,7 +684,7 @@ export function SignUpLight() {
                         <Button
                           type="button"
                           variant="outline"
-                          onClick={() => setCurrentStep(1)}
+                          onClick={handlePreviousStep}
                           className="flex-1 border-gray-300 text-gray-700 hover:bg-gray-50 bg-white shadow-sm"
                         >
                           <ArrowLeft className="w-4 h-4 mr-2" />
@@ -755,7 +810,7 @@ export function SignUpLight() {
                         <Button
                           type="button"
                           variant="outline"
-                          onClick={() => setCurrentStep(2)}
+                          onClick={handlePreviousStep}
                           className="flex-1 border-gray-300 text-gray-700 hover:bg-gray-50 bg-white shadow-sm"
                         >
                           <ArrowLeft className="w-4 h-4 mr-2" />
