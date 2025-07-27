@@ -44,8 +44,8 @@ const exploreItems = [
 interface SidebarLightProps {
   isOpen: boolean;
   onToggle: () => void;
-  activeView: string; // Add this prop
-  onViewChange: (view: string) => void; // Add this prop
+  activeView: string;
+  onViewChange: (view: string, data?: any) => void;
 }
 
 interface UploadedFile {
@@ -69,11 +69,17 @@ export function SidebarLight({
   };
 
   const handleNavClick = (key: string) => {
+    // Simple view change - no navigation, keeps SPA behavior
     onViewChange(key);
   };
 
   const handleCreateFile = () => {
-    onViewChange("editor");
+    // Create new file with empty content and switch to editor
+    onViewChange("editor", {
+      content: "# Write code for your new file", // New default content
+      filename: "untitled.isi",
+      isNewFile: true, // Flag to indicate this is a new file creation
+    });
   };
 
   const handleImportFile = () => {
@@ -81,7 +87,7 @@ export function SidebarLight({
   };
 
   const handleFileImported = (file: UploadedFile) => {
-    // Pass file data to parent component instead of navigating
+    // Pass file data to parent and switch to editor view
     onViewChange("editor", {
       content: file.content,
       filename: file.name,

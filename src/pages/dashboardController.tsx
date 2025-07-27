@@ -19,9 +19,9 @@ export default function DashboardLightPage() {
     const urlActiveView = location.state?.activeView;
     if (urlActiveView) return urlActiveView;
 
-    // Then check localStorage for persistence
-    const savedState = loadState();
-    return savedState.currentView || "home";
+    // ALWAYS default to "home" instead of loading from localStorage
+    // This ensures fresh visits to /dash always go to home screen
+    return "home";
   });
 
   const [editorData, setEditorData] = useState(() => {

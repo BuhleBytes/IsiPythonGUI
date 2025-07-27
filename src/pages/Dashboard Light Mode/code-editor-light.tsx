@@ -42,14 +42,7 @@ interface CodeEditorLightProps {
   onCloseSidebar?: () => void;
 }
 
-const defaultCode = `# Bhala ikhowudi ka IsiPython apha...
-# Ngxatsho Mxhosa, Ndiyakwamkela ku IsiPython!
-
-chaza molo_hlabathi():
-    print("Niyabulisa, IsiPython IDE!")
-    print("Ndiyabulisa mzi ontsundi? ")
-
-hello_world()`;
+const defaultCode = `# Write code for your new file`;
 
 export function CodeEditorLight({
   initialCode,
@@ -200,6 +193,9 @@ export function CodeEditorLight({
     if (initialCode !== undefined && initialCode !== code) {
       setCode(initialCode);
       setHasUnsavedChanges(false);
+
+      // Clear output when loading new/different code
+      setOutput("");
     }
   }, [initialCode]);
 
@@ -217,10 +213,11 @@ export function CodeEditorLight({
   };
 
   const handleRunCode = async () => {
-    setOutput("");
     setIsRunning(true);
     setWaitingForInput(false); // Reset input state
-    setOutput("🚀 Initializing execution environment...\n \n");
+    setOutput(
+      "🚀 Initializing IsiPython execution environment...\n⚡ Loading IsiPython interpreter...\n🔥 Running your code...\n\n"
+    );
 
     let allOutput = [];
     let allErrors = [];
@@ -700,7 +697,7 @@ export function CodeEditorLight({
               </div>
             </CardHeader>
             <CardContent className="flex-1 min-h-0">
-              <div className="bg-gradient-to-br from-slate-50 to-gray-100 rounded-lg p-4 h-full overflow-y-auto max-h-full">
+              <div className="bg-gradient-to-br from-slate-50 to-gray-100 border-2 border-gray-200/70 rounded-lg p-4 h-full overflow-y-auto max-h-full shadow-inner">
                 <pre className="font-mono text-sm text-slate-700 whitespace-pre-wrap break-words">
                   {output || "🚀Output will appear here \n  \n  \n  \n  \n  \n"}
                 </pre>
