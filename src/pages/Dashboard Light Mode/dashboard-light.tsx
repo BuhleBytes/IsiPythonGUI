@@ -87,7 +87,7 @@ export function DashboardLight({
       icon: FileText,
       gradient: "from-cyan-500 via-blue-500 to-indigo-600",
       hoverGradient: "from-cyan-600 via-blue-600 to-indigo-700",
-      action: () => (window.location.href = "/editor-light"),
+      action: () => window.locatio,
     },
     {
       title: "Start Challenge",

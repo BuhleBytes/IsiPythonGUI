@@ -1,4 +1,5 @@
 "use client";
+import PrivateRoute from "@/components/PrivateRoute";
 import DashboardLightPage from "@/pages/dashboardController";
 import { HomepageLight } from "@/pages/homepage-light";
 import { SignUpLight } from "@/pages/signup-light";
@@ -9,7 +10,6 @@ import { QuizTakerLight } from "./pages/Dashboard Light Mode/quiz-taker-light";
 import { LoginLight } from "./pages/login-light";
 
 import "./App.css";
-
 function App() {
   return (
     <BrowserRouter>
@@ -17,7 +17,14 @@ function App() {
         <Route path="/" element={<HomepageLight />} />
         <Route path="/signup" element={<SignUpLight />} />
         <Route path="/login" element={<LoginLight />} />
-        <Route path="/dash" element={<DashboardLightPage />} />
+        <Route
+          path="/dash"
+          element={
+            <PrivateRoute>
+              <DashboardLightPage />
+            </PrivateRoute>
+          }
+        />
         <Route path="/quiz-light/:id" element={<QuizTakerLight />} />
         <Route path="/challenge/:id" element={<ChallengeSolverLight />} />
         <Route path="/editor" element={<CodeEditorLight />} />
