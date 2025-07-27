@@ -28,6 +28,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useState } from "react";
+import { useUser } from "../../useUser";
 
 interface DashboardLightProps {
   sidebarOpen?: boolean;
@@ -39,7 +40,7 @@ export function DashboardLight({
   onToggleSidebar,
 }: DashboardLightProps) {
   const [searchQuery, setSearchQuery] = useState("");
-
+  const { firstName } = useUser();
   const recentFiles = [
     {
       name: "data_analysis.py",
@@ -205,7 +206,7 @@ export function DashboardLight({
         {/* Welcome Section */}
         <div className="space-y-3">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-purple-800 bg-clip-text text-transparent flex items-center gap-3">
-            Welcome back, Developer
+            Welcome back, {firstName}
             <Sparkles className="w-8 h-8 text-cyan-500 animate-pulse" />
           </h1>
           <p className="text-lg text-gray-600">

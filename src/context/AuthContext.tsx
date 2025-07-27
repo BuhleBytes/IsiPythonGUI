@@ -12,11 +12,19 @@ export const AuthContextProvider = ({ children }) => {
   const signUpNewUser = async (email, password, profileData = {}) => {
     try {
       setLoading(true);
+      console.log(profileData.firstName);
+      console.log(profileData.lastName);
 
       // Step 1: Create auth user
       const { data, error } = await supabase.auth.signUp({
         email: email,
         password: password,
+        options: {
+          data: {
+            first_name: profileData.firstName,
+            last_name: profileData.lastName,
+          },
+        },
       });
 
       if (error) {
@@ -29,26 +37,7 @@ export const AuthContextProvider = ({ children }) => {
         setSession(data.session);
       }
 
-      // Step 3: Create profile if user was created successfully
-      if (data.user) {
-        const { error: profileError } = await supabase.from("profiles").insert({
-          id: data.user.id,
-          first_name: profileData.firstName || "",
-          last_name: profileData.lastName || "",
-          language: profileData.language || "",
-          experience: profileData.experience || "",
-          goals: profileData.goals || [],
-          subscribe_newsletter: profileData.subscribeNewsletter || false,
-        });
-
-        if (profileError) {
-          console.error("Error creating profile:", profileError);
-          // Don't return error here as auth user was created successfully
-          // You might want to retry profile creation later
-        }
-      }
-
-      console.log("Sign-up successful:", data);
+      // console.log("Sign-up successful:", data);
       return { success: true, data, hasSession: !!data.session };
     } catch (error) {
       console.error("An error occurred during signup:", error);
@@ -135,15 +124,19 @@ export const AuthContextProvider = ({ children }) => {
     }
   };
 
-  // Update user profile
+  // Update user profile (only first_name and last_name for now)
   const updateUserProfile = async (userId, updates) => {
     try {
+      // Only allow first_name and last_name updates for now
+      const allowedUpdates = {};
+      if (updates.first_name !== undefined)
+        allowedUpdates.first_name = updates.first_name;
+      if (updates.last_name !== undefined)
+        allowedUpdates.last_name = updates.last_name;
+
       const { data, error } = await supabase
         .from("profiles")
-        .update({
-          ...updates,
-          updated_at: new Date().toISOString(),
-        })
+        .update(allowedUpdates)
         .eq("id", userId)
         .select()
         .single();

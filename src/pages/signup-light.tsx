@@ -73,7 +73,8 @@ export function SignUpLight() {
   const [errors, setErrors] = useState<Partial<FormData>>({});
   const [error, setError] = useState("");
   const [currentStep, setCurrentStep] = useState(1);
-  const { session, signUpNewUser } = UserAuth();
+  const { session, signUpNewUser, getUserProfile, updateUserProfile } =
+    UserAuth();
 
   const navigate = useNavigate();
 
@@ -204,18 +205,42 @@ export function SignUpLight() {
     setError("");
 
     try {
-      const result = await signUpNewUser(formData.email, formData.password);
+      // Prepare profile data
+      // Note: Only firstName/lastName will be stored in profiles table
+      // Other data (language, experience, goals) goes to auth metadata only
+      const profileData = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        language: formData.language,
+        experience: formData.experience,
+        goals: formData.goals,
+        subscribeNewsletter: formData.subscribeNewsletter,
+      };
+
+      console.log("Submitting signup with profile data:", profileData);
+
+      const result = await signUpNewUser(
+        formData.email,
+        formData.password,
+        profileData
+      );
 
       if (result.success) {
-        // Check if email confirmation is required
-        if (result.data?.user && !result.data.session) {
+        console.log("Signup successful, navigating to dashboard...");
+
+        // Check if we have an immediate session (email confirmation disabled)
+        if (result.hasSession) {
+          // User is immediately logged in
+          navigate("/dash", { replace: true });
+        } else if (result.data?.user && !result.data.session) {
           // Email confirmation required
           alert(
-            "Please check your email and click the confirmation link to complete your registration."
+            "Account created! Please check your email and click the confirmation link to complete your registration. You'll then be able to sign in."
           );
+          navigate("/login");
         } else {
-          // Direct sign-in successful or email confirmation not required
-          navigate("/dash");
+          // Fallback - try to navigate to dashboard anyway
+          navigate("/dash", { replace: true });
         }
       } else {
         setError(result.error || "Failed to create account");
