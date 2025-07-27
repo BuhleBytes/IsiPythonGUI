@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { UserAuth } from "@/context/AuthContext";
 import {
   AlertCircle,
   ArrowLeft,
@@ -25,7 +26,8 @@ import {
   Zap,
 } from "lucide-react";
 import type React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface FormData {
   email: string;
@@ -43,13 +45,33 @@ export function LoginLight() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Partial<FormData>>({});
+  const [error, setError] = useState("");
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetSuccess, setResetSuccess] = useState(false);
 
-  const handleInputChange = (field: keyof FormData, value: string) => {
+  const { session, signInUser, resetPassword } = UserAuth();
+  const navigate = useNavigate();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (session) {
+      navigate("/dash");
+    }
+  }, [session, navigate]);
+
+  const handleInputChange = (
+    field: keyof FormData,
+    value: string | boolean
+  ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
     if (errors[field]) {
       setErrors((prev) => ({ ...prev, [field]: undefined }));
+    }
+    // Clear general error
+    if (error) {
+      setError("");
     }
   };
 
@@ -77,21 +99,60 @@ export function LoginLight() {
     if (!validateForm()) return;
 
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
+    setError("");
+
+    try {
+      const result = await signInUser(formData.email, formData.password);
+
+      if (result.success) {
+        console.log("Login successful, navigating to dashboard...");
+        navigate("/dash", { replace: true });
+      } else {
+        setError(result.error || "Failed to sign in");
+      }
+    } catch (err) {
+      console.error("Login error:", err);
+      setError("An unexpected error occurred. Please try again.");
+    } finally {
       setIsLoading(false);
-      console.log("Login successful:", formData);
-      // Handle successful login - redirect to dashboard
-    }, 2000);
+    }
   };
 
   const handleSocialLogin = (provider: string) => {
     console.log(`Login with ${provider}`);
+    // TODO: Implement social login if needed
+    setError("Social login not implemented yet");
   };
 
   const handleForgotPassword = async (email: string) => {
-    console.log("Password reset requested for:", email);
-    // Handle password reset logic
+    if (!email.trim()) {
+      setError("Please enter your email address");
+      return;
+    }
+
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      setError("Please enter a valid email address");
+      return;
+    }
+
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const result = await resetPassword(email);
+
+      if (result.success) {
+        setResetSuccess(true);
+        setError("");
+      } else {
+        setError(result.error || "Failed to send reset email");
+      }
+    } catch (err) {
+      console.error("Password reset error:", err);
+      setError("An unexpected error occurred. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (showForgotPassword) {
@@ -106,7 +167,11 @@ export function LoginLight() {
                   variant="ghost"
                   size="icon"
                   className="text-gray-600 hover:text-cyan-600 hover:bg-gray-100"
-                  onClick={() => setShowForgotPassword(false)}
+                  onClick={() => {
+                    setShowForgotPassword(false);
+                    setResetSuccess(false);
+                    setError("");
+                  }}
                 >
                   <ArrowLeft className="w-4 h-4" />
                 </Button>
@@ -141,48 +206,105 @@ export function LoginLight() {
                 Reset Password
               </CardTitle>
               <p className="text-gray-600">
-                Enter your email to receive reset instructions
+                {resetSuccess
+                  ? "Check your email for reset instructions"
+                  : "Enter your email to receive reset instructions"}
               </p>
             </CardHeader>
             <CardContent>
-              <form className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="resetEmail" className="text-gray-700">
-                    Email Address
-                  </Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <Input
-                      id="resetEmail"
-                      type="email"
-                      placeholder="Enter your email address"
-                      className="pl-10 bg-white/80 border-gray-300 text-gray-900 placeholder-gray-500 focus:border-cyan-500 focus:ring-cyan-500/20"
-                    />
-                  </div>
+              {/* Error Message */}
+              {error && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-red-600 text-sm flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4" />
+                    {error}
+                  </p>
                 </div>
+              )}
 
-                <Button
-                  type="submit"
-                  className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white shadow-lg"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleForgotPassword(formData.email);
-                  }}
-                >
-                  <Mail className="w-4 h-4 mr-2" />
-                  Send Reset Link
-                </Button>
+              {resetSuccess ? (
+                <div className="space-y-4">
+                  <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-center gap-2 text-green-700">
+                      <CheckCircle className="w-5 h-5" />
+                      <span className="font-medium">Email sent!</span>
+                    </div>
+                    <p className="text-green-600 text-sm mt-1">
+                      We've sent password reset instructions to{" "}
+                      <strong>{resetEmail}</strong>. Check your email and follow
+                      the link to reset your password.
+                    </p>
+                  </div>
 
-                <div className="text-center">
                   <Button
-                    variant="ghost"
-                    onClick={() => setShowForgotPassword(false)}
-                    className="text-gray-600 hover:text-cyan-600"
+                    onClick={() => {
+                      setShowForgotPassword(false);
+                      setResetSuccess(false);
+                      setError("");
+                    }}
+                    className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white shadow-lg"
                   >
                     Back to Login
                   </Button>
                 </div>
-              </form>
+              ) : (
+                <form
+                  className="space-y-4"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleForgotPassword(resetEmail);
+                  }}
+                >
+                  <div className="space-y-2">
+                    <Label htmlFor="resetEmail" className="text-gray-700">
+                      Email Address
+                    </Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                      <Input
+                        id="resetEmail"
+                        type="email"
+                        value={resetEmail}
+                        onChange={(e) => setResetEmail(e.target.value)}
+                        placeholder="Enter your email address"
+                        className="pl-10 bg-white/80 border-gray-300 text-gray-900 placeholder-gray-500 focus:border-cyan-500 focus:ring-cyan-500/20"
+                      />
+                    </div>
+                  </div>
+
+                  <Button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white shadow-lg"
+                  >
+                    {isLoading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Mail className="w-4 h-4 mr-2" />
+                        Send Reset Link
+                      </>
+                    )}
+                  </Button>
+
+                  <div className="text-center">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={() => {
+                        setShowForgotPassword(false);
+                        setError("");
+                      }}
+                      className="text-gray-600 hover:text-cyan-600"
+                    >
+                      Back to Login
+                    </Button>
+                  </div>
+                </form>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -201,7 +323,7 @@ export function LoginLight() {
                 variant="ghost"
                 size="icon"
                 className="text-gray-600 hover:text-cyan-600 hover:bg-gray-100"
-                onClick={() => window.history.back()}
+                onClick={() => navigate("/")}
               >
                 <ArrowLeft className="w-4 h-4" />
               </Button>
@@ -221,9 +343,9 @@ export function LoginLight() {
               <Button
                 variant="outline"
                 className="border-gray-300 text-gray-700 hover:bg-gray-50 bg-white shadow-sm"
-                asChild
+                onClick={() => navigate("/signup")}
               >
-                <a href="/signup">Sign Up</a>
+                Sign Up
               </Button>
             </div>
           </div>
@@ -335,6 +457,16 @@ export function LoginLight() {
               </CardHeader>
 
               <CardContent>
+                {/* Error Message */}
+                {error && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-red-600 text-sm flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4" />
+                      {error}
+                    </p>
+                  </div>
+                )}
+
                 <form onSubmit={handleSubmit} className="space-y-6">
                   {/* Social Login Options */}
                   <div className="space-y-3">
@@ -479,12 +611,13 @@ export function LoginLight() {
                   <div className="text-center">
                     <p className="text-sm text-gray-600">
                       Don't have an account?{" "}
-                      <a
-                        href="/signup"
+                      <button
+                        type="button"
+                        onClick={() => navigate("/signup")}
                         className="text-cyan-600 hover:text-cyan-700 font-medium underline"
                       >
                         Sign up for free
-                      </a>
+                      </button>
                     </p>
                   </div>
 

@@ -95,7 +95,7 @@ export function HomepageLight() {
                 Docs
               </a>
               <a
-                href="#login"
+                href="/login"
                 className="text-gray-700 hover:text-cyan-600 transition-colors font-medium"
               >
                 Login

@@ -8,10 +8,12 @@ export const AuthContextProvider = ({ children }) => {
   const [session, setSession] = useState(undefined);
   const [loading, setLoading] = useState(true);
 
-  // Sign up function - fixed naming to match usage
-  const signUpNewUser = async (email, password) => {
+  // Sign up function - with profile creation
+  const signUpNewUser = async (email, password, profileData = {}) => {
     try {
       setLoading(true);
+
+      // Step 1: Create auth user
       const { data, error } = await supabase.auth.signUp({
         email: email,
         password: password,
@@ -22,8 +24,32 @@ export const AuthContextProvider = ({ children }) => {
         return { success: false, error: error.message };
       }
 
+      // Step 2: If user was created and we have a session, update our state
+      if (data.session) {
+        setSession(data.session);
+      }
+
+      // Step 3: Create profile if user was created successfully
+      if (data.user) {
+        const { error: profileError } = await supabase.from("profiles").insert({
+          id: data.user.id,
+          first_name: profileData.firstName || "",
+          last_name: profileData.lastName || "",
+          language: profileData.language || "",
+          experience: profileData.experience || "",
+          goals: profileData.goals || [],
+          subscribe_newsletter: profileData.subscribeNewsletter || false,
+        });
+
+        if (profileError) {
+          console.error("Error creating profile:", profileError);
+          // Don't return error here as auth user was created successfully
+          // You might want to retry profile creation later
+        }
+      }
+
       console.log("Sign-up successful:", data);
-      return { success: true, data };
+      return { success: true, data, hasSession: !!data.session };
     } catch (error) {
       console.error("An error occurred during signup:", error);
       return { success: false, error: error.message };
@@ -88,6 +114,52 @@ export const AuthContextProvider = ({ children }) => {
     }
   };
 
+  // Get user profile
+  const getUserProfile = async (userId) => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .single();
+
+      if (error) {
+        console.error("Error fetching profile:", error);
+        return { success: false, error: error.message };
+      }
+
+      return { success: true, data };
+    } catch (error) {
+      console.error("An error occurred fetching profile:", error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Update user profile
+  const updateUserProfile = async (userId, updates) => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", userId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Error updating profile:", error);
+        return { success: false, error: error.message };
+      }
+
+      return { success: true, data };
+    } catch (error) {
+      console.error("An error occurred updating profile:", error);
+      return { success: false, error: error.message };
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -96,6 +168,8 @@ export const AuthContextProvider = ({ children }) => {
         signInUser,
         signOut,
         loading,
+        getUserProfile,
+        updateUserProfile,
       }}
     >
       {children}
