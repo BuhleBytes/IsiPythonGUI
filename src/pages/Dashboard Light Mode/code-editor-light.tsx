@@ -525,6 +525,7 @@ export function CodeEditorLight({
               currentFileName={currentFileName}
               onSave={handleSave}
               hasUnsavedChanges={hasUnsavedChanges}
+              currentCode={code}
             />
             <Button
               variant="ghost"

@@ -454,12 +454,54 @@ export const useUserFiles = () => {
     console.log("🔄 DEBUG - Loading state changed:", loading);
   }, [loading]);
 
-  console.log("hack: ", files);
+  const saveNewFile = useCallback(
+    async (title, code) => {
+      if (!isValidUserId(userId)) {
+        console.error("❌ Cannot save file: Invalid userId");
+        return null;
+      }
+
+      try {
+        const response = await fetch(
+          "https://isipython-dev.onrender.com/api/save",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              title,
+              code,
+              user_id: userId,
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log("✅ File saved successfully:", result);
+
+        // Optionally refresh files after saving
+        await fetchFiles(userId);
+
+        return result; // Return server response (can include saved file data)
+      } catch (error) {
+        console.error("💥 Error saving new file:", error);
+        return null;
+      }
+    },
+    [userId, fetchFiles]
+  );
+
   return {
     // State
     files,
     loading,
     deletingFiles,
+    saveNewFile,
 
     // Actions
     fetchFiles,

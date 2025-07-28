@@ -12,21 +12,33 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { FileText, Save } from "lucide-react";
 import { useState } from "react";
+import { useUserFiles } from "../../useUserFiles";
 
 interface FileNameDialogProps {
   currentFileName: string;
   onSave: (fileName: string) => void;
   hasUnsavedChanges?: boolean;
+  currentCode: string;
 }
 
 export function FileNameDialog({
   currentFileName,
   onSave,
   hasUnsavedChanges = false,
+  currentCode,
 }: FileNameDialogProps) {
   const [open, setOpen] = useState(false);
   const [fileName, setFileName] = useState(currentFileName);
   const [error, setError] = useState("");
+  const { saveNewFile } = useUserFiles();
+
+  //Logic here
+  const handleSaveNewFile = async () => {
+    const result = await saveNewFile(fileName, currentCode);
+    if (result?.success) {
+      console.log("🎉 File saved and listed!");
+    }
+  };
 
   const handleSave = () => {
     // Basic validation
@@ -138,7 +150,7 @@ export function FileNameDialog({
           </Button>
           <Button
             type="button"
-            onClick={handleSave}
+            onClick={handleSaveNewFile}
             className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white border-0 shadow-md"
           >
             <Save className="w-4 h-4 mr-2" />
