@@ -19,8 +19,13 @@ export default function DashboardLightPage() {
     const urlActiveView = location.state?.activeView;
     if (urlActiveView) return urlActiveView;
 
-    // ALWAYS default to "home" instead of loading from localStorage
-    // This ensures fresh visits to /dash always go to home screen
+    // Check if there's a saved view from previous session (for browser refresh)
+    const savedState = loadState();
+    if (savedState.currentView) {
+      return savedState.currentView;
+    }
+
+    // Only default to "home" for completely fresh visits
     return "home";
   });
 
@@ -68,6 +73,7 @@ export default function DashboardLightPage() {
           <DashboardLight
             sidebarOpen={sidebarOpen}
             onToggleSidebar={handleToggleSidebar}
+            onViewChange={handleViewChange}
           />
         );
       case "editor":
@@ -96,6 +102,7 @@ export default function DashboardLightPage() {
           <DashboardLight
             sidebarOpen={sidebarOpen}
             onToggleSidebar={handleToggleSidebar}
+            onViewChange={handleViewChange}
           />
         );
     }
