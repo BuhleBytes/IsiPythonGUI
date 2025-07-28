@@ -18,18 +18,17 @@ import {
   Bell,
   CheckCircle,
   Clock,
-  Coffee,
-  Database,
   FileText,
   Flame,
-  Globe,
   GraduationCap,
+  Loader2,
   Menu,
   Play,
   Search,
   Settings,
   Sparkles,
   Star,
+  Trash2,
   TrendingUp,
   Trophy,
   User,
@@ -37,197 +36,40 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useUser } from "../../useUser";
+import { useUserFiles } from "../../useUserFiles"; // Import the new hook
 
 interface DashboardLightProps {
   sidebarOpen?: boolean;
   onToggleSidebar?: () => void;
-  onViewChange?: (view: string, data?: any) => void; // Added this prop
+  onViewChange?: (view: string, data?: any) => void;
 }
 
 export function DashboardLight({
   sidebarOpen,
   onToggleSidebar,
-  onViewChange, // Added this prop
+  onViewChange,
 }: DashboardLightProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [viewAllFiles, setViewAllFiles] = useState(false);
   const [fileSearchQuery, setFileSearchQuery] = useState("");
   const [selectedFileType, setSelectedFileType] = useState("All");
   const [selectedTimePeriod, setSelectedTimePeriod] = useState("All");
+
   const { firstName } = useUser();
-  const recentFiles = [
-    {
-      name: "data_analysis.py",
-      icon: BarChart3,
-      time: "2 hours ago",
-      size: "2.4 KB",
-      language: "Python",
-      gradient: "from-cyan-400 to-blue-500",
-      bgGradient: "from-cyan-50 to-blue-50",
-      type: "Analysis",
-      lastModified: "2024-01-15",
-      description: "Data visualization and statistical analysis script",
-    },
-    {
-      name: "web_scraper.py",
-      icon: Globe,
-      time: "1 day ago",
-      size: "5.1 KB",
-      language: "Python",
-      gradient: "from-purple-400 to-pink-500",
-      bgGradient: "from-purple-50 to-pink-50",
-      type: "Web Development",
-      lastModified: "2024-01-14",
-      description: "Web scraping tool for extracting data from websites",
-    },
-    {
-      name: "machine_learning.py",
-      icon: Coffee,
-      time: "3 days ago",
-      size: "8.7 KB",
-      language: "Python",
-      gradient: "from-orange-400 to-red-500",
-      bgGradient: "from-orange-50 to-red-50",
-      type: "Machine Learning",
-      lastModified: "2024-01-12",
-      description: "Neural network implementation for classification tasks",
-    },
-    {
-      name: "api_client.py",
-      icon: Zap,
-      time: "1 week ago",
-      size: "3.2 KB",
-      language: "Python",
-      gradient: "from-green-400 to-emerald-500",
-      bgGradient: "from-green-50 to-emerald-50",
-      type: "API",
-      lastModified: "2024-01-08",
-      description: "REST API client with authentication and error handling",
-    },
-    {
-      name: "database_manager.py",
-      icon: Database,
-      time: "1 week ago",
-      size: "6.8 KB",
-      language: "Python",
-      gradient: "from-indigo-400 to-purple-500",
-      bgGradient: "from-indigo-50 to-purple-50",
-      type: "Database",
-      lastModified: "2024-01-07",
-      description: "Database connection and query management utility",
-    },
-    {
-      name: "automation_script.py",
-      icon: Sparkles,
-      time: "2 weeks ago",
-      size: "4.3 KB",
-      language: "Python",
-      gradient: "from-pink-400 to-rose-500",
-      bgGradient: "from-pink-50 to-rose-50",
-      type: "Automation",
-      lastModified: "2024-01-01",
-      description: "Task automation for file organization and processing",
-    },
-    {
-      name: "text_processor.py",
-      icon: FileText,
-      time: "2 weeks ago",
-      size: "3.9 KB",
-      language: "Python",
-      gradient: "from-teal-400 to-cyan-500",
-      bgGradient: "from-teal-50 to-cyan-50",
-      type: "Text Processing",
-      lastModified: "2023-12-28",
-      description: "Natural language processing and text analysis tools",
-    },
-    {
-      name: "image_converter.py",
-      icon: Star,
-      time: "3 weeks ago",
-      size: "7.2 KB",
-      language: "Python",
-      gradient: "from-yellow-400 to-orange-500",
-      bgGradient: "from-yellow-50 to-orange-50",
-      type: "Image Processing",
-      lastModified: "2023-12-20",
-      description: "Batch image conversion and resizing utility",
-    },
-    {
-      name: "email_sender.py",
-      icon: User,
-      time: "1 month ago",
-      size: "2.8 KB",
-      language: "Python",
-      gradient: "from-blue-400 to-indigo-500",
-      bgGradient: "from-blue-50 to-indigo-50",
-      type: "Communication",
-      lastModified: "2023-12-15",
-      description: "Automated email sending with template support",
-    },
-    {
-      name: "game_logic.py",
-      icon: Trophy,
-      time: "1 month ago",
-      size: "12.5 KB",
-      language: "Python",
-      gradient: "from-emerald-400 to-green-500",
-      bgGradient: "from-emerald-50 to-green-50",
-      type: "Game Development",
-      lastModified: "2023-12-10",
-      description: "Core game logic for a puzzle-solving game",
-    },
-  ];
 
-  const fileTypes = [
-    "All",
-    "Analysis",
-    "Web Development",
-    "Machine Learning",
-    "API",
-    "Database",
-    "Automation",
-    "Text Processing",
-    "Image Processing",
-    "Communication",
-    "Game Development",
-  ];
+  // Use the custom hook for file operations
+  const {
+    files,
+    loading: filesLoading,
+    deletingFiles,
+    fetchFiles,
+    deleteFile,
+    refreshFiles,
+    getFilteredFiles,
+  } = useUserFiles();
+
+  const fileTypes = ["All", "IsiPython"];
   const timePeriods = ["All", "Today", "This Week", "This Month", "Older"];
-
-  const getFilteredFiles = () => {
-    return recentFiles.filter((file) => {
-      const matchesSearch =
-        file.name.toLowerCase().includes(fileSearchQuery.toLowerCase()) ||
-        file.description.toLowerCase().includes(fileSearchQuery.toLowerCase());
-      const matchesType =
-        selectedFileType === "All" || file.type === selectedFileType;
-
-      let matchesTime = true;
-      if (selectedTimePeriod !== "All") {
-        const now = new Date();
-        const fileDate = new Date(file.lastModified);
-        const daysDiff = Math.floor(
-          (now.getTime() - fileDate.getTime()) / (1000 * 3600 * 24)
-        );
-
-        switch (selectedTimePeriod) {
-          case "Today":
-            matchesTime = daysDiff === 0;
-            break;
-          case "This Week":
-            matchesTime = daysDiff <= 7;
-            break;
-          case "This Month":
-            matchesTime = daysDiff <= 30;
-            break;
-          case "Older":
-            matchesTime = daysDiff > 30;
-            break;
-        }
-      }
-
-      return matchesSearch && matchesType && matchesTime;
-    });
-  };
 
   // Updated quickActions with proper handleCreateFile function
   const handleCreateFile = () => {
@@ -243,11 +85,11 @@ export function DashboardLight({
   const quickActions = [
     {
       title: "Create New File",
-      description: "Start a new Python project",
+      description: "Start a new IsiPython project",
       icon: FileText,
       gradient: "from-cyan-500 via-blue-500 to-indigo-600",
       hoverGradient: "from-cyan-600 via-blue-600 to-indigo-700",
-      action: handleCreateFile, // Fixed this line
+      action: handleCreateFile,
     },
     {
       title: "Start Challenge",
@@ -255,21 +97,21 @@ export function DashboardLight({
       icon: Trophy,
       gradient: "from-purple-500 via-pink-500 to-rose-600",
       hoverGradient: "from-purple-600 via-pink-600 to-rose-700",
-      action: () => onViewChange && onViewChange("challenges"), // Updated this too
+      action: () => onViewChange && onViewChange("challenges"),
     },
     {
       title: "Take Quiz",
-      description: "Test your Python knowledge",
+      description: "Test your IsiPython knowledge",
       icon: GraduationCap,
       gradient: "from-green-500 via-emerald-500 to-teal-600",
       hoverGradient: "from-green-600 via-emerald-600 to-teal-700",
-      action: () => onViewChange && onViewChange("quizzes"), // Updated this too
+      action: () => onViewChange && onViewChange("quizzes"),
     },
   ];
 
   const learningPath = [
     {
-      title: "Python Basics",
+      title: "IsiPython Basics",
       status: "Complete",
       progress: 100,
       icon: CheckCircle,
@@ -296,6 +138,84 @@ export function DashboardLight({
       borderColor: "border-gray-300",
     },
   ];
+
+  // File card component with delete functionality
+  const FileCard = ({ file, index }: { file: SavedFile; index: number }) => {
+    const isDeleting = deletingFiles.has(file.id);
+    console.log("fucked 123", file.id);
+    return (
+      <Card
+        key={index}
+        className={`bg-gradient-to-br ${
+          file.bgGradient
+        } border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer group relative overflow-hidden ${
+          isDeleting ? "opacity-50 cursor-not-allowed" : ""
+        }`}
+      >
+        <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+        {/* Delete button - positioned in top right */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute top-2 right-2 z-20 w-8 h-8 bg-white/80 hover:bg-red-100 text-gray-600 hover:text-red-600 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-all duration-300 hover:scale-110"
+          onClick={(e) => {
+            e.stopPropagation();
+            deleteFile(file.id);
+          }}
+          disabled={isDeleting}
+          title="Delete file"
+        >
+          {isDeleting ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Trash2 className="w-4 h-4" />
+          )}
+        </Button>
+
+        <CardContent className="p-5 relative z-10">
+          <div className="flex items-center gap-3 mb-4">
+            <div
+              className={`w-12 h-12 bg-gradient-to-r ${file.gradient} rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300`}
+            >
+              <file.icon className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1 min-w-0 pr-8">
+              {" "}
+              {/* Added right padding for delete button */}
+              <h3 className="font-semibold text-gray-900 truncate">
+                {file.name}
+              </h3>
+              <p className="text-xs text-gray-600">{file.time}</p>
+            </div>
+          </div>
+          <div className="flex items-center justify-between text-xs text-gray-700 mb-4">
+            <Badge className="bg-white/80 text-gray-700 border-gray-300">
+              {file.language}
+            </Badge>
+            <span className="font-medium">{file.size}</span>
+          </div>
+          <Button
+            size="sm"
+            className={`w-full bg-gradient-to-r ${file.gradient} hover:shadow-md text-white border-0 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0`}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!isDeleting && onViewChange) {
+                onViewChange("editor", {
+                  content: file.code,
+                  filename: file.name,
+                });
+              }
+            }}
+            disabled={isDeleting}
+          >
+            <Play className="w-4 h-4 mr-2" />
+            Open
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  };
 
   return (
     <div className="flex-1 bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30 min-h-screen flex flex-col overflow-hidden">
@@ -370,7 +290,7 @@ export function DashboardLight({
             <Sparkles className="w-8 h-8 text-cyan-500 animate-pulse" />
           </h1>
           <p className="text-lg text-gray-600">
-            Continue your Python journey with IsiPython IDE
+            Continue your IsiPython journey with IsiPython IDE
           </p>
         </div>
 
@@ -380,15 +300,19 @@ export function DashboardLight({
             <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-blue-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
               <CardTitle className="text-sm font-medium text-gray-700">
-                Challenges Completed
+                Files Created
               </CardTitle>
               <div className="p-2 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-lg shadow-md">
-                <Trophy className="w-5 h-5 text-white" />
+                <FileText className="w-5 h-5 text-white" />
               </div>
             </CardHeader>
             <CardContent className="relative z-10">
               <div className="text-3xl font-bold bg-gradient-to-r from-cyan-600 to-blue-700 bg-clip-text text-transparent">
-                47
+                {filesLoading ? (
+                  <Loader2 className="w-8 h-8 animate-spin" />
+                ) : (
+                  files.length
+                )}
               </div>
               <div className="space-y-3 mt-3">
                 <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
@@ -400,10 +324,10 @@ export function DashboardLight({
                 <div className="flex justify-between items-center">
                   <p className="text-sm text-gray-600 flex items-center gap-1">
                     <Star className="w-3 h-3 text-yellow-500" />
-                    +3 this week
+                    IsiPython Files
                   </p>
                   <Badge className="bg-cyan-100 text-cyan-700 border-cyan-300">
-                    78%
+                    Active
                   </Badge>
                 </div>
               </div>
@@ -486,53 +410,63 @@ export function DashboardLight({
               <CardTitle className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
                 Recent Files
               </CardTitle>
-              <Button
-                variant="ghost"
-                onClick={() => setViewAllFiles(true)}
-                className="text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50 font-medium transition-all duration-300 hover:scale-105"
-              >
-                View All
-              </Button>
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="ghost"
+                  onClick={refreshFiles}
+                  className="text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50 font-medium transition-all duration-300 hover:scale-105"
+                  disabled={filesLoading}
+                >
+                  {filesLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  ) : null}
+                  Refresh
+                </Button>
+                {files.length > 4 && (
+                  <Button
+                    variant="ghost"
+                    onClick={() => setViewAllFiles(true)}
+                    className="text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50 font-medium transition-all duration-300 hover:scale-105"
+                  >
+                    View All
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {recentFiles.slice(0, 4).map((file, index) => (
-                  <Card
-                    key={index}
-                    className={`bg-gradient-to-br ${file.bgGradient} border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 cursor-pointer group relative overflow-hidden`}
+              {filesLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-8 h-8 animate-spin text-cyan-600" />
+                  <span className="ml-3 text-gray-600">
+                    Loading your files...
+                  </span>
+                </div>
+              ) : files.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                    <FileText className="w-8 h-8 text-gray-500" />
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    No files yet
+                  </h3>
+                  <p className="text-gray-600 mb-4">
+                    Create your first IsiPython file to get started
+                  </p>
+                  <Button
+                    onClick={handleCreateFile}
+                    className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white"
                   >
-                    <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    <CardContent className="p-5 relative z-10">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div
-                          className={`w-12 h-12 bg-gradient-to-r ${file.gradient} rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300`}
-                        >
-                          <file.icon className="w-6 h-6 text-white" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-gray-900 truncate">
-                            {file.name}
-                          </h3>
-                          <p className="text-xs text-gray-600">{file.time}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between text-xs text-gray-700 mb-4">
-                        <Badge className="bg-white/80 text-gray-700 border-gray-300">
-                          {file.language}
-                        </Badge>
-                        <span className="font-medium">{file.size}</span>
-                      </div>
-                      <Button
-                        size="sm"
-                        className={`w-full bg-gradient-to-r ${file.gradient} hover:shadow-md text-white border-0 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0`}
-                      >
-                        <Play className="w-4 h-4 mr-2" />
-                        Open
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                    <FileText className="w-4 h-4 mr-2" />
+                    Create New File
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {files.slice(0, 4).map((file, index) => (
+                    <FileCard key={file.id} file={file} index={index} />
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         ) : (
@@ -546,16 +480,29 @@ export function DashboardLight({
                     All Files
                   </CardTitle>
                   <p className="text-gray-600">
-                    Browse and manage your recent Python files
+                    Browse and manage your IsiPython files
                   </p>
                 </div>
-                <Button
-                  variant="ghost"
-                  onClick={() => setViewAllFiles(false)}
-                  className="text-gray-600 hover:text-cyan-600 hover:bg-cyan-50 font-medium transition-all duration-300 hover:scale-105"
-                >
-                  Back to Dashboard
-                </Button>
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="ghost"
+                    onClick={refreshFiles}
+                    className="text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50 font-medium transition-all duration-300 hover:scale-105"
+                    disabled={filesLoading}
+                  >
+                    {filesLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : null}
+                    Refresh
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    onClick={() => setViewAllFiles(false)}
+                    className="text-gray-600 hover:text-cyan-600 hover:bg-cyan-50 font-medium transition-all duration-300 hover:scale-105"
+                  >
+                    Back to Dashboard
+                  </Button>
+                </div>
               </div>
 
               {/* File Stats */}
@@ -569,7 +516,7 @@ export function DashboardLight({
                       </div>
                       <div>
                         <p className="text-2xl font-bold bg-gradient-to-r from-cyan-600 to-blue-700 bg-clip-text text-transparent">
-                          {recentFiles.length}
+                          {files.length}
                         </p>
                         <p className="text-xs text-gray-600">Total Files</p>
                       </div>
@@ -604,10 +551,12 @@ export function DashboardLight({
                       <div>
                         <p className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-700 bg-clip-text text-transparent">
                           {
-                            recentFiles.filter(
+                            files.filter(
                               (f) =>
                                 f.time.includes("hour") ||
-                                f.time.includes("day")
+                                f.time.includes("day") ||
+                                f.time.includes("minute") ||
+                                f.time.includes("Just now")
                             ).length
                           }
                         </p>
@@ -627,7 +576,7 @@ export function DashboardLight({
                       <div>
                         <p className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-red-700 bg-clip-text text-transparent">
                           {Math.round(
-                            recentFiles.reduce(
+                            files.reduce(
                               (sum, f) =>
                                 sum + parseFloat(f.size.replace(" KB", "")),
                               0
@@ -697,73 +646,45 @@ export function DashboardLight({
             </CardHeader>
 
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {getFilteredFiles().map((file, index) => (
-                  <Card
-                    key={index}
-                    className={`bg-gradient-to-br ${file.bgGradient} border border-gray-200/50 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:-translate-y-1 cursor-pointer group relative overflow-hidden`}
-                  >
-                    <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    <CardContent className="p-5 relative z-10">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div
-                          className={`w-12 h-12 bg-gradient-to-r ${file.gradient} rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300`}
-                        >
-                          <file.icon className="w-6 h-6 text-white" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-gray-900 truncate group-hover:bg-gradient-to-r group-hover:from-cyan-600 group-hover:to-blue-600 group-hover:bg-clip-text group-hover:text-transparent transition-all duration-300">
-                            {file.name}
-                          </h3>
-                          <p className="text-xs text-gray-600">{file.time}</p>
-                        </div>
-                      </div>
-
-                      <p className="text-sm text-gray-700 mb-3 line-clamp-2">
-                        {file.description}
-                      </p>
-
-                      <div className="flex items-center justify-between text-xs text-gray-700 mb-4">
-                        <Badge className="bg-white/80 text-gray-700 border-gray-300">
-                          {file.type}
-                        </Badge>
-                        <span className="font-medium">{file.size}</span>
-                      </div>
-
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          className={`flex-1 bg-gradient-to-r ${file.gradient} hover:shadow-md text-white border-0 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-2 group-hover:translate-y-0`}
-                          onClick={() =>
-                            onViewChange &&
-                            onViewChange("editor", {
-                              content: `# ${file.description}\n# File: ${file.name}\n# Last modified: ${file.lastModified}\n\nprint("Hello from ${file.name}!")`,
-                              filename: file.name,
-                            })
-                          }
-                        >
-                          <Play className="w-4 h-4 mr-1" />
-                          Open
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-
-              {getFilteredFiles().length === 0 && (
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                    <Search className="w-8 h-8 text-gray-500" />
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    No files found
-                  </h3>
-                  <p className="text-gray-600">
-                    Try adjusting your search or filter criteria
-                  </p>
+              {filesLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="w-8 h-8 animate-spin text-cyan-600" />
+                  <span className="ml-3 text-gray-600">
+                    Loading your files...
+                  </span>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {getFilteredFiles(
+                    fileSearchQuery,
+                    selectedFileType,
+                    selectedTimePeriod
+                  ).map((file, index) => (
+                    <FileCard key={file.id} file={file} index={index} />
+                  ))}
                 </div>
               )}
+
+              {!filesLoading &&
+                getFilteredFiles(
+                  fileSearchQuery,
+                  selectedFileType,
+                  selectedTimePeriod
+                ).length === 0 && (
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                      <Search className="w-8 h-8 text-gray-500" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      No files found
+                    </h3>
+                    <p className="text-gray-600">
+                      {files.length === 0
+                        ? "Create your first IsiPython file to get started"
+                        : "Try adjusting your search or filter criteria"}
+                    </p>
+                  </div>
+                )}
             </CardContent>
           </Card>
         )}

@@ -40,6 +40,17 @@ export const useUser = () => {
   const user = session?.user;
   const isLoggedIn = !!session;
 
+  // 🐛 DEBUG: Add this right before your return statement in useUser.js
+  console.log("🔍 DEBUG - Full session object:", session);
+  console.log("🔍 DEBUG - User object:", user);
+  console.log("🔍 DEBUG - User ID (user?.id):", user?.id);
+  console.log("🔍 DEBUG - User UID (user?.uid):", user?.uid);
+  console.log("🔍 DEBUG - User user_id (user?.user_id):", user?.user_id);
+  console.log(
+    "🔍 DEBUG - All user properties:",
+    user ? Object.keys(user) : "no user"
+  );
+
   // Get names from both sources (fallback to metadata if profile fails)
   const firstNameFromMetadata = user?.user_metadata?.first_name || "";
   const lastNameFromMetadata = user?.user_metadata?.last_name || "";
@@ -62,6 +73,11 @@ export const useUser = () => {
       ? email[0].toUpperCase()
       : "U";
 
+  // 🔧 EXTRA DEBUG - Log what we're about to return
+  console.log("🔧 USEUSER DEBUG - About to return userId:", user?.id);
+  console.log("🔧 USEUSER DEBUG - userId type:", typeof user?.id);
+  console.log("🔧 USEUSER DEBUG - userId length:", user?.id?.length);
+
   return {
     // Auth state
     isLoggedIn,
@@ -70,6 +86,7 @@ export const useUser = () => {
 
     // User data
     user,
+    userId: user?.id, // 🔧 THIS WAS MISSING! ADDED IT HERE
     profile,
     email,
     firstName,
