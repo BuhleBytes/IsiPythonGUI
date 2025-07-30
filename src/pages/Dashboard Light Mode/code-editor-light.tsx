@@ -18,7 +18,10 @@ import { useUserFiles } from "../../useUserFiles";
 
 import {
   Activity,
+  AlertCircle,
+  CheckCircle,
   ChevronRight,
+  Clock,
   Copy,
   Download,
   FileText,
@@ -29,7 +32,7 @@ import {
   Terminal,
   Zap,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 // #endregion
 
 // #region Defining Interface Props
@@ -79,7 +82,14 @@ export function CodeEditorLight({
   const [isResizing, setIsResizing] = useState(false);
   const [isEditingFileName, setIsEditingFileName] = useState(false);
   const [tempFileName, setTempFileName] = useState(currentFileName);
-  const [absName, setAbsName] = useState("");
+
+  // ✅ NEW - Auto-save states
+  const [autoSaveStatus, setAutoSaveStatus] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle");
+  const [lastAutoSaveTime, setLastAutoSaveTime] = useState<Date | null>(null);
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastSavedCodeRef = useRef<string>(initialCode || defaultCode);
 
   // Auto-save effect - debounced to avoid too many saves
   const debouncedCodeChange = useCallback(
@@ -93,13 +103,86 @@ export function CodeEditorLight({
 
   // #endregion
 
+  // ✅ NEW - Debounced Auto-Save Effect (3 seconds after user stops typing)
+  useEffect(() => {
+    // Clear any existing timer
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+
+    // Only auto-save if:
+    // 1. File has unsaved changes
+    // 2. File has an ID (existing file, not new)
+    // 3. Code is different from last saved version
+    if (hasUnsavedChanges && fileId && code !== lastSavedCodeRef.current) {
+      console.log("🔄 Setting up auto-save timer (3 seconds)...");
+
+      autoSaveTimerRef.current = setTimeout(async () => {
+        console.log("💾 Auto-save triggered!");
+        setAutoSaveStatus("saving");
+
+        try {
+          const result = await saveNewFile(currentFileName, code, fileId);
+
+          console.log("📄 Auto-save result:", result);
+
+          // ✅ FIXED - Check for API response structure (data + message) instead of success field
+          if (result && (result.data || result.message)) {
+            console.log("✅ Auto-save successful!");
+            setAutoSaveStatus("saved");
+            setHasUnsavedChanges(false);
+            setLastAutoSaveTime(new Date());
+            lastSavedCodeRef.current = code;
+
+            // Show "saved" status for 2 seconds, then fade to idle
+            setTimeout(() => {
+              setAutoSaveStatus("idle");
+            }, 2000);
+          } else {
+            console.error("❌ Auto-save failed:", result);
+            setAutoSaveStatus("error");
+
+            // Show error for 3 seconds, then back to idle
+            setTimeout(() => {
+              setAutoSaveStatus("idle");
+            }, 3000);
+          }
+        } catch (error) {
+          console.error("💥 Auto-save error:", error);
+          setAutoSaveStatus("error");
+
+          setTimeout(() => {
+            setAutoSaveStatus("idle");
+          }, 3000);
+        }
+      }, 3000); // 3 second delay
+    }
+
+    // Cleanup function
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
+  }, [code, hasUnsavedChanges, fileId, currentFileName, saveNewFile]);
+
+  // ✅ UPDATED - Original debounced callback (now separate from auto-save)
   useEffect(() => {
     const timer = setTimeout(() => {
       debouncedCodeChange(code);
-    }, 1000); // Auto-save after 1 second of inactivity
+    }, 1000); // Notify parent about changes after 1 second
 
     return () => clearTimeout(timer);
   }, [code, debouncedCodeChange]);
+
+  // ✅ NEW - Cleanup auto-save timer on unmount
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
+  }, []);
 
   // Resize functionality for right panel
   const handleMouseDown = (e) => {
@@ -190,16 +273,24 @@ export function CodeEditorLight({
           // Call saveNewFile with the fileId to trigger PUT request
           const result = await saveNewFile(newFileName, code, fileId);
 
-          if (result?.success) {
+          console.log("📄 Filename save result:", result);
+
+          // ✅ FIXED - Check for API response structure (data + message) instead of success field
+          if (result && (result.data || result.message)) {
             console.log("🎉 File renamed successfully in backend!");
             setOutput(
-              `📝 File renamed to: ${newFileName}\n✨ Backend updated successfully!\n`
+              `📝 File renamed to: ${newFileName}\n✨ Backend updated successfully!\n${
+                result.message || "Rename completed!"
+              }\n`
             );
             setHasUnsavedChanges(false);
+            lastSavedCodeRef.current = code; // ✅ UPDATE - Update last saved reference
           } else {
             console.error("❌ Failed to rename file in backend:", result);
             setOutput(
-              `❌ Failed to rename file to: ${newFileName}\n🔧 Backend update failed. Please try again!\n`
+              `❌ Failed to rename file to: ${newFileName}\n🔧 Backend update failed: ${
+                result?.error || result?.message || "Unknown error"
+              }\n🔧 Please try again!\n`
             );
           }
         } catch (error) {
@@ -245,10 +336,12 @@ export function CodeEditorLight({
     // Save on blur (when clicking outside)
     await handleFileNameSave();
   };
+
   useEffect(() => {
     if (initialCode !== undefined && initialCode !== code) {
       setCode(initialCode);
       setHasUnsavedChanges(false);
+      lastSavedCodeRef.current = initialCode; // ✅ UPDATE - Update last saved reference
 
       // Clear output when loading new/different code
       setOutput("");
@@ -266,6 +359,10 @@ export function CodeEditorLight({
   const handleCodeChange = (newCode: string) => {
     setCode(newCode);
     setHasUnsavedChanges(true);
+    // ✅ NEW - Reset auto-save status when user types
+    if (autoSaveStatus === "saved") {
+      setAutoSaveStatus("idle");
+    }
   };
 
   const handleRunCode = async () => {
@@ -497,20 +594,87 @@ export function CodeEditorLight({
     );
   };
 
-  // Must save the file if the fileId is null, if the fileId is not null update the file using the fileId
+  // ✅ FIXED - Manual save with proper PUT/POST logic and correct API response handling
   const handleSaveNewFile = async () => {
-    const result = await saveNewFile(currentFileName, code, fileId);
-    if (result?.success) {
-      console.log("🎉 File saved and listed!");
-      setHasUnsavedChanges(false);
-      setOutput(
-        `💾 File saved successfully: ${currentFileName}\n✨ Your code is safe and sound!\n`
+    console.log("🔧 Manual save triggered");
+    console.log("🔍 fileId:", fileId);
+    console.log("🔍 fileId type:", typeof fileId);
+    console.log("🔍 fileId is null:", fileId === null);
+    console.log("🔍 fileId is undefined:", fileId === undefined);
+
+    // Cancel any pending auto-save
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+      autoSaveTimerRef.current = null;
+      console.log("🚫 Cancelled pending auto-save timer");
+    }
+
+    setAutoSaveStatus("saving");
+
+    try {
+      console.log(
+        `📡 ${
+          fileId ? "Updating existing file (PUT)" : "Creating new file (POST)"
+        }`
       );
-    } else {
-      console.error("❌ Failed to save file");
-      setOutput(
-        `❌ Failed to save file: ${currentFileName}\n🔧 Please try again!\n`
+
+      const result = await saveNewFile(currentFileName, code, fileId);
+
+      console.log("📄 Save result:", result);
+      console.log("📄 Save result type:", typeof result);
+      console.log(
+        "📄 Save result keys:",
+        result ? Object.keys(result) : "null result"
       );
+
+      // ✅ FIXED - Check for API response structure (data + message) instead of success field
+      if (result && (result.data || result.message)) {
+        console.log("🎉 Manual save successful!");
+        setHasUnsavedChanges(false);
+        lastSavedCodeRef.current = code; // Update saved reference
+        setLastAutoSaveTime(new Date());
+        setAutoSaveStatus("saved");
+        setOutput(
+          `💾 File ${
+            fileId ? "updated" : "saved"
+          } successfully: ${currentFileName}\n✨ Your code is safe and sound!\n${
+            result.message || "Operation completed successfully!"
+          }\n`
+        );
+
+        // Show saved status for 2 seconds
+        setTimeout(() => {
+          setAutoSaveStatus("idle");
+        }, 2000);
+      } else {
+        console.error("❌ Manual save failed - invalid response:", result);
+        setAutoSaveStatus("error");
+        setOutput(
+          `❌ Failed to ${
+            fileId ? "update" : "save"
+          } file: ${currentFileName}\n🔧 Error: ${
+            result?.error || result?.message || "Invalid server response"
+          }\n🔧 Please try again!\n`
+        );
+
+        setTimeout(() => {
+          setAutoSaveStatus("idle");
+        }, 3000);
+      }
+    } catch (error) {
+      console.error("💥 Manual save error:", error);
+      setAutoSaveStatus("error");
+      setOutput(
+        `❌ Network error while ${
+          fileId ? "updating" : "saving"
+        } file: ${currentFileName}\n🔧 Error: ${
+          error.message
+        }\n🔧 Please check your connection and try again!\n`
+      );
+
+      setTimeout(() => {
+        setAutoSaveStatus("idle");
+      }, 3000);
     }
   };
 
@@ -532,6 +696,37 @@ export function CodeEditorLight({
     setOutput(
       `📥 File downloaded: ${currentFileName}\n🎯 Check your downloads folder!\n`
     );
+  };
+
+  // ✅ NEW - Helper function to get auto-save status display
+  const getAutoSaveStatusDisplay = () => {
+    switch (autoSaveStatus) {
+      case "saving":
+        return {
+          icon: Clock,
+          text: "Saving...",
+          color: "text-blue-600",
+          bgColor: "bg-blue-100",
+        };
+      case "saved":
+        return {
+          icon: CheckCircle,
+          text: lastAutoSaveTime
+            ? `Saved ${lastAutoSaveTime.toLocaleTimeString()}`
+            : "Saved",
+          color: "text-green-600",
+          bgColor: "bg-green-100",
+        };
+      case "error":
+        return {
+          icon: AlertCircle,
+          text: "Save failed",
+          color: "text-red-600",
+          bgColor: "bg-red-100",
+        };
+      default:
+        return null;
+    }
   };
 
   return (
@@ -579,6 +774,27 @@ export function CodeEditorLight({
                   Unsaved
                 </Badge>
               )}
+
+              {/* ✅ NEW - Auto-save status indicator */}
+              {(() => {
+                const statusDisplay = getAutoSaveStatusDisplay();
+                if (!statusDisplay) return null;
+
+                const {
+                  icon: StatusIcon,
+                  text,
+                  color,
+                  bgColor,
+                } = statusDisplay;
+                return (
+                  <Badge
+                    className={`${bgColor} ${color} border-0 shadow-sm flex items-center gap-1`}
+                  >
+                    <StatusIcon className="w-3 h-3" />
+                    {text}
+                  </Badge>
+                );
+              })()}
             </div>
             <Select value={pythonVersion} onValueChange={setPythonVersion}>
               <SelectTrigger className="w-36 bg-white/80 border-gray-300/50 text-gray-900 shadow-sm">
@@ -594,20 +810,19 @@ export function CodeEditorLight({
           </div>
 
           <div className="flex items-center gap-2">
-            {/* <FileNameDialog
-              currentFileName={currentFileName}
-              onSave={handleSave}
-              hasUnsavedChanges={hasUnsavedChanges}
-              currentCode={code}
-            /> */}
             <Button
               variant="ghost"
               size="icon"
               onClick={handleSaveNewFile}
               className="text-gray-600 hover:text-green-600 hover:bg-green-50 transition-all duration-200"
-              title="Save File"
+              title={fileId ? "Update File" : "Save File"}
+              disabled={autoSaveStatus === "saving"}
             >
-              <Save className="w-4 h-4" />
+              {autoSaveStatus === "saving" ? (
+                <Clock className="w-4 h-4 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4" />
+              )}
             </Button>
             <Button
               variant="ghost"
@@ -801,8 +1016,18 @@ export function CodeEditorLight({
             <span>UTF-8</span>
             <span>Ln {code.split("\n").length}, Col 1</span>
             <span className="font-medium">{currentFileName}</span>
+            {/* ✅ NEW - Auto-save info in status bar */}
+            {fileId && (
+              <span className="text-gray-500">
+                Auto-save: {fileId ? "On" : "Off"}
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-4">
+            {/* ✅ NEW - File type indicator */}
+            <span className="text-gray-500">
+              {fileId ? `ID: ${fileId.slice(0, 8)}...` : "New File"}
+            </span>
             <span
               className={`flex items-center gap-2 ${
                 isRunning ? "text-green-600" : "text-gray-600"
