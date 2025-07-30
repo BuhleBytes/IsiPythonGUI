@@ -3,7 +3,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { UserAuth } from "@/context/AuthContext";
@@ -366,18 +365,18 @@ export function LoginLight() {
               <div className="space-y-4">
                 <Badge className="bg-gradient-to-r from-cyan-100 to-blue-100 text-cyan-700 border-cyan-200 shadow-sm">
                   <Sparkles className="w-3 h-3 mr-1" />
-                  Welcome Back to IsiPython
+                  Wamkelekile kwakhona ku-IsiPython
                 </Badge>
                 <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 leading-tight">
-                  Continue Your
+                  Qhubekeka noHambo
                   <span className="block text-transparent bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text">
-                    Learning Journey
+                    Lwakho lokuFunda
                   </span>
                 </h1>
                 <p className="text-xl text-gray-700 leading-relaxed">
-                  Sign in to access your personalized learning dashboard, track
-                  your progress, and continue mastering Python in your native
-                  language.
+                  Ngena ukuze ufikelele kwi-dashboard yakho yokufunda eyenziwe
+                  ngokukodwa, ulandelele inkqubela yakho, kwaye uqhubekeke
+                  nokukhohlakala iPython ngolwimi lwakho lwemvelo.
                 </p>
               </div>
 
@@ -431,28 +430,16 @@ export function LoginLight() {
                   </div>
                 </div>
               </div>
-
-              {/* Quick Stats */}
-              <div className="flex items-center gap-8">
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-cyan-600">15K+</div>
-                  <div className="text-sm text-gray-600">Active Learners</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-purple-600">95%</div>
-                  <div className="text-sm text-gray-600">Success Rate</div>
-                </div>
-              </div>
             </div>
 
             {/* Right Side - Login Form */}
             <Card className="bg-white/80 border-gray-200/80 backdrop-blur-sm shadow-xl relative">
               <CardHeader>
                 <CardTitle className="text-2xl font-bold text-gray-900">
-                  Sign In
+                  Ngena
                 </CardTitle>
                 <p className="text-gray-600">
-                  Access your IsiPython learning dashboard
+                  Fikelela kwi-dashboard yakho yokufunda u-IsiPython
                 </p>
               </CardHeader>
 
@@ -567,27 +554,6 @@ export function LoginLight() {
                       </p>
                     )}
                   </div>
-
-                  {/* Remember Me */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Checkbox
-                        id="rememberMe"
-                        checked={formData.rememberMe}
-                        onCheckedChange={(checked) =>
-                          handleInputChange("rememberMe", checked)
-                        }
-                        className="data-[state=checked]:bg-cyan-600 data-[state=checked]:border-cyan-600"
-                      />
-                      <Label
-                        htmlFor="rememberMe"
-                        className="text-sm text-gray-700"
-                      >
-                        Remember me
-                      </Label>
-                    </div>
-                  </div>
-
                   {/* Submit Button */}
                   <Button
                     type="submit"
@@ -647,7 +613,7 @@ export function LoginLight() {
       <footer className="border-t border-gray-200 bg-white py-6">
         <div className="container mx-auto px-6">
           <div className="flex items-center justify-center gap-6 text-sm text-gray-500">
-            <span>© 2024 IsiPython</span>
+            <span>© 2025 IsiPython</span>
             <span>•</span>
             <a href="#" className="hover:text-cyan-600 transition-colors">
               Privacy Policy

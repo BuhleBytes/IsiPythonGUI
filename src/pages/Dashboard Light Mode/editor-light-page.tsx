@@ -6,6 +6,7 @@ import { CodeEditorLight } from "./code-editor-light";
 interface EditorLightPageProps {
   initialCode?: string;
   fileName?: string;
+  fileId?: string | null;
   sidebarOpen?: boolean;
   onCloseSidebar?: () => void;
 }
@@ -13,11 +14,13 @@ interface EditorLightPageProps {
 export default function EditorLightPage({
   initialCode: propInitialCode,
   fileName: propFileName,
+  fileId: propFileId,
   sidebarOpen,
   onCloseSidebar,
 }: EditorLightPageProps) {
   const [editorCode, setEditorCode] = useState<string | undefined>();
   const [editorFileName, setEditorFileName] = useState<string | undefined>();
+  console.log("Dickson ", propFileId);
 
   useEffect(() => {
     // Priority system for loading code:
@@ -49,6 +52,7 @@ export default function EditorLightPage({
         saveEditorState({
           code: propInitialCode || "# Write code for your new file",
           fileName: propFileName || "untitled.isi",
+          fileId: propFileId,
           hasUnsavedChanges: false,
           lastModified: Date.now(),
         });
@@ -62,7 +66,7 @@ export default function EditorLightPage({
       }
       // If no saved state, let CodeEditor use its default
     }
-  }, [propInitialCode, propFileName]);
+  }, [propInitialCode, propFileName, propFileId]);
 
   const handleSave = (code: string, fileName: string) => {
     console.log("Saving file:", fileName, "with content:", code);
@@ -89,13 +93,14 @@ export default function EditorLightPage({
       lastModified: Date.now(),
     });
   };
-
+  console.log("TOC: ", propFileId);
   return (
     <div className="flex h-screen bg-gradient-to-br from-slate-50 to-gray-100 overflow-hidden">
       <div className="flex-1 min-w-0">
         <CodeEditorLight
           initialCode={editorCode}
           fileName={editorFileName}
+          fileId={propFileId}
           onSave={handleSave}
           onCodeChange={handleCodeChange}
           sidebarOpen={sidebarOpen}

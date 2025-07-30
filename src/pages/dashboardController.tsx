@@ -36,6 +36,7 @@ export default function DashboardLightPage() {
       ? {
           content: savedState.editorState.code,
           filename: savedState.editorState.fileName,
+          fileId: savedState.editorState.fileId ?? null,
         }
       : null;
   });
@@ -77,10 +78,12 @@ export default function DashboardLightPage() {
           />
         );
       case "editor":
+        console.log("TOA: ", editorData?.fileId);
         return (
           <EditorLightPage
             initialCode={editorData?.content}
             fileName={editorData?.filename}
+            fileId={editorData?.fileId}
             sidebarOpen={sidebarOpen}
             onCloseSidebar={() => setSidebarOpen(false)}
           />

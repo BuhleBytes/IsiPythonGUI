@@ -131,29 +131,17 @@ export const useUserFiles = () => {
     return transformedFile;
   }, []);
 
-  // Fetch user files from API
+  // Fetch user files from API           Need some way to preserve the Id of each file
   const fetchFiles = useCallback(
     async (userIdToUse) => {
-      console.log("🚀 =================================");
-      console.log("🚀 FETCH FILES CALLED");
-      console.log("🚀 =================================");
-
       const targetUserId = userIdToUse || userId;
-
-      console.log("🔍 DEBUG - Target User ID:", targetUserId);
-      console.log("🔍 DEBUG - User ID type:", typeof targetUserId);
-      console.log("🔍 DEBUG - User ID valid:", isValidUserId(targetUserId));
 
       // FIXED: Proper validation
       if (!isValidUserId(targetUserId)) {
-        console.log("❌ DEBUG - Invalid or missing userId, cannot fetch files");
-        console.log("❌ DEBUG - targetUserId:", targetUserId);
         setLoading(false);
         setFiles([]);
         return;
       }
-
-      console.log("✅ DEBUG - Valid userId found, proceeding with API call");
 
       try {
         setLoading(true);
@@ -454,42 +442,105 @@ export const useUserFiles = () => {
     console.log("🔄 DEBUG - Loading state changed:", loading);
   }, [loading]);
 
+  // const saveNewFile = useCallback(
+  //   async (title, code) => {
+  //     if (!isValidUserId(userId)) {
+  //       console.error("❌ Cannot save file: Invalid userId");
+  //       return null;
+  //     }
+
+  //     try {
+  //       const response = await fetch(
+  //         "https://isipython-dev.onrender.com/api/save",
+  //         {
+  //           method: "POST",
+  //           headers: {
+  //             "Content-Type": "application/json",
+  //           },
+  //           body: JSON.stringify({
+  //             title,
+  //             code,
+  //             user_id: userId,
+  //           }),
+  //         }
+  //       );
+
+  //       if (!response.ok) {
+  //         throw new Error(`HTTP error! status: ${response.status}`);
+  //       }
+
+  //       const result = await response.json();
+  //       console.log("✅ File saved successfully:", result);
+
+  //       // Optionally refresh files after saving
+  //       await fetchFiles(userId);
+
+  //       return result; // Return server response (can include saved file data)
+  //     } catch (error) {
+  //       console.error("💥 Error saving new file:", error);
+  //       return null;
+  //     }
+  //   },
+  //   [userId, fetchFiles]
+  // );
+
   const saveNewFile = useCallback(
-    async (title, code) => {
+    async (title, code, fileId = null) => {
+      console.log("hashtag: ", title);
       if (!isValidUserId(userId)) {
         console.error("❌ Cannot save file: Invalid userId");
         return null;
       }
 
       try {
-        const response = await fetch(
-          "https://isipython-dev.onrender.com/api/save",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              title,
-              code,
-              user_id: userId,
-            }),
-          }
-        );
+        // Determine URL and action based on whether fileId is provided
+        const isUpdate = fileId !== null && fileId !== undefined;
+        const url = isUpdate
+          ? `https://isipython-dev.onrender.com/api/saved/update/${fileId}`
+          : "https://isipython-dev.onrender.com/api/save";
+
+        console.log(`${isUpdate ? "🔄 Updating" : "💾 Creating"} file:`, {
+          title,
+          fileId,
+        });
+        let myMethod = "";
+        if (isUpdate) {
+          myMethod = "PUT";
+        } else {
+          myMethod = "POST";
+        }
+
+        const response = await fetch(url, {
+          method: myMethod,
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            title,
+            code,
+            user_id: userId,
+          }),
+        });
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const result = await response.json();
-        console.log("✅ File saved successfully:", result);
+        console.log(
+          `✅ File ${isUpdate ? "updated" : "saved"} successfully:`,
+          result
+        );
 
-        // Optionally refresh files after saving
+        // Refresh files after saving/updating
         await fetchFiles(userId);
 
         return result; // Return server response (can include saved file data)
       } catch (error) {
-        console.error("💥 Error saving new file:", error);
+        console.error(
+          `💥 Error ${fileId ? "updating" : "saving"} file:`,
+          error
+        );
         return null;
       }
     },

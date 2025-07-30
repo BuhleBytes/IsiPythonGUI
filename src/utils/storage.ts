@@ -2,6 +2,7 @@
 export interface EditorState {
   code: string;
   fileName: string;
+  fileId?: string | null; // Add fileId to the interface
   hasUnsavedChanges: boolean;
   lastModified: number;
 }

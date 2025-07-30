@@ -1,5 +1,6 @@
 "use client";
 
+// #region All of my imports
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +14,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import Editor from "@monaco-editor/react";
 import { registerIsiPython } from "../../languages/isiPython";
-import { FileNameDialog } from "./FileNameDialog";
+import { useUserFiles } from "../../useUserFiles";
 
 import {
   Activity,
@@ -23,15 +24,19 @@ import {
   FileText,
   Play,
   RotateCcw,
+  Save,
   Square,
   Terminal,
   Zap,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+// #endregion
 
+// #region Defining Interface Props
 interface CodeEditorLightProps {
   initialCode?: string;
   fileName?: string;
+  fileId?: string | null;
   onSave?: (code: string, fileName: string) => void;
   onCodeChange?: (
     code: string,
@@ -41,21 +46,24 @@ interface CodeEditorLightProps {
   sidebarOpen?: boolean;
   onCloseSidebar?: () => void;
 }
+// #endregion
 
 const defaultCode = `# Write code for your new file`;
 
 export function CodeEditorLight({
   initialCode,
   fileName,
+  fileId,
   onSave,
   onCodeChange,
   sidebarOpen,
   onCloseSidebar,
 }: CodeEditorLightProps) {
+  // #region All-Const
   const handleEditorWillMount = (monaco) => {
     registerIsiPython(monaco);
   };
-
+  const { saveNewFile } = useUserFiles();
   const [code, setCode] = useState(initialCode || defaultCode);
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
@@ -71,6 +79,7 @@ export function CodeEditorLight({
   const [isResizing, setIsResizing] = useState(false);
   const [isEditingFileName, setIsEditingFileName] = useState(false);
   const [tempFileName, setTempFileName] = useState(currentFileName);
+  const [absName, setAbsName] = useState("");
 
   // Auto-save effect - debounced to avoid too many saves
   const debouncedCodeChange = useCallback(
@@ -81,6 +90,8 @@ export function CodeEditorLight({
     },
     [onCodeChange, currentFileName, hasUnsavedChanges]
   );
+
+  // #endregion
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -156,27 +167,73 @@ export function CodeEditorLight({
     setTempFileName(e.target.value);
   };
 
-  const handleFileNameKeyPress = (e) => {
+  useEffect(() => {
+    console.log("✅ currentFileName was updated:", currentFileName);
+  }, [currentFileName]); // <-- This triggers when currentFileName changes
+
+  const handleFileNameSave = async () => {
+    const newFileName = tempFileName.trim();
+    console.log("🔄 Attempting to rename file to:", newFileName);
+
+    if (newFileName && newFileName !== currentFileName) {
+      // Update the local state immediately
+      setCurrentFileName(newFileName);
+
+      // ✅ KEY FIX - Send PUT request to backend if this is an existing file
+      if (fileId) {
+        console.log(
+          "📡 Sending PUT request to update filename for fileId:",
+          fileId
+        );
+
+        try {
+          // Call saveNewFile with the fileId to trigger PUT request
+          const result = await saveNewFile(newFileName, code, fileId);
+
+          if (result?.success) {
+            console.log("🎉 File renamed successfully in backend!");
+            setOutput(
+              `📝 File renamed to: ${newFileName}\n✨ Backend updated successfully!\n`
+            );
+            setHasUnsavedChanges(false);
+          } else {
+            console.error("❌ Failed to rename file in backend:", result);
+            setOutput(
+              `❌ Failed to rename file to: ${newFileName}\n🔧 Backend update failed. Please try again!\n`
+            );
+          }
+        } catch (error) {
+          console.error("💥 Error during file rename:", error);
+          setOutput(
+            `❌ Network error while renaming file\n🔧 Please check your connection and try again!\n`
+          );
+        }
+      } else {
+        // This is a new file that hasn't been saved yet
+        console.log("📝 New file - just updating local filename");
+        if (onSave) {
+          onSave(code, newFileName);
+        }
+        setOutput(
+          `📝 File renamed to: ${newFileName}\n✨ Save the file to persist the name!\n`
+        );
+      }
+    } else if (!newFileName) {
+      console.log("❌ Empty filename provided");
+      setOutput("❌ Filename cannot be empty!\n");
+    } else {
+      console.log("ℹ️ Filename unchanged");
+    }
+
+    setIsEditingFileName(false);
+  };
+
+  const handleFileNameKeyPress = async (e) => {
     if (e.key === "Enter") {
-      handleFileNameSave();
+      await handleFileNameSave(); // Wait for the save to complete
     } else if (e.key === "Escape") {
       handleFileNameCancel();
     }
-  };
-
-  const handleFileNameSave = () => {
-    const newFileName = tempFileName.trim();
-    if (newFileName && newFileName !== currentFileName) {
-      setCurrentFileName(newFileName);
-      if (onSave) {
-        onSave(code, newFileName);
-      }
-      setHasUnsavedChanges(false);
-      setOutput(
-        `📝 File renamed to: ${newFileName}\n✨ Your file has been updated!\n`
-      );
-    }
-    setIsEditingFileName(false);
   };
 
   const handleFileNameCancel = () => {
@@ -184,11 +241,10 @@ export function CodeEditorLight({
     setIsEditingFileName(false);
   };
 
-  const handleFileNameBlur = () => {
+  const handleFileNameBlur = async () => {
     // Save on blur (when clicking outside)
-    handleFileNameSave();
+    await handleFileNameSave();
   };
-
   useEffect(() => {
     if (initialCode !== undefined && initialCode !== code) {
       setCode(initialCode);
@@ -441,6 +497,23 @@ export function CodeEditorLight({
     );
   };
 
+  // Must save the file if the fileId is null, if the fileId is not null update the file using the fileId
+  const handleSaveNewFile = async () => {
+    const result = await saveNewFile(currentFileName, code, fileId);
+    if (result?.success) {
+      console.log("🎉 File saved and listed!");
+      setHasUnsavedChanges(false);
+      setOutput(
+        `💾 File saved successfully: ${currentFileName}\n✨ Your code is safe and sound!\n`
+      );
+    } else {
+      console.error("❌ Failed to save file");
+      setOutput(
+        `❌ Failed to save file: ${currentFileName}\n🔧 Please try again!\n`
+      );
+    }
+  };
+
   const handleCopyCode = () => {
     navigator.clipboard.writeText(code);
     setOutput(
@@ -521,12 +594,21 @@ export function CodeEditorLight({
           </div>
 
           <div className="flex items-center gap-2">
-            <FileNameDialog
+            {/* <FileNameDialog
               currentFileName={currentFileName}
               onSave={handleSave}
               hasUnsavedChanges={hasUnsavedChanges}
               currentCode={code}
-            />
+            /> */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleSaveNewFile}
+              className="text-gray-600 hover:text-green-600 hover:bg-green-50 transition-all duration-200"
+              title="Save File"
+            >
+              <Save className="w-4 h-4" />
+            </Button>
             <Button
               variant="ghost"
               size="icon"

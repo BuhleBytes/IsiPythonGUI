@@ -37,9 +37,9 @@ import {
 import { useState } from "react";
 import { useUser } from "../../useUser";
 import { useUserFiles } from "../../useUserFiles"; // Import the new hook
-
 interface DashboardLightProps {
   sidebarOpen?: boolean;
+  fileId?: string | null;
   onToggleSidebar?: () => void;
   onViewChange?: (view: string, data?: any) => void;
 }
@@ -54,6 +54,7 @@ export function DashboardLight({
   const [fileSearchQuery, setFileSearchQuery] = useState("");
   const [selectedFileType, setSelectedFileType] = useState("All");
   const [selectedTimePeriod, setSelectedTimePeriod] = useState("All");
+  const [fileID, setFileID] = useState<string | null>();
 
   const { firstName } = useUser();
 
@@ -143,6 +144,7 @@ export function DashboardLight({
   const FileCard = ({ file, index }: { file: SavedFile; index: number }) => {
     const isDeleting = deletingFiles.has(file.id);
     console.log("fucked 123", file.id);
+    setFileID(file.id);
     return (
       <Card
         key={index}
@@ -201,9 +203,11 @@ export function DashboardLight({
             onClick={(e) => {
               e.stopPropagation();
               if (!isDeleting && onViewChange) {
+                console.log("omni-man100", file.id); //This works perfectly
                 onViewChange("editor", {
                   content: file.code,
                   filename: file.name,
+                  fileId: file.id,
                 });
               }
             }}
