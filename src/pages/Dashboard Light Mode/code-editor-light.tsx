@@ -101,7 +101,13 @@ export function CodeEditorLight({
     [onCodeChange, currentFileName, hasUnsavedChanges]
   );
 
-  // #endregion
+  // ✅ NEW - Memoized save function to prevent unnecessary re-renders
+  const memoizedSaveNewFile = useCallback(
+    (fileName, code, fileId) => {
+      return saveNewFile(fileName, code, fileId);
+    },
+    [saveNewFile]
+  );
 
   // ✅ NEW - Debounced Auto-Save Effect (3 seconds after user stops typing)
   useEffect(() => {
@@ -174,6 +180,18 @@ export function CodeEditorLight({
 
     return () => clearTimeout(timer);
   }, [code, debouncedCodeChange]);
+
+  // ✅ NEW - Debug effect to track auto-save state changes
+  useEffect(() => {
+    console.log("🔍 AUTO-SAVE STATE CHANGE:", {
+      hasUnsavedChanges,
+      fileId: fileId ? `${fileId.slice(0, 8)}...` : "null",
+      autoSaveStatus,
+      codeLength: code.length,
+      lastSavedLength: lastSavedCodeRef.current.length,
+      timerId: autoSaveTimerRef.current ? "SET" : "NULL",
+    });
+  }, [hasUnsavedChanges, fileId, autoSaveStatus]);
 
   // ✅ NEW - Cleanup auto-save timer on unmount
   useEffect(() => {
