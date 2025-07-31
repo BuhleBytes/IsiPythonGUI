@@ -16,16 +16,21 @@ import { useState } from "react";
 import { FileImport } from "../file-import";
 
 const mainItems = [
-  { title: "Home", url: "/dashboard-light", icon: Home, key: "home" },
-  { title: "Editor", url: "/editor-light", icon: Code, key: "editor" },
+  { title: "Ikhaya", url: "/dashboard-light", icon: Home, key: "home" },
   {
-    title: "Challenges",
+    title: "Umhleli Wekhowudi",
+    url: "/editor-light",
+    icon: Code,
+    key: "editor",
+  },
+  {
+    title: "Imingeni",
     url: "/challenges-light",
     icon: Trophy,
     key: "challenges",
   },
   {
-    title: "Quizzes",
+    title: "IiKhwizi",
     url: "/quizzes-light",
     icon: GraduationCap,
     key: "quizzes",
@@ -34,7 +39,7 @@ const mainItems = [
 
 const exploreItems = [
   {
-    title: "Documentation",
+    title: "Uxwebhu",
     url: "/documentation-light",
     icon: HelpCircle,
     key: "documentation",
@@ -148,7 +153,7 @@ export function SidebarLight({
               }`}
             >
               <FileText className="w-4 h-4 flex-shrink-0" />
-              {isOpen && <span className="truncate ml-3">Create File</span>}
+              {isOpen && <span className="truncate ml-3">Yenza ifayile</span>}
             </Button>
             <Button
               variant="ghost"
@@ -158,7 +163,7 @@ export function SidebarLight({
               }`}
             >
               <Upload className="w-4 h-4 flex-shrink-0" />
-              {isOpen && <span className="truncate ml-3">Import File</span>}
+              {isOpen && <span className="truncate ml-3">Ngenisa ifayile</span>}
             </Button>
           </div>
 

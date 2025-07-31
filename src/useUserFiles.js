@@ -248,7 +248,7 @@ export const useUserFiles = () => {
     [userId, transformFileData]
   );
 
-  // Delete file function
+  // Delete file function - CORRECTED VERSION
   const deleteFile = useCallback(
     async (fileId) => {
       console.log("🗑️ DEBUG - Delete file called for:", fileId);
@@ -265,6 +265,7 @@ export const useUserFiles = () => {
       try {
         setDeletingFiles((prev) => new Set([...prev, fileId]));
 
+        // FIXED: Removed double slash in URL
         const deleteUrl = `https://isipython-dev.onrender.com/api/saved/delete/${fileId}`;
         console.log("🗑️ DEBUG - Delete URL:", deleteUrl);
         console.log("🗑️ DEBUG - Delete payload:", { user_id: userId });
@@ -289,13 +290,26 @@ export const useUserFiles = () => {
         const result = await response.json();
         console.log("🗑️ DEBUG - Delete response:", result);
 
-        if (result.success) {
+        // FIXED: Check for the correct response format
+        // API returns: { "message": "Code deleted successfully" }
+        if (result.message === "Code deleted successfully") {
           console.log("✅ DEBUG - File deleted successfully, updating state");
+
+          // Remove the file from the local state immediately
           setFiles((prev) => prev.filter((file) => file.id !== fileId));
+
+          // Optionally refresh files from server to ensure sync
+          // await fetchFiles(userId);
+
           return true;
         } else {
-          console.log("❌ DEBUG - Delete failed:", result.error);
-          alert("Failed to delete file: " + (result.error || "Unknown error"));
+          console.log(
+            "❌ DEBUG - Delete failed:",
+            result.message || "Unknown error"
+          );
+          alert(
+            "Failed to delete file: " + (result.message || "Unknown error")
+          );
           return false;
         }
       } catch (error) {
@@ -303,6 +317,7 @@ export const useUserFiles = () => {
         alert("Error deleting file. Please try again.");
         return false;
       } finally {
+        // Always remove the file from deleting state
         setDeletingFiles((prev) => {
           const newSet = new Set(prev);
           newSet.delete(fileId);
@@ -310,7 +325,7 @@ export const useUserFiles = () => {
         });
       }
     },
-    [userId]
+    [userId] // Removed fetchFiles from dependency since we're not using it
   );
 
   // Refresh files

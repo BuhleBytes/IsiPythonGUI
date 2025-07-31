@@ -83,6 +83,9 @@ export function CodeEditorLight({
   const [isEditingFileName, setIsEditingFileName] = useState(false);
   const [tempFileName, setTempFileName] = useState(currentFileName);
 
+  // ✅ NEW - Ref for auto-scrolling output
+  const outputRef = useRef<HTMLDivElement>(null);
+
   // ✅ NEW - Auto-save states
   const [autoSaveStatus, setAutoSaveStatus] = useState<
     "idle" | "saving" | "saved" | "error"
@@ -180,6 +183,13 @@ export function CodeEditorLight({
 
     return () => clearTimeout(timer);
   }, [code, debouncedCodeChange]);
+
+  // ✅ NEW - Auto-scroll output to bottom when content changes
+  useEffect(() => {
+    if (outputRef.current) {
+      outputRef.current.scrollTop = outputRef.current.scrollHeight;
+    }
+  }, [output]);
 
   // ✅ NEW - Debug effect to track auto-save state changes
   useEffect(() => {
@@ -912,9 +922,9 @@ export function CodeEditorLight({
           </div>
         </div>
 
-        {/* Right Panel - Resizable width */}
+        {/* Right Panel - Resizable width with fixed component heights */}
         <div
-          className="flex flex-col flex-shrink-0 relative"
+          className="flex flex-col flex-shrink-0 relative space-y-0"
           style={{ width: `${rightPanelWidth}px` }}
         >
           {/* Resize handle */}
@@ -926,15 +936,15 @@ export function CodeEditorLight({
             {/* Visual indicator on hover */}
             <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-16 bg-gray-300 rounded-full opacity-0 hover:opacity-100 transition-opacity duration-200"></div>
           </div>
-          {/* Input Panel */}
-          <Card className="bg-white/95 backdrop-blur-xl border-gray-200/50 rounded-none border-b shadow-sm">
-            <CardHeader className="pb-3">
+          {/* Input Panel - Fixed height */}
+          <Card className="h-60 bg-white/95 backdrop-blur-xl border-gray-200/50 rounded-none border-b shadow-sm flex flex-col">
+            <CardHeader className="pb-3 flex-shrink-0">
               <CardTitle className="text-sm font-semibold bg-gradient-to-r from-cyan-600 to-blue-700 bg-clip-text text-transparent flex items-center gap-2">
                 <Terminal className="w-4 h-4 text-cyan-600" />
                 Python Input
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="flex-1 space-y-3 p-3">
               <div
                 className={`relative ${waitingForInput ? "input-waiting" : ""}`}
               >
@@ -991,8 +1001,8 @@ export function CodeEditorLight({
             </CardContent>
           </Card>
 
-          {/* Output Panel - Takes remaining space */}
-          <Card className="flex-1 bg-white/95 backdrop-blur-xl border-gray-200/50 rounded-none shadow-sm min-h-0">
+          {/* Output Panel - Fixed height with scrollable content */}
+          <Card className="h-full bg-white/95 backdrop-blur-xl border-gray-200/50 rounded-none shadow-sm flex flex-col">
             <CardHeader className="pb-3 flex-shrink-0">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm font-semibold bg-gradient-to-r from-purple-600 to-pink-700 bg-clip-text text-transparent flex items-center gap-2">
@@ -1012,8 +1022,11 @@ export function CodeEditorLight({
                 </Button>
               </div>
             </CardHeader>
-            <CardContent className="flex-1 min-h-0">
-              <div className="bg-gradient-to-br from-slate-50 to-gray-100 border-2 border-gray-200/70 rounded-lg p-4 h-full overflow-y-auto max-h-full shadow-inner">
+            <CardContent className="flex-1 min-h-0 p-3">
+              <div
+                ref={outputRef}
+                className="bg-gradient-to-br from-slate-50 to-gray-100 border-2 border-gray-200/70 rounded-lg p-4 h-full overflow-y-auto shadow-inner"
+              >
                 <pre className="font-mono text-sm text-slate-700 whitespace-pre-wrap break-words">
                   {output || "🚀Output will appear here \n  \n  \n  \n  \n  \n"}
                 </pre>

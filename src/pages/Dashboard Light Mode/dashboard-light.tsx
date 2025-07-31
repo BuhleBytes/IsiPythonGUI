@@ -85,24 +85,24 @@ export function DashboardLight({
 
   const quickActions = [
     {
-      title: "Create New File",
-      description: "Start a new IsiPython project",
+      title: "Yenza ifayile entsha",
+      description: "Qala iprojekthi entsha ka-IsiPython",
       icon: FileText,
       gradient: "from-cyan-500 via-blue-500 to-indigo-600",
       hoverGradient: "from-cyan-600 via-blue-600 to-indigo-700",
       action: handleCreateFile,
     },
     {
-      title: "Start Challenge",
-      description: "Practice with coding challenges",
+      title: "Qalisa iprojekthi entsha ye-IsiPython",
+      description: "Ziqeqeshe ngemingeni yokukoda",
       icon: Trophy,
       gradient: "from-purple-500 via-pink-500 to-rose-600",
       hoverGradient: "from-purple-600 via-pink-600 to-rose-700",
       action: () => onViewChange && onViewChange("challenges"),
     },
     {
-      title: "Take Quiz",
-      description: "Test your IsiPython knowledge",
+      title: "Yenza Ikhwizi",
+      description: "Vavanya ulwazi lwakho lwe-IsiPython",
       icon: GraduationCap,
       gradient: "from-green-500 via-emerald-500 to-teal-600",
       hoverGradient: "from-green-600 via-emerald-600 to-teal-700",
@@ -113,7 +113,7 @@ export function DashboardLight({
   const learningPath = [
     {
       title: "IsiPython Basics",
-      status: "Complete",
+      status: "Gqityiwe",
       progress: 100,
       icon: CheckCircle,
       color: "text-green-600",
@@ -122,7 +122,7 @@ export function DashboardLight({
     },
     {
       title: "Data Structures",
-      status: "In Progress",
+      status: "Iyaqhubeka",
       progress: 65,
       icon: Clock,
       color: "text-cyan-600",
@@ -131,7 +131,7 @@ export function DashboardLight({
     },
     {
       title: "Algorithms",
-      status: "Locked",
+      status: "Itshixiwe",
       progress: 0,
       icon: AlertCircle,
       color: "text-gray-500",
@@ -290,11 +290,11 @@ export function DashboardLight({
         {/* Welcome Section */}
         <div className="space-y-3">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-purple-800 bg-clip-text text-transparent flex items-center gap-3">
-            Welcome back, {firstName}
+            Wamkelekile kwakhona , {firstName}
             <Sparkles className="w-8 h-8 text-cyan-500 animate-pulse" />
           </h1>
           <p className="text-lg text-gray-600">
-            Continue your IsiPython journey with IsiPython IDE
+            Qhubeka nohambo lwakho lwePython ngeIsiPython IDE
           </p>
         </div>
 
@@ -304,7 +304,7 @@ export function DashboardLight({
             <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-blue-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
               <CardTitle className="text-sm font-medium text-gray-700">
-                Files Created
+                Iifayile ozenzileyo
               </CardTitle>
               <div className="p-2 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-lg shadow-md">
                 <FileText className="w-5 h-5 text-white" />
@@ -328,7 +328,7 @@ export function DashboardLight({
                 <div className="flex justify-between items-center">
                   <p className="text-sm text-gray-600 flex items-center gap-1">
                     <Star className="w-3 h-3 text-yellow-500" />
-                    IsiPython Files
+                    Iifayile zika-IsiPython
                   </p>
                   <Badge className="bg-cyan-100 text-cyan-700 border-cyan-300">
                     Active
@@ -342,7 +342,7 @@ export function DashboardLight({
             <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-pink-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
               <CardTitle className="text-sm font-medium text-gray-700">
-                Quizzes Attempted
+                Iikhwizi Ezizanyiweyo
               </CardTitle>
               <div className="p-2 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg shadow-md">
                 <GraduationCap className="w-5 h-5 text-white" />
@@ -362,7 +362,7 @@ export function DashboardLight({
                 <div className="flex justify-between items-center">
                   <p className="text-sm text-gray-600 flex items-center gap-1">
                     <Flame className="w-3 h-3 text-orange-500" />
-                    Average: 87%
+                    Umndilili wamanqaku: 87%
                   </p>
                   <Badge className="bg-purple-100 text-purple-700 border-purple-300">
                     65%
@@ -376,7 +376,7 @@ export function DashboardLight({
             <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-emerald-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
               <CardTitle className="text-sm font-medium text-gray-700">
-                Overall Progress
+                Inkqubela iyonke
               </CardTitle>
               <div className="p-2 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg shadow-md">
                 <TrendingUp className="w-5 h-5 text-white" />
@@ -396,7 +396,7 @@ export function DashboardLight({
                 <div className="flex justify-between items-center">
                   <p className="text-sm text-gray-600 flex items-center gap-1">
                     <Sparkles className="w-3 h-3 text-green-500" />
-                    Excellent!
+                    Inkqubela entle kakhulu!
                   </p>
                   <Badge className="bg-green-100 text-green-700 border-green-300">
                     92%
@@ -412,7 +412,7 @@ export function DashboardLight({
           <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-xl">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-                Recent Files
+                Iifayile Zakutshanje
               </CardTitle>
               <div className="flex items-center gap-3">
                 <Button
@@ -424,7 +424,7 @@ export function DashboardLight({
                   {filesLoading ? (
                     <Loader2 className="w-4 h-4 animate-spin mr-2" />
                   ) : null}
-                  Refresh
+                  Hlaziya
                 </Button>
                 {files.length > 4 && (
                   <Button
@@ -432,7 +432,7 @@ export function DashboardLight({
                     onClick={() => setViewAllFiles(true)}
                     className="text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50 font-medium transition-all duration-300 hover:scale-105"
                   >
-                    View All
+                    Bona Konke
                   </Button>
                 )}
               </div>
@@ -442,7 +442,7 @@ export function DashboardLight({
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="w-8 h-8 animate-spin text-cyan-600" />
                   <span className="ml-3 text-gray-600">
-                    Loading your files...
+                    Kulayishwa iifayile zakho...
                   </span>
                 </div>
               ) : files.length === 0 ? (
@@ -451,17 +451,17 @@ export function DashboardLight({
                     <FileText className="w-8 h-8 text-gray-500" />
                   </div>
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    No files yet
+                    Akukho fayile okwangoku
                   </h3>
                   <p className="text-gray-600 mb-4">
-                    Create your first IsiPython file to get started
+                    Yenza ifayile yakho yokuqala ye-IsiPython ukuze uqalise
                   </p>
                   <Button
                     onClick={handleCreateFile}
                     className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white"
                   >
                     <FileText className="w-4 h-4 mr-2" />
-                    Create New File
+                    Yenza ifayile entsha
                   </Button>
                 </div>
               ) : (
@@ -481,10 +481,10 @@ export function DashboardLight({
                 <div>
                   <CardTitle className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-2 flex items-center gap-3">
                     <FileText className="w-7 h-7 text-cyan-500" />
-                    All Files
+                    Zonke Iifayile
                   </CardTitle>
                   <p className="text-gray-600">
-                    Browse and manage your IsiPython files
+                    Khangela uze ulawule iifayile zakho ze-IsiPython
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -497,14 +497,14 @@ export function DashboardLight({
                     {filesLoading ? (
                       <Loader2 className="w-4 h-4 animate-spin mr-2" />
                     ) : null}
-                    Refresh
+                    Hlaziya
                   </Button>
                   <Button
                     variant="ghost"
                     onClick={() => setViewAllFiles(false)}
                     className="text-gray-600 hover:text-cyan-600 hover:bg-cyan-50 font-medium transition-all duration-300 hover:scale-105"
                   >
-                    Back to Dashboard
+                    Buyela kwiDashboard
                   </Button>
                 </div>
               </div>
@@ -522,7 +522,9 @@ export function DashboardLight({
                         <p className="text-2xl font-bold bg-gradient-to-r from-cyan-600 to-blue-700 bg-clip-text text-transparent">
                           {files.length}
                         </p>
-                        <p className="text-xs text-gray-600">Total Files</p>
+                        <p className="text-xs text-gray-600">
+                          Iifayile Zizonke
+                        </p>
                       </div>
                     </div>
                   </CardContent>
@@ -539,7 +541,9 @@ export function DashboardLight({
                         <p className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-700 bg-clip-text text-transparent">
                           {fileTypes.length - 1}
                         </p>
-                        <p className="text-xs text-gray-600">File Types</p>
+                        <p className="text-xs text-gray-600">
+                          Iintlobo Zeefayile
+                        </p>
                       </div>
                     </div>
                   </CardContent>
@@ -564,7 +568,7 @@ export function DashboardLight({
                             ).length
                           }
                         </p>
-                        <p className="text-xs text-gray-600">Recent</p>
+                        <p className="text-xs text-gray-600">Zakutshanje</p>
                       </div>
                     </div>
                   </CardContent>
@@ -588,7 +592,7 @@ export function DashboardLight({
                           ) / 10}
                           KB
                         </p>
-                        <p className="text-xs text-gray-600">Total Size</p>
+                        <p className="text-xs text-gray-600">Ubukhulu Bonke</p>
                       </div>
                     </div>
                   </CardContent>
@@ -654,7 +658,7 @@ export function DashboardLight({
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="w-8 h-8 animate-spin text-cyan-600" />
                   <span className="ml-3 text-gray-600">
-                    Loading your files...
+                    Kulayishwa iifayile zakho...
                   </span>
                 </div>
               ) : (
@@ -680,7 +684,7 @@ export function DashboardLight({
                       <Search className="w-8 h-8 text-gray-500" />
                     </div>
                     <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      No files found
+                      Azifumanekanga iifayile
                     </h3>
                     <p className="text-gray-600">
                       {files.length === 0
@@ -700,7 +704,7 @@ export function DashboardLight({
             <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-xl">
               <CardHeader>
                 <CardTitle className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-                  Quick Actions
+                  Izenzo Ezikhawulezayo
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -729,7 +733,7 @@ export function DashboardLight({
             <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-xl">
               <CardHeader>
                 <CardTitle className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-                  Learning Path
+                  Indlela Yokufunda
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -757,7 +761,7 @@ export function DashboardLight({
                           <div className="w-full bg-white/60 rounded-full h-2 overflow-hidden">
                             <div
                               className={`h-2 rounded-full ${
-                                item.status === "Complete"
+                                item.status === "Gqityiwe"
                                   ? "bg-gradient-to-r from-green-500 to-emerald-600"
                                   : "bg-gradient-to-r from-cyan-500 to-blue-600"
                               }`}
@@ -768,9 +772,9 @@ export function DashboardLight({
                       )}
                       <Badge
                         className={
-                          item.status === "Complete"
+                          item.status === "Gqityiwe"
                             ? "bg-green-500 text-white border-0 shadow-sm"
-                            : item.status === "In Progress"
+                            : item.status === "Iyaqhubeka"
                             ? "bg-cyan-500 text-white border-0 shadow-sm"
                             : "bg-gray-400 text-white border-0 shadow-sm"
                         }

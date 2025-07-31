@@ -99,38 +99,56 @@ export default function Component() {
         <div className="max-w-4xl mx-auto p-6 space-y-8">
           {/* Main Description */}
           <Card className="border-0 shadow-lg bg-white/90 backdrop-blur-sm">
-            <CardContent className="p-8 space-y-6">
-              <p className="text-gray-700 leading-relaxed">
-                Variables in Python are used to store data values. Unlike other
-                programming languages, Python has no command for declaring a
-                variable. A variable is created the moment you first assign a
-                value to it.
-              </p>
+            <CardContent className="p-8">
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-gray-800 mb-2">
+                  Glossary
+                </h2>
+              </div>
 
-              <div className="space-y-3">
-                <p className="text-gray-700">
-                  Python has several built-in data types:
-                </p>
-                <ul className="space-y-2">
-                  <li className="text-gray-700">
-                    - <strong>**Numbers**</strong>: int, float, complex
-                  </li>
-                  <li className="text-gray-700">
-                    - <strong>**Text**</strong>: str
-                  </li>
-                  <li className="text-gray-700">
-                    - <strong>**Boolean**</strong>: bool
-                  </li>
-                  <li className="text-gray-700">
-                    - <strong>**Sequences**</strong>: list, tuple, range
-                  </li>
-                  <li className="text-gray-700">
-                    - <strong>**Mappings**</strong>: dict
-                  </li>
-                  <li className="text-gray-700">
-                    - <strong>**Sets**</strong>: set, frozenset
-                  </li>
-                </ul>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+                {/* Python Version Column */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">
+                    Python Version
+                  </h3>
+                  <div className="space-y-3">
+                    <div className="text-gray-700">if</div>
+                    <div className="text-gray-700">elif</div>
+                    <div className="text-gray-700">else</div>
+                    <div className="text-gray-700 mt-4">True</div>
+                    <div className="text-gray-700">False</div>
+                    <div className="text-gray-700">and</div>
+                    <div className="text-gray-700">not</div>
+                    <div className="text-gray-700">break</div>
+                    <div className="text-gray-700 mt-4">while</div>
+                    <div className="text-gray-700">for</div>
+                  </div>
+                </div>
+
+                {/* Arrow Column */}
+                <div className="flex justify-center items-center">
+                  <div className="text-2xl font-bold text-gray-600">→</div>
+                </div>
+
+                {/* IsiPython Version Column */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">
+                    IsiPython Version
+                  </h3>
+                  <div className="space-y-3">
+                    <div className="text-gray-700">ukuba</div>
+                    <div className="text-gray-700">okanye</div>
+                    <div className="text-gray-700">enye</div>
+                    <div className="text-gray-700 mt-4">Inyaniso</div>
+                    <div className="text-gray-700">Ubuxoki</div>
+                    <div className="text-gray-700">kwaye</div>
+                    <div className="text-gray-700">hayi</div>
+                    <div className="text-gray-700">yekisa</div>
+                    <div className="text-gray-700 mt-4">ngexesha</div>
+                    <div className="text-gray-700">ngokulandelelana</div>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -149,7 +167,7 @@ export default function Component() {
                 onClick={() => toggleSection("variableAssignment")}
               >
                 <h3 className="font-medium text-gray-800 text-lg">
-                  Variable Assignment
+                  Comparing Number Inputs
                 </h3>
                 <div className="flex items-center gap-2">
                   <Button
@@ -157,21 +175,24 @@ export default function Component() {
                     size="sm"
                     onClick={(e) => {
                       e.stopPropagation();
-                      copyToClipboard(`# Integer
-x = 5
-print(type(x))  # <class 'int'>
+                      copyToClipboard(`# Bhala ikhowudi ka IsiPython apha...
+# Ngxatsho Mxhosa, Ndiyakwamkela ku IsiPython!
 
-# Float
-y = 3.14
-print(type(y))  # <class 'float'>
-
-# String
-name = "Python"
-print(type(name))  # <class 'str'>
-
-# Boolean
-is_active = True
-print(type(is_active))  # <class 'bool'>`);
+num1 = eval(input("Enter a number: "))
+num2 = eval(input("Enter another number "))
+ukuba num1 > num2:
+    print(num1, "is greater than", num2)
+okanye_ukuba num1 < num2:
+    print(num1, "is less than", num2)
+enye:
+    y = int(input("Enter a number to compare with both: "))
+    ukuba y > num1 kwaye y > num2:
+        print(y, "is greater than both", num1, "and", num2)
+    okanye_ukuba y < num1 kwaye y < num2:
+        print(y, "is less than both", num1, "and", num2)
+    enye:
+        print(y, "is equal to both numbers")
+`);
                     }}
                   >
                     <Copy className="w-4 h-4" />
@@ -183,89 +204,175 @@ print(type(is_active))  # <class 'bool'>`);
                   )}
                 </div>
               </div>
-
               {expandedSections.variableAssignment && (
                 <CardContent className="pt-0 px-6 pb-6">
                   <div className="bg-gray-900 rounded-lg p-4 text-sm font-mono">
                     <div className="space-y-1">
                       <div>
-                        <span className="text-gray-500"># Integer</span>
-                      </div>
-                      <div>
-                        <span className="text-blue-400">x</span>{" "}
-                        <span className="text-white">=</span>{" "}
-                        <span className="text-green-400">5</span>
-                      </div>
-                      <div>
-                        <span className="text-yellow-400">print</span>
-                        <span className="text-white">(</span>
-                        <span className="text-yellow-400">type</span>
-                        <span className="text-white">(</span>
-                        <span className="text-blue-400">x</span>
-                        <span className="text-white">))</span>{" "}
                         <span className="text-gray-500">
-                          # {"<class 'int'>"}
+                          # Bhala ikhowudi ka IsiPython apha...
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">
+                          # Ngxatsho Mxhosa, Ndiyakwamkela ku IsiPython!
                         </span>
                       </div>
                       <div className="mt-2"></div>
                       <div>
-                        <span className="text-gray-500"># Float</span>
+                        <span className="text-blue-400">num1</span>
+                        <span className="text-white"> = </span>
+                        <span className="text-yellow-400">eval</span>
+                        <span className="text-white">(</span>
+                        <span className="text-yellow-400">input</span>
+                        <span className="text-white">(</span>
+                        <span className="text-green-400">
+                          &quot;Enter a number: &quot;
+                        </span>
+                        <span className="text-white">))</span>
                       </div>
                       <div>
-                        <span className="text-blue-400">y</span>{" "}
-                        <span className="text-white">=</span>{" "}
-                        <span className="text-green-400">3.14</span>
+                        <span className="text-blue-400">num2</span>
+                        <span className="text-white"> = </span>
+                        <span className="text-yellow-400">eval</span>
+                        <span className="text-white">(</span>
+                        <span className="text-yellow-400">input</span>
+                        <span className="text-white">(</span>
+                        <span className="text-green-400">
+                          &quot;Enter another number &quot;
+                        </span>
+                        <span className="text-white">))</span>
                       </div>
+                      <div className="mt-2"></div>
                       <div>
+                        <span className="text-purple-400">ukuba</span>
+                        <span className="text-white"> </span>
+                        <span className="text-blue-400">num1</span>
+                        <span className="text-white"> &gt; </span>
+                        <span className="text-blue-400">num2</span>
+                        <span className="text-white">:</span>
+                      </div>
+                      <div className="ml-4">
                         <span className="text-yellow-400">print</span>
                         <span className="text-white">(</span>
-                        <span className="text-yellow-400">type</span>
+                        <span className="text-blue-400">num1</span>
+                        <span className="text-white">, </span>
+                        <span className="text-green-400">
+                          &quot;is greater than&quot;
+                        </span>
+                        <span className="text-white">, </span>
+                        <span className="text-blue-400">num2</span>
+                        <span className="text-white">)</span>
+                      </div>
+                      <div>
+                        <span className="text-purple-400">okanye_ukuba</span>
+                        <span className="text-white"> </span>
+                        <span className="text-blue-400">num1</span>
+                        <span className="text-white"> &lt; </span>
+                        <span className="text-blue-400">num2</span>
+                        <span className="text-white">:</span>
+                      </div>
+                      <div className="ml-4">
+                        <span className="text-yellow-400">print</span>
+                        <span className="text-white">(</span>
+                        <span className="text-blue-400">num1</span>
+                        <span className="text-white">, </span>
+                        <span className="text-green-400">
+                          &quot;is less than&quot;
+                        </span>
+                        <span className="text-white">, </span>
+                        <span className="text-blue-400">num2</span>
+                        <span className="text-white">)</span>
+                      </div>
+                      <div>
+                        <span className="text-purple-400">enye</span>
+                        <span className="text-white">:</span>
+                      </div>
+                      <div className="ml-4">
+                        <span className="text-blue-400">y</span>
+                        <span className="text-white"> = </span>
+                        <span className="text-yellow-400">int</span>
+                        <span className="text-white">(</span>
+                        <span className="text-yellow-400">input</span>
+                        <span className="text-white">(</span>
+                        <span className="text-green-400">
+                          &quot;Enter a number to compare with both: &quot;
+                        </span>
+                        <span className="text-white">))</span>
+                      </div>
+                      <div className="ml-4">
+                        <span className="text-purple-400">ukuba</span>
+                        <span className="text-white"> </span>
+                        <span className="text-blue-400">y</span>
+                        <span className="text-white"> &gt; </span>
+                        <span className="text-blue-400">num1</span>
+                        <span className="text-white"> </span>
+                        <span className="text-purple-400">kwaye</span>
+                        <span className="text-white"> </span>
+                        <span className="text-blue-400">y</span>
+                        <span className="text-white"> &gt; </span>
+                        <span className="text-blue-400">num2</span>
+                        <span className="text-white">:</span>
+                      </div>
+                      <div className="ml-8">
+                        <span className="text-yellow-400">print</span>
                         <span className="text-white">(</span>
                         <span className="text-blue-400">y</span>
-                        <span className="text-white">))</span>{" "}
-                        <span className="text-gray-500">
-                          # {"<class 'float'>"}
+                        <span className="text-white">, </span>
+                        <span className="text-green-400">
+                          &quot;is greater than both&quot;
                         </span>
+                        <span className="text-white">, </span>
+                        <span className="text-blue-400">num1</span>
+                        <span className="text-white">, </span>
+                        <span className="text-green-400">&quot;and&quot;</span>
+                        <span className="text-white">, </span>
+                        <span className="text-blue-400">num2</span>
+                        <span className="text-white">)</span>
                       </div>
-                      <div className="mt-2"></div>
-                      <div>
-                        <span className="text-gray-500"># String</span>
+                      <div className="ml-4">
+                        <span className="text-purple-400">okanye_ukuba</span>
+                        <span className="text-white"> </span>
+                        <span className="text-blue-400">y</span>
+                        <span className="text-white"> &lt; </span>
+                        <span className="text-blue-400">num1</span>
+                        <span className="text-white"> </span>
+                        <span className="text-purple-400">kwaye</span>
+                        <span className="text-white"> </span>
+                        <span className="text-blue-400">y</span>
+                        <span className="text-white"> &lt; </span>
+                        <span className="text-blue-400">num2</span>
+                        <span className="text-white">:</span>
                       </div>
-                      <div>
-                        <span className="text-blue-400">name</span>{" "}
-                        <span className="text-white">=</span>{" "}
-                        <span className="text-green-400">"Python"</span>
-                      </div>
-                      <div>
+                      <div className="ml-8">
                         <span className="text-yellow-400">print</span>
                         <span className="text-white">(</span>
-                        <span className="text-yellow-400">type</span>
-                        <span className="text-white">(</span>
-                        <span className="text-blue-400">name</span>
-                        <span className="text-white">))</span>{" "}
-                        <span className="text-gray-500">
-                          # {"<class 'str'>"}
+                        <span className="text-blue-400">y</span>
+                        <span className="text-white">, </span>
+                        <span className="text-green-400">
+                          &quot;is less than both&quot;
                         </span>
+                        <span className="text-white">, </span>
+                        <span className="text-blue-400">num1</span>
+                        <span className="text-white">, </span>
+                        <span className="text-green-400">&quot;and&quot;</span>
+                        <span className="text-white">, </span>
+                        <span className="text-blue-400">num2</span>
+                        <span className="text-white">)</span>
                       </div>
-                      <div className="mt-2"></div>
-                      <div>
-                        <span className="text-gray-500"># Boolean</span>
+                      <div className="ml-4">
+                        <span className="text-purple-400">enye</span>
+                        <span className="text-white">:</span>
                       </div>
-                      <div>
-                        <span className="text-blue-400">is_active</span>{" "}
-                        <span className="text-white">=</span>{" "}
-                        <span className="text-purple-400">True</span>
-                      </div>
-                      <div>
+                      <div className="ml-8">
                         <span className="text-yellow-400">print</span>
                         <span className="text-white">(</span>
-                        <span className="text-yellow-400">type</span>
-                        <span className="text-white">(</span>
-                        <span className="text-blue-400">is_active</span>
-                        <span className="text-white">))</span>{" "}
-                        <span className="text-gray-500">
-                          # {"<class 'bool'>"}
+                        <span className="text-blue-400">y</span>
+                        <span className="text-white">, </span>
+                        <span className="text-green-400">
+                          &quot;is equal to both numbers&quot;
                         </span>
+                        <span className="text-white">)</span>
                       </div>
                     </div>
                   </div>
@@ -274,13 +381,17 @@ print(type(is_active))  # <class 'bool'>`);
                     <div className="flex items-start gap-2">
                       <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
                       <p className="text-sm text-blue-800">
-                        Variables are dynamically typed in Python, meaning you
-                        don't need to declare their type explicitly.
+                        This IsiPython code demonstrates conditional statements
+                        using Xhosa keywords:
+                        <strong> ukuba</strong> (if),{" "}
+                        <strong> okanye_ukuba</strong> (elif),
+                        <strong> enye</strong> (else), and{" "}
+                        <strong> kwaye</strong> (and).
                       </p>
                     </div>
                   </div>
                 </CardContent>
-              )}
+              )}{" "}
             </Card>
 
             {/* Type Conversion Card */}
@@ -290,7 +401,7 @@ print(type(is_active))  # <class 'bool'>`);
                 onClick={() => toggleSection("typeConversion")}
               >
                 <h3 className="font-medium text-gray-800 text-lg">
-                  Type Conversion
+                  While Loop in IsiPython
                 </h3>
                 <div className="flex items-center gap-2">
                   <Button
@@ -299,15 +410,10 @@ print(type(is_active))  # <class 'bool'>`);
                     onClick={(e) => {
                       e.stopPropagation();
                       copyToClipboard(`# Converting between types
-x = 5
-y = str(x)    # String to integer
-z = float(x)  # String to float
-a = bool(x)   # String to boolean
-
-print(f"x: {type(x).__name__}")
-print(f"y: {type(y).__name__}")
-print(f"z: {type(z).__name__}")
-print(f"a: {type(a).__name__}")`);
+# For loop with list
+fruits = ["apple", "banana", "orange"]
+ngokulandelelana fruit in fruits:
+    print("I like", fruit)`);
                     }}
                   >
                     <Copy className="w-4 h-4" />
@@ -326,96 +432,43 @@ print(f"a: {type(a).__name__}")`);
                     <div className="space-y-1">
                       <div>
                         <span className="text-gray-500">
-                          # Converting between types
+                          # For loop with list
                         </span>
                       </div>
                       <div>
-                        <span className="text-blue-400">x</span>{" "}
-                        <span className="text-white">=</span>{" "}
-                        <span className="text-green-400">5</span>
-                      </div>
-                      <div>
-                        <span className="text-blue-400">y</span>{" "}
-                        <span className="text-white">=</span>{" "}
-                        <span className="text-yellow-400">str</span>
-                        <span className="text-white">(</span>
-                        <span className="text-blue-400">x</span>
-                        <span className="text-white">)</span>{" "}
-                        <span className="text-gray-500">
-                          # String to integer
+                        <span className="text-blue-400">fruits</span>
+                        <span className="text-white"> = [</span>
+                        <span className="text-green-400">
+                          &quot;apple&quot;
                         </span>
-                      </div>
-                      <div>
-                        <span className="text-blue-400">z</span>{" "}
-                        <span className="text-white">=</span>{" "}
-                        <span className="text-yellow-400">float</span>
-                        <span className="text-white">(</span>
-                        <span className="text-blue-400">x</span>
-                        <span className="text-white">)</span>{" "}
-                        <span className="text-gray-500"># String to float</span>
-                      </div>
-                      <div>
-                        <span className="text-blue-400">a</span>{" "}
-                        <span className="text-white">=</span>{" "}
-                        <span className="text-yellow-400">bool</span>
-                        <span className="text-white">(</span>
-                        <span className="text-blue-400">x</span>
-                        <span className="text-white">)</span>{" "}
-                        <span className="text-gray-500">
-                          # String to boolean
+                        <span className="text-white">, </span>
+                        <span className="text-green-400">
+                          &quot;banana&quot;
                         </span>
-                      </div>
-                      <div className="mt-2"></div>
-                      <div>
-                        <span className="text-yellow-400">print</span>
-                        <span className="text-white">(</span>
-                        <span className="text-green-400">f"x: </span>
-                        <span className="text-white">{"{"}</span>
-                        <span className="text-yellow-400">type</span>
-                        <span className="text-white">(</span>
-                        <span className="text-blue-400">x</span>
-                        <span className="text-white">).__name__</span>
-                        <span className="text-white">{"}"}</span>
-                        <span className="text-green-400">"</span>
-                        <span className="text-white">)</span>
+                        <span className="text-white">, </span>
+                        <span className="text-green-400">
+                          &quot;orange&quot;
+                        </span>
+                        <span className="text-white">]</span>
                       </div>
                       <div>
-                        <span className="text-yellow-400">print</span>
-                        <span className="text-white">(</span>
-                        <span className="text-green-400">f"y: </span>
-                        <span className="text-white">{"{"}</span>
-                        <span className="text-yellow-400">type</span>
-                        <span className="text-white">(</span>
-                        <span className="text-blue-400">y</span>
-                        <span className="text-white">).__name__</span>
-                        <span className="text-white">{"}"}</span>
-                        <span className="text-green-400">"</span>
-                        <span className="text-white">)</span>
+                        <span className="text-purple-400">
+                          ngokulandelelana
+                        </span>
+                        <span className="text-white"> </span>
+                        <span className="text-blue-400">fruit</span>
+                        <span className="text-white"> in </span>
+                        <span className="text-blue-400">fruits</span>
+                        <span className="text-white">:</span>
                       </div>
-                      <div>
+                      <div className="ml-4">
                         <span className="text-yellow-400">print</span>
                         <span className="text-white">(</span>
-                        <span className="text-green-400">f"z: </span>
-                        <span className="text-white">{"{"}</span>
-                        <span className="text-yellow-400">type</span>
-                        <span className="text-white">(</span>
-                        <span className="text-blue-400">z</span>
-                        <span className="text-white">).__name__</span>
-                        <span className="text-white">{"}"}</span>
-                        <span className="text-green-400">"</span>
-                        <span className="text-white">)</span>
-                      </div>
-                      <div>
-                        <span className="text-yellow-400">print</span>
-                        <span className="text-white">(</span>
-                        <span className="text-green-400">f"a: </span>
-                        <span className="text-white">{"{"}</span>
-                        <span className="text-yellow-400">type</span>
-                        <span className="text-white">(</span>
-                        <span className="text-blue-400">a</span>
-                        <span className="text-white">).__name__</span>
-                        <span className="text-white">{"}"}</span>
-                        <span className="text-green-400">"</span>
+                        <span className="text-green-400">
+                          &quot;I like&quot;
+                        </span>
+                        <span className="text-white">, </span>
+                        <span className="text-blue-400">fruit</span>
                         <span className="text-white">)</span>
                       </div>
                     </div>
@@ -425,8 +478,10 @@ print(f"a: {type(a).__name__}")`);
                     <div className="flex items-start gap-2">
                       <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
                       <p className="text-sm text-blue-800">
-                        Python provides built-in functions for converting
-                        between different data types.
+                        In IsiPython, <strong>ngokulandelelana</strong> (meaning
+                        &quot;for&quot; in Xhosa) is used to iterate through
+                        lists, strings, and other iterable objects. This example
+                        shows looping through a list of fruits.
                       </p>
                     </div>
                   </div>
