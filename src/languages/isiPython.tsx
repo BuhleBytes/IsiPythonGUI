@@ -8,7 +8,7 @@ export const registerIsiPython = (monaco) => {
       root: [
         // Keywords - these will be highlighted
         [
-          /\b(Ubuxoki|Inyaniso|Akukho|kwaye|njenga|qinisekisa|ngemva|linda|yekisa|iklasi|qhubeka|chaza|cima|okanye|enye|ngaphandle|ekugqibeleni|jikelele|ukuba|ngenisa|ku|phakathi|umsebenzi|ingaphandle|hayi|dlula|phakamisa|buyisela|zama|ngexesha|nge|velisa|ngokulandelelana|ukusuka|ngu|okanye_ukuba|printa|print|shicilela)\b/,
+          /\b(Ubuxoki|Inyaniso|Akukho|kwaye|njenga|qinisekisa|ngemva|linda|yekisa|iklasi|qhubeka|chaza|cima|okanye|enye|ngaphandle|ekugqibeleni|jikelele|ukuba|ngenisa|ku|phakathi|umsebenzi|ingaphandle|hayi|dlula|phakamisa|buyisela|zama|ngelixa|nge|velisa|ngokulandelelana|ukusuka|ngu|okanye_ukuba|printa|print|shicilela)\b/,
           "keyword",
         ],
 
@@ -193,9 +193,9 @@ export const registerIsiPython = (monaco) => {
 
         // Loops
         {
-          label: "ngexesha",
+          label: "ngelixa",
           kind: monaco.languages.CompletionItemKind.Keyword,
-          insertText: "ngexesha ${1:(imeko)}:\n\t$0",
+          insertText: "ngelixa ${1:(imeko)}:\n\t$0",
           insertTextRules:
             monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
           detail: "while - while loop",

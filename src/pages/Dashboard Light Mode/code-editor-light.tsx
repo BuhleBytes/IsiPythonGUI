@@ -4,7 +4,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -13,12 +12,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import Editor from "@monaco-editor/react";
-import { registerIsiPython } from "../../languages/isiPython";
-import { useUserFiles } from "../../useUserFiles";
-
 import {
   Activity,
   AlertCircle,
@@ -30,23 +25,20 @@ import {
   Circle,
   Clock,
   Copy,
-  Dot,
   Download,
-  Eye,
   FileText,
-  Layers,
   Play,
   RotateCcw,
   Save,
-  Settings,
   Square,
-  StepForward,
-  StepBackIcon as StepInto,
-  StepBackIcon as StepOut,
   Terminal,
   Zap,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { debugHelper, isDebugError } from "../../debugHelper";
+import { registerIsiPython } from "../../languages/isiPython";
+import { useUserFiles } from "../../useUserFiles";
+import { DebugPanel } from "./DebugPanel";
 // #endregion
 
 // #region Debug Interfaces
@@ -59,12 +51,6 @@ interface Variable {
   name: string;
   value: string;
   type: string;
-}
-
-interface CallStackFrame {
-  function: string;
-  file: string;
-  line: number;
 }
 // #endregion
 
@@ -108,6 +94,11 @@ def main():
 if __name__ == "__main__":
     main()`;
 
+// Helper functions to check API response status
+const isWaitingForInput = (response: any) =>
+  response?.waiting_for_input === true;
+const isCompleted = (response: any) => response?.completed === true;
+
 export function CodeEditorLight({
   initialCode,
   fileName,
@@ -145,72 +136,14 @@ export function CodeEditorLight({
   // #region Debug States
   const [breakpoints, setBreakpoints] = useState<Breakpoint[]>([]);
   const [currentLine, setCurrentLine] = useState<number | null>(null);
-  const [isDebugging, setIsDebugging] = useState(false);
-  const [debugOutput, setDebugOutput] = useState("");
   const [showDebugPanel, setShowDebugPanel] = useState(false);
-  const [debugPanelHeight, setDebugPanelHeight] = useState(250); // Reduced default height
+  const [debugPanelHeight, setDebugPanelHeight] = useState(250);
   const [isResizingDebugPanel, setIsResizingDebugPanel] = useState(false);
-
-  const [variables, setVariables] = useState<Variable[]>([
-    { name: "n", value: "5", type: "int" },
-    { name: "a", value: "0", type: "int" },
-    { name: "b", value: "1", type: "int" },
-    { name: "i", value: "2", type: "int" },
-    { name: "numbers", value: "[5, 8, 10, 12]", type: "list" },
-    { name: "results", value: "[]", type: "list" },
-    { name: "fib_result", value: "5", type: "int" },
-    { name: "num", value: "5", type: "int" },
-    { name: "__name__", value: "'__main__'", type: "str" },
-    {
-      name: "fibonacci",
-      value: "<function fibonacci at 0x7f8b8c0e4ca0>",
-      type: "function",
-    },
-    {
-      name: "main",
-      value: "<function main at 0x7f8b8c0e4d30>",
-      type: "function",
-    },
-    {
-      name: "__builtins__",
-      value: "<module 'builtins' (built-in)>",
-      type: "module",
-    },
-    { name: "__doc__", value: "None", type: "NoneType" },
-    { name: "__file__", value: "'untitled.isi'", type: "str" },
-    { name: "__package__", value: "None", type: "NoneType" },
-    { name: "__spec__", value: "None", type: "NoneType" },
-    { name: "__cached__", value: "None", type: "NoneType" },
-    {
-      name: "__loader__",
-      value: "<_frozen_importlib_external.SourceFileLoader>",
-      type: "object",
-    },
-    { name: "temp_var", value: "42", type: "int" },
-    {
-      name: "debug_info",
-      value: "{'session': 'active', 'line': 14}",
-      type: "dict",
-    },
-    { name: "local_scope", value: "{'x': 1, 'y': 2, 'z': 3}", type: "dict" },
-    { name: "nested_list", value: "[[1, 2], [3, 4], [5, 6]]", type: "list" },
-    { name: "string_var", value: "'Hello, IsiPython!'", type: "str" },
-    { name: "boolean_flag", value: "True", type: "bool" },
-    { name: "float_num", value: "3.14159", type: "float" },
-  ]);
-
-  const [callStack, setCallStack] = useState<CallStackFrame[]>([
-    { function: "fibonacci", file: "untitled.isi", line: 6 },
-    { function: "main", file: "untitled.isi", line: 14 },
-    { function: "<module>", file: "untitled.isi", line: 21 },
-    { function: "<built-in>", file: "<built-in>", line: 1 },
-    { function: "__init__", file: "debug_module.py", line: 45 },
-    { function: "setup_environment", file: "env_config.py", line: 12 },
-    { function: "load_dependencies", file: "loader.py", line: 78 },
-    { function: "validate_input", file: "validator.py", line: 23 },
-    { function: "process_data", file: "processor.py", line: 156 },
-    { function: "handle_exception", file: "error_handler.py", line: 89 },
-  ]);
+  const [isDebugging, setIsDebugging] = useState(false);
+  const [debugSessionId, setDebugSessionId] = useState<string | null>(null);
+  const [debugVariables, setDebugVariables] = useState<Variable[]>([]);
+  const [isStepInProgress, setIsStepInProgress] = useState(false);
+  const [debugWaitingForInput, setDebugWaitingForInput] = useState(false);
   // #endregion
 
   // #region Auto-save States
@@ -223,7 +156,7 @@ export function CodeEditorLight({
   const lastSavedCodeRef = useRef<string>(initialCode || defaultCode);
   // #endregion
 
-  // #region Debug Functions
+  // #region Breakpoint Functions
   const lines = code.split("\n");
 
   const toggleBreakpoint = (lineNumber: number) => {
@@ -236,288 +169,269 @@ export function CodeEditorLight({
       }
     });
   };
+  // #endregion
 
-  const startDebugging = () => {
-    setIsDebugging(true);
-    setShowDebugPanel(true);
-    setCurrentLine(1);
-    setDebugOutput(`🚀 Debug session started at ${new Date().toLocaleTimeString()}
-🔍 Initializing debugger...
-✅ Debugger ready!
-📝 Loading symbols...
-🔧 Setting up breakpoints...
-📊 Preparing variable inspection...
-🎯 Debug session initialized successfully!
+  // #region Debug Functions
+  const startDebugging = async () => {
+    try {
+      console.log("🚀 Starting debug session...");
+      setIsDebugging(true);
+      setShowDebugPanel(true);
 
-[DEBUG] Loaded 25 variables into scope
-[DEBUG] Detected 10 stack frames
-[DEBUG] Ready to step through code
-[DEBUG] Breakpoints: ${breakpoints.length} active
-[DEBUG] Current file: untitled.isi
-[DEBUG] Python interpreter: IsiPython 1.0
-[DEBUG] Memory usage: 45.2 MB
-[DEBUG] Execution mode: Step-by-step
+      const response = await debugHelper.startDebugSession(code);
+      console.log("📥 Debug start response:", response);
 
->>> Ready to debug! Use step controls to navigate.
-`);
+      if (isDebugError(response)) {
+        console.error("❌ Debug failed:", response);
+        setOutput(`❌ Debug error: ${response.error}`);
+        setIsDebugging(false);
+        return;
+      }
 
-    // Update variables to reflect current debugging context
-    setVariables((prev) =>
-      prev.map((v) => ({
-        ...v,
-        value: v.name.startsWith("__") ? v.value : "undefined",
-      }))
-    );
+      // Update states with API response
+      const newCurrentLine = response.current_line ?? 1;
+      console.log("📍 Starting at line:", newCurrentLine);
+      setCurrentLine(newCurrentLine);
+      setDebugSessionId(response.session_id);
+
+      // Check if waiting for input
+      if (isWaitingForInput(response)) {
+        setDebugWaitingForInput(true);
+        setOutput(
+          `🚀 Debug session started at ${new Date().toLocaleTimeString()}\n` +
+            `🔧 Session ID: ${response.session_id}\n` +
+            `📍 Starting at line: ${newCurrentLine}\n` +
+            `${response.output || ""}\n` +
+            `⌨️  Program is waiting for input. Please enter input in the input box and press Enter.\n`
+        );
+      } else {
+        setOutput(
+          `🚀 Debug session started at ${new Date().toLocaleTimeString()}\n` +
+            `🔧 Session ID: ${response.session_id}\n` +
+            `📍 Starting at line: ${newCurrentLine}\n` +
+            `${response.output || ""}\n` +
+            `\n✅ Ready to step through code! Click "Step" to continue.\n`
+        );
+      }
+
+      // Update variables
+      const apiVariables =
+        response.variables && typeof response.variables === "object"
+          ? Object.entries(response.variables).map(([name, value]) => ({
+              name,
+              value: String(value),
+              type: typeof value,
+            }))
+          : [];
+
+      console.log("📊 Initial variables:", apiVariables);
+      setDebugVariables(apiVariables);
+
+      console.log("✅ Debug session started successfully");
+    } catch (error) {
+      console.error("❌ Failed to start debugging:", error);
+      setOutput(`❌ Failed to start debug session: ${error.message}`);
+      setIsDebugging(false);
+    }
+  };
+
+  const stepDebug = async () => {
+    if (!debugSessionId || isStepInProgress) return;
+
+    try {
+      setIsStepInProgress(true);
+      console.log("🔄 Stepping over with session:", debugSessionId);
+
+      const response = await debugHelper.stepOnly(debugSessionId);
+      console.log("📥 Step response:", response);
+
+      if (isDebugError(response)) {
+        console.error("❌ Debug step error:", response.error);
+        setOutput((prev) => prev + `\n❌ Debug error: ${response.error}\n`);
+        stopDebugging();
+        return;
+      }
+
+      // Update current line
+      const newCurrentLine = response.current_line;
+      console.log("📍 Moving to line:", newCurrentLine);
+      setCurrentLine(newCurrentLine);
+
+      // Format debug output
+      const timestamp = new Date().toLocaleTimeString();
+      const currentLineCode = lines[newCurrentLine - 1]?.trim() || "N/A";
+
+      let debugMessage = `\n[${timestamp}] STEP: line ${newCurrentLine}\n`;
+      debugMessage += `🔍 Executing: ${currentLineCode}\n`;
+
+      // Update variables
+      if (response.variables && typeof response.variables === "object") {
+        const apiVariables = Object.entries(response.variables).map(
+          ([name, value]) => ({
+            name,
+            value: String(value),
+            type: typeof value,
+          })
+        );
+
+        setDebugVariables(apiVariables);
+        debugMessage += `🔢 Variables in scope: ${apiVariables.length}\n`;
+      }
+
+      // Add program output if any
+      if (response.output) {
+        debugMessage += `📤 Program output: ${response.output}\n`;
+      }
+
+      // Check if waiting for input
+      if (isWaitingForInput(response)) {
+        setDebugWaitingForInput(true);
+        debugMessage += `⌨️  Waiting for user input: ${
+          response.prompt || "Enter input"
+        }\n`;
+      } else {
+        setDebugWaitingForInput(false);
+      }
+
+      // Check if completed
+      if (isCompleted(response)) {
+        debugMessage += `✅ Program execution completed\n`;
+        stopDebugging();
+      }
+
+      setOutput((prev) => prev + debugMessage);
+
+      console.log("✅ Step completed successfully");
+    } catch (error) {
+      console.error("❌ Step failed:", error);
+      setOutput((prev) => prev + `\n❌ Failed to step: ${error.message}\n`);
+    } finally {
+      setIsStepInProgress(false);
+    }
+  };
+
+  const provideDebugInput = async (inputValue: string) => {
+    if (!debugSessionId) return;
+
+    try {
+      console.log("🔄 Providing debug input:", inputValue);
+      setIsStepInProgress(true);
+
+      const response = await debugHelper.provideInput(
+        debugSessionId,
+        inputValue
+      );
+      console.log("📥 Debug input response:", response);
+
+      if (isDebugError(response)) {
+        console.error("❌ Debug input error:", response.error);
+        setOutput((prev) => prev + `\n❌ Debug error: ${response.error}\n`);
+        stopDebugging();
+        return;
+      }
+
+      // Update current line
+      const newCurrentLine = response.current_line;
+      console.log("📍 Moving to line:", newCurrentLine);
+      setCurrentLine(newCurrentLine);
+
+      // Format debug output
+      const timestamp = new Date().toLocaleTimeString();
+      const currentLineCode = lines[newCurrentLine - 1]?.trim() || "N/A";
+
+      let debugMessage = `\n[${timestamp}] INPUT PROVIDED: "${inputValue}"\n`;
+      debugMessage += `🔍 Executing: ${currentLineCode}\n`;
+
+      // Update variables
+      if (response.variables && typeof response.variables === "object") {
+        const apiVariables = Object.entries(response.variables).map(
+          ([name, value]) => ({
+            name,
+            value: String(value),
+            type: typeof value,
+          })
+        );
+
+        setDebugVariables(apiVariables);
+        debugMessage += `🔢 Variables in scope: ${apiVariables.length}\n`;
+      }
+
+      // Add program output if any
+      if (response.output) {
+        debugMessage += `📤 Program output: ${response.output}\n`;
+      }
+
+      // Check if still waiting for more input
+      if (isWaitingForInput(response)) {
+        setDebugWaitingForInput(true);
+        debugMessage += `⌨️  Waiting for more input: ${
+          response.prompt || "Enter input"
+        }\n`;
+      } else {
+        setDebugWaitingForInput(false);
+      }
+
+      // Check if completed
+      if (isCompleted(response)) {
+        debugMessage += `✅ Program execution completed\n`;
+        stopDebugging();
+      }
+
+      setOutput((prev) => prev + debugMessage);
+
+      console.log("✅ Debug input provided successfully");
+    } catch (error) {
+      console.error("❌ Failed to provide debug input:", error);
+      setOutput(
+        (prev) => prev + `\n❌ Failed to provide input: ${error.message}\n`
+      );
+    } finally {
+      setIsStepInProgress(false);
+    }
   };
 
   const stopDebugging = () => {
     setIsDebugging(false);
     setCurrentLine(null);
-    setIsRunning(false);
-    setDebugOutput(
+    setDebugSessionId(null);
+    setDebugVariables([]);
+    setDebugWaitingForInput(false);
+
+    setOutput(
       (prev) =>
         prev +
-        `
-🛑 Debug session ended at ${new Date().toLocaleTimeString()}
-📊 Session Summary:
-   • Total steps executed: ${Math.floor(Math.random() * 20) + 5}
-   • Functions called: ${callStack.length}
-   • Variables tracked: ${variables.length}
-   • Breakpoints hit: ${breakpoints.length}
-   • Execution time: ${(Math.random() * 5 + 1).toFixed(2)}s
-   • Memory peak: ${(Math.random() * 20 + 40).toFixed(1)} MB
-
-📝 Debug log saved to session history
-✅ All resources cleaned up
-🎯 Session completed successfully!
-
->>> Debug session terminated. Ready for next session.
-`
+        `\n🛑 Debug session ended at ${new Date().toLocaleTimeString()}\n` +
+        `✅ All resources cleaned up\n` +
+        `🎯 Session completed successfully!\n\n` +
+        `>>> Debug session terminated. Ready for next session.\n`
     );
-
-    // Reset variables to default state
-    setVariables([
-      { name: "n", value: "5", type: "int" },
-      { name: "a", value: "0", type: "int" },
-      { name: "b", value: "1", type: "int" },
-      { name: "i", value: "2", type: "int" },
-      { name: "numbers", value: "[5, 8, 10, 12]", type: "list" },
-      { name: "results", value: "[]", type: "list" },
-      { name: "fib_result", value: "5", type: "int" },
-      { name: "num", value: "5", type: "int" },
-      { name: "__name__", value: "'__main__'", type: "str" },
-      {
-        name: "fibonacci",
-        value: "<function fibonacci at 0x7f8b8c0e4ca0>",
-        type: "function",
-      },
-      {
-        name: "main",
-        value: "<function main at 0x7f8b8c0e4d30>",
-        type: "function",
-      },
-      {
-        name: "__builtins__",
-        value: "<module 'builtins' (built-in)>",
-        type: "module",
-      },
-      { name: "__doc__", value: "None", type: "NoneType" },
-      { name: "__file__", value: "'untitled.isi'", type: "str" },
-      { name: "__package__", value: "None", type: "NoneType" },
-      { name: "__spec__", value: "None", type: "NoneType" },
-      { name: "__cached__", value: "None", type: "NoneType" },
-      {
-        name: "__loader__",
-        value: "<_frozen_importlib_external.SourceFileLoader>",
-        type: "object",
-      },
-      { name: "temp_var", value: "42", type: "int" },
-      {
-        name: "debug_info",
-        value: "{'session': 'active', 'line': 14}",
-        type: "dict",
-      },
-      { name: "local_scope", value: "{'x': 1, 'y': 2, 'z': 3}", type: "dict" },
-      { name: "nested_list", value: "[[1, 2], [3, 4], [5, 6]]", type: "list" },
-      { name: "string_var", value: "'Hello, IsiPython!'", type: "str" },
-      { name: "boolean_flag", value: "True", type: "bool" },
-      { name: "float_num", value: "3.14159", type: "float" },
-    ]);
-  };
-
-  const stepOver = () => {
-    if (currentLine && currentLine < lines.length) {
-      const nextLine = currentLine + 1;
-      setCurrentLine(nextLine);
-      setDebugOutput(
-        (prev) =>
-          prev +
-          `
-[${new Date().toLocaleTimeString()}] STEP OVER: line ${nextLine}
-🔍 Executing: ${lines[nextLine - 1]?.trim() || "N/A"}
-📍 Current position: line ${nextLine}
-🔢 Variables in scope: ${variables.length}
-⏱️  Execution time: ${Math.random() * 10 + 1}ms
-`
-      );
-
-      // Simulate variable updates based on line
-      if (nextLine === 14) {
-        setVariables((prev) =>
-          prev.map((v) =>
-            v.name === "numbers"
-              ? { ...v, value: "[5, 8, 10, 12]" }
-              : v.name === "results"
-              ? { ...v, value: "[]" }
-              : v
-          )
-        );
-        setDebugOutput(
-          (prev) => prev + `📝 Updated variables: numbers, results\n`
-        );
-      } else if (nextLine === 16) {
-        setVariables((prev) =>
-          prev.map((v) =>
-            v.name === "num" ? { ...v, value: "5", type: "int" } : v
-          )
-        );
-        setDebugOutput((prev) => prev + `📝 New variable: num = 5\n`);
-      }
-    }
-  };
-
-  const stepInto = () => {
-    if (currentLine) {
-      setDebugOutput(
-        (prev) =>
-          prev +
-          `
-[${new Date().toLocaleTimeString()}] STEP INTO: line ${currentLine}
-🚪 Entering function call...
-📍 Current line: ${lines[currentLine - 1]?.trim() || "N/A"}
-🔍 Looking for function definition...
-`
-      );
-
-      // Simulate entering function
-      if (currentLine === 17) {
-        setCurrentLine(3);
-        setDebugOutput(
-          (prev) =>
-            prev +
-            `
-✅ Entered function: fibonacci(5)
-📍 New position: line 3
-🔢 Function parameters: n = 5
-📊 Local scope created
-⚡ Ready to execute function body
-`
-        );
-        setVariables((prev) =>
-          prev.map((v) =>
-            v.name === "n" ? { ...v, value: "5", type: "int" } : v
-          )
-        );
-      }
-    }
-  };
-
-  const stepOut = () => {
-    if (currentLine) {
-      setDebugOutput(
-        (prev) =>
-          prev +
-          `
-[${new Date().toLocaleTimeString()}] STEP OUT: line ${currentLine}
-🚪 Exiting current function...
-📤 Returning to caller...
-🔍 Cleaning up local scope...
-`
-      );
-
-      // Simulate exiting function
-      setCurrentLine(17);
-      setDebugOutput(
-        (prev) =>
-          prev +
-          `
-✅ Exited function successfully
-📍 Returned to: line 17
-🔄 Return value: 5
-📊 Local scope destroyed
-⚡ Back in main execution context
-`
-      );
-      setVariables((prev) =>
-        prev.map((v) =>
-          v.name === "fib_result" ? { ...v, value: "5", type: "int" } : v
-        )
-      );
-    }
-  };
-
-  const continueExecution = () => {
-    setIsRunning(true);
-    setDebugOutput((prev) => prev + "Continuing execution...\n");
-
-    // Simulate hitting next breakpoint
-    setTimeout(() => {
-      const nextBreakpoint = breakpoints.find(
-        (bp) => bp.line > (currentLine || 0) && bp.enabled
-      );
-      if (nextBreakpoint) {
-        setCurrentLine(nextBreakpoint.line);
-        setIsRunning(false);
-        setDebugOutput(
-          (prev) => prev + `Breakpoint hit at line ${nextBreakpoint.line}\n`
-        );
-      }
-    }, 1000);
   };
   // #endregion
 
-  // #region Debug Panel Resize Handler
-  const handleDebugPanelMouseDown = (e) => {
-    setIsResizingDebugPanel(true);
-    e.preventDefault();
+  // #region Debug Panel Handlers
+  const handleCurrentLineChange = (line: number | null) => {
+    setCurrentLine(line);
   };
 
-  useEffect(() => {
-    const handleMouseMove = (e) => {
-      if (!isResizingDebugPanel) return;
-
-      const containerRect = document
-        .querySelector(".editor-container")
-        ?.getBoundingClientRect();
-      if (!containerRect) return;
-
-      const newHeight = containerRect.bottom - e.clientY;
-      const minHeight = 180; // Minimum height for debug panel
-      const maxHeight = window.innerHeight * 0.4; // Maximum 40% of screen height (reduced from 60%)
-
-      if (newHeight >= minHeight && newHeight <= maxHeight) {
-        setDebugPanelHeight(newHeight);
-      }
-    };
-
-    const handleMouseUp = () => {
-      setIsResizingDebugPanel(false);
-    };
-
-    if (isResizingDebugPanel) {
-      document.addEventListener("mousemove", handleMouseMove);
-      document.addEventListener("mouseup", handleMouseUp);
-      document.body.style.cursor = "row-resize";
-      document.body.style.userSelect = "none";
+  const handleDebugPanelClose = () => {
+    setShowDebugPanel(false);
+    if (isDebugging) {
+      stopDebugging();
     }
+    setDebugWaitingForInput(false);
+  };
 
-    return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-      document.body.style.cursor = "";
-      document.body.style.userSelect = "";
-    };
-  }, [isResizingDebugPanel]);
+  const handleDebugPanelHeightChange = (height: number) => {
+    setDebugPanelHeight(height);
+  };
+
+  const handleDebugResizeStart = () => {
+    setIsResizingDebugPanel(true);
+  };
+
+  const handleDebugResizeEnd = () => {
+    setIsResizingDebugPanel(false);
+  };
   // #endregion
 
   // #region Auto-save and other existing functionality (keeping original logic)
@@ -937,7 +851,16 @@ export function CodeEditorLight({
   };
 
   const handleInputSubmit = () => {
-    if (inputResolver && input.trim()) {
+    if (!input.trim()) return;
+
+    // Check if we're in debug mode and waiting for debug input
+    if (isDebugging && debugWaitingForInput) {
+      // Provide debug input
+      provideDebugInput(input.trim());
+      setInput("");
+      setDebugWaitingForInput(false);
+    } else if (inputResolver && waitingForInput) {
+      // Handle normal execution input
       clearTimeout(inputResolver.current.timeout);
       inputResolver.current(input.trim());
       setInputResolver(null);
@@ -946,9 +869,16 @@ export function CodeEditorLight({
   };
 
   const handleInputKeyPress = (e) => {
-    if (e.key === "Enter" && waitingForInput) {
+    if (e.key === "Enter") {
       e.preventDefault();
-      handleInputSubmit();
+
+      // Check if we're waiting for any kind of input (debug or normal execution)
+      if (
+        (isDebugging && debugWaitingForInput) ||
+        (waitingForInput && inputResolver)
+      ) {
+        handleInputSubmit();
+      }
     }
   };
   // #endregion
@@ -1166,40 +1096,32 @@ export function CodeEditorLight({
             ) : (
               <>
                 <Button
-                  onClick={continueExecution}
-                  disabled={isRunning}
+                  onClick={stepDebug}
+                  disabled={isStepInProgress || debugWaitingForInput}
                   variant="outline"
                   size="sm"
-                  className="text-green-600 border-green-600 hover:bg-green-50"
+                  className={`${
+                    isStepInProgress || debugWaitingForInput
+                      ? "text-gray-400 border-gray-400"
+                      : "text-blue-600 border-blue-600 hover:bg-blue-50"
+                  } transition-all duration-200`}
+                  title={
+                    debugWaitingForInput ? "Waiting for input" : "Step Over"
+                  }
                 >
-                  <Play className="h-4 w-4" />
+                  {isStepInProgress ? (
+                    <div className="w-4 h-4 animate-spin rounded-full border-2 border-gray-400 border-t-transparent"></div>
+                  ) : (
+                    <ChevronRight className="h-4 w-4" />
+                  )}
                 </Button>
                 <Button
-                  onClick={stepOver}
-                  variant="outline"
+                  onClick={stopDebugging}
+                  variant="destructive"
                   size="sm"
-                  className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                  title="Stop Debug"
                 >
-                  <StepForward className="h-4 w-4" />
-                </Button>
-                <Button
-                  onClick={stepInto}
-                  variant="outline"
-                  size="sm"
-                  className="text-purple-600 border-purple-600 hover:bg-purple-50"
-                >
-                  <StepInto className="h-4 w-4" />
-                </Button>
-                <Button
-                  onClick={stepOut}
-                  variant="outline"
-                  size="sm"
-                  className="text-orange-600 border-orange-600 hover:bg-orange-50"
-                >
-                  <StepOut className="h-4 w-4" />
-                </Button>
-                <Button onClick={stopDebugging} variant="destructive" size="sm">
-                  <Square className="h-4 w-4" />
+                  <Square className="h-4 w-4 fill-current" />
                 </Button>
               </>
             )}
@@ -1269,8 +1191,8 @@ export function CodeEditorLight({
         {/* Editor and Right Panel Container */}
         <div className="flex flex-1 min-h-0">
           {/* Left Side - Code Editor with Breakpoints */}
-          <div className="flex-1 flex flex-col border-r border-gray-200/50 min-w-0">
-            <div className="flex-1 flex min-h-0">
+          <div className="flex-1 flex flex-col border-r border-gray-200/50 min-w-0 editor-left-column">
+            <div className="flex flex-1 min-h-0">
               {/* Breakpoint gutter and line numbers */}
               <div className="flex bg-white border-r">
                 {/* Breakpoint gutter */}
@@ -1286,7 +1208,7 @@ export function CodeEditorLight({
                         className="flex items-center justify-center cursor-pointer hover:bg-gray-200 transition-colors duration-150"
                         onClick={() => toggleBreakpoint(lineNumber)}
                         style={{
-                          height: "22px", // Exact match with Monaco editor line height
+                          height: "22px",
                           lineHeight: "22px",
                           fontSize: "14px",
                         }}
@@ -1306,7 +1228,7 @@ export function CodeEditorLight({
                       key={index + 1}
                       className="flex items-center justify-end pr-2 text-gray-500"
                       style={{
-                        height: "22px", // Exact match with Monaco editor line height
+                        height: "22px",
                         lineHeight: "22px",
                         fontSize: "12px",
                       }}
@@ -1318,7 +1240,7 @@ export function CodeEditorLight({
               </div>
 
               {/* Code Area */}
-              <div className="flex-1 relative min-w-0">
+              <div className="flex-1 relative min-w-0 monaco-editor-container">
                 <Editor
                   height="100%"
                   language="isipython"
@@ -1329,16 +1251,16 @@ export function CodeEditorLight({
                   options={{
                     minimap: { enabled: false },
                     fontSize: 14,
-                    lineNumbers: "off", // We're showing custom line numbers
+                    lineNumbers: "off",
                     scrollBeyondLastLine: false,
                     automaticLayout: true,
                     wordWrap: "on",
-                    lineHeight: 22, // Match our gutter height exactly
+                    lineHeight: 22,
                     glyphMargin: false,
                     folding: false,
                     lineDecorationsWidth: 0,
                     lineNumbersMinChars: 0,
-                    padding: { top: 0, bottom: 0 }, // Remove extra padding
+                    padding: { top: 0, bottom: 0 },
                   }}
                 />
 
@@ -1347,13 +1269,29 @@ export function CodeEditorLight({
                   <div
                     className="absolute left-0 right-0 bg-yellow-200 opacity-50 pointer-events-none z-10"
                     style={{
-                      top: `${(currentLine - 1) * 22}px`, // Match exact line height
+                      top: `${(currentLine - 1) * 22}px`,
                       height: "22px",
                     }}
                   />
                 )}
               </div>
             </div>
+
+            {/* Debug Panel */}
+            {showDebugPanel && (
+              <DebugPanel
+                isVisible={showDebugPanel}
+                onClose={handleDebugPanelClose}
+                variables={debugVariables}
+                currentLine={currentLine}
+                isDebugging={isDebugging}
+                panelHeight={debugPanelHeight}
+                onPanelHeightChange={handleDebugPanelHeightChange}
+                isResizing={isResizingDebugPanel}
+                onResizeStart={handleDebugResizeStart}
+                onResizeEnd={handleDebugResizeEnd}
+              />
+            )}
           </div>
 
           {/* Right Panel - Input/Output */}
@@ -1381,7 +1319,9 @@ export function CodeEditorLight({
               <CardContent className="flex-1 space-y-3 p-3">
                 <div
                   className={`relative ${
-                    waitingForInput ? "input-waiting" : ""
+                    waitingForInput || debugWaitingForInput
+                      ? "input-waiting"
+                      : ""
                   }`}
                 >
                   <Textarea
@@ -1389,20 +1329,24 @@ export function CodeEditorLight({
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleInputKeyPress}
                     placeholder={
-                      waitingForInput
+                      debugWaitingForInput
+                        ? "Debug is waiting for input... Press Enter to submit"
+                        : waitingForInput
                         ? "Program is waiting for input... Press Enter to submit"
                         : "Enter input for your program..."
                     }
                     className={`relative z-10 resize-none h-20 focus:ring-2 transition-all duration-300 ${
-                      waitingForInput
+                      waitingForInput || debugWaitingForInput
                         ? "bg-cyan-50 border-cyan-400 text-cyan-900 placeholder-cyan-600 focus:ring-cyan-400/50 shadow-lg shadow-cyan-400/20"
                         : "bg-gradient-to-br from-gray-50 to-gray-100 border-gray-300/50 text-gray-900 placeholder-gray-500 focus:ring-cyan-400/30"
                     }`}
-                    disabled={isRunning && !waitingForInput}
-                    autoFocus={waitingForInput}
+                    disabled={
+                      isRunning && !waitingForInput && !debugWaitingForInput
+                    }
+                    autoFocus={waitingForInput || debugWaitingForInput}
                   />
 
-                  {waitingForInput && (
+                  {(waitingForInput || debugWaitingForInput) && (
                     <>
                       <div className="absolute inset-0 -z-10 rounded-md">
                         <div className="absolute inset-0 rounded-md bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 opacity-30"></div>
@@ -1421,12 +1365,14 @@ export function CodeEditorLight({
                 <div className="flex items-center justify-between">
                   <p
                     className={`text-xs p-2 rounded-lg border transition-all duration-300 flex-1 ${
-                      waitingForInput
+                      waitingForInput || debugWaitingForInput
                         ? "text-cyan-700 bg-cyan-50/80 border-cyan-200"
                         : "text-gray-600 bg-blue-50/50 border-blue-200/50"
                     }`}
                   >
-                    {waitingForInput
+                    {debugWaitingForInput
+                      ? "🐛 Debug session is waiting for your input! Type above and press Enter to continue debugging..."
+                      : waitingForInput
                       ? "⚡ Program is waiting for your input! Type above and press Enter to continue..."
                       : "💡 If your code takes input, add it in the above box before running"}
                   </p>
@@ -1469,224 +1415,6 @@ export function CodeEditorLight({
             </Card>
           </div>
         </div>
-
-        {/* Bottom Debug Panel */}
-        {showDebugPanel && (
-          <div
-            className="border-t border-gray-200/50 bg-white/95 backdrop-blur-xl relative flex-shrink-0"
-            style={{ height: `${debugPanelHeight}px` }}
-          >
-            {/* Resize handle for debug panel */}
-            <div
-              className="absolute left-0 right-0 top-0 h-1 bg-transparent hover:bg-cyan-400 cursor-row-resize transition-colors duration-200"
-              onMouseDown={handleDebugPanelMouseDown}
-              title="Drag to resize debug panel"
-            >
-              <div className="absolute left-1/2 top-0 transform -translate-x-1/2 w-16 h-1 bg-gray-300 rounded-full opacity-0 hover:opacity-100 transition-opacity duration-200"></div>
-            </div>
-
-            {/* Debug Panel Header */}
-            <div className="flex items-center justify-between p-3 border-b border-gray-200/50">
-              <div className="flex items-center gap-2">
-                <Bug className="w-4 h-4 text-green-600" />
-                <span className="font-semibold text-gray-900">Debug Panel</span>
-                {isDebugging && (
-                  <Badge className="bg-green-100 text-green-700 border-green-300 flex items-center gap-1">
-                    <Dot className="w-3 h-3 fill-green-500 text-green-500" />
-                    Active
-                  </Badge>
-                )}
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setShowDebugPanel(false)}
-                className="text-gray-600 hover:text-red-600 hover:bg-red-50 h-6 w-6"
-              >
-                <ChevronDown className="w-3 h-3" />
-              </Button>
-            </div>
-
-            {/* Debug Tabs */}
-            <Tabs
-              defaultValue="variables"
-              className="flex-1 flex flex-col min-h-0"
-            >
-              <div className="px-3 pt-2 flex-shrink-0">
-                <TabsList className="grid w-full grid-cols-4">
-                  <TabsTrigger value="variables" className="text-xs">
-                    <Eye className="h-3 w-3 mr-1" />
-                    Variables
-                  </TabsTrigger>
-                  <TabsTrigger value="callstack" className="text-xs">
-                    <Layers className="h-3 w-3 mr-1" />
-                    Stack
-                  </TabsTrigger>
-                  <TabsTrigger value="debugoutput" className="text-xs">
-                    <Terminal className="h-3 w-3 mr-1" />
-                    Debug Output
-                  </TabsTrigger>
-                  <TabsTrigger value="console" className="text-xs">
-                    <Settings className="h-3 w-3 mr-1" />
-                    Console
-                  </TabsTrigger>
-                </TabsList>
-              </div>
-
-              <TabsContent
-                value="variables"
-                className="flex-1 p-0 mt-2 min-h-0 overflow-hidden"
-              >
-                <Card className="h-full rounded-none border-0 flex flex-col">
-                  <CardContent className="p-0 flex-1 min-h-0">
-                    <ScrollArea className="h-full w-full">
-                      <div className="divide-y divide-gray-200">
-                        {variables.map((variable, index) => (
-                          <div
-                            key={index}
-                            className="flex items-center justify-between p-3 hover:bg-gray-50 transition-colors duration-150"
-                          >
-                            <div className="flex-1 min-w-0">
-                              <div className="font-mono text-sm font-semibold text-gray-800 truncate">
-                                {variable.name}
-                              </div>
-                              <div className="text-xs text-gray-500">
-                                {variable.type}
-                              </div>
-                            </div>
-                            <div className="font-mono text-sm text-blue-600 bg-blue-50 px-2 py-1 rounded border ml-2 flex-shrink-0">
-                              {variable.value}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </ScrollArea>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent
-                value="callstack"
-                className="flex-1 p-0 mt-2 min-h-0 overflow-hidden"
-              >
-                <Card className="h-full rounded-none border-0 flex flex-col">
-                  <CardContent className="p-0 flex-1 min-h-0">
-                    <ScrollArea className="h-full w-full">
-                      <div className="divide-y divide-gray-200">
-                        {callStack.map((frame, index) => (
-                          <div
-                            key={index}
-                            className="p-3 hover:bg-gray-50 cursor-pointer transition-colors duration-200 border-l-4 border-transparent hover:border-purple-300"
-                          >
-                            <div className="font-mono text-sm font-semibold text-purple-700">
-                              {frame.function}
-                            </div>
-                            <div className="text-xs text-gray-500 mt-1">
-                              📁 {frame.file}:{frame.line}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </ScrollArea>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent
-                value="debugoutput"
-                className="flex-1 p-0 mt-2 min-h-0 overflow-hidden"
-              >
-                <Card className="h-full rounded-none border-0 flex flex-col">
-                  <CardContent className="p-0 flex-1 min-h-0">
-                    <ScrollArea className="h-full w-full">
-                      <div className="bg-gradient-to-br from-slate-50 to-gray-100 border-2 border-gray-200/70 rounded-lg m-2 p-4 shadow-inner">
-                        <pre className="text-sm font-mono text-slate-700 whitespace-pre-wrap break-words leading-relaxed">
-                          {debugOutput ||
-                            "Debug output will appear here...\n\nThis area will show:\n• Step-by-step execution logs\n• Variable changes\n• Function calls and returns\n• Breakpoint hits\n• Error messages\n• Debug session status\n\nStart debugging to see real-time information!"}
-                        </pre>
-                      </div>
-                    </ScrollArea>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent
-                value="console"
-                className="flex-1 p-0 mt-2 min-h-0 overflow-hidden"
-              >
-                <Card className="h-full rounded-none border-0 flex flex-col">
-                  <CardContent className="p-0 flex-1 min-h-0 flex flex-col">
-                    <ScrollArea className="flex-1 min-h-0">
-                      <div className="bg-gradient-to-br from-slate-50 to-gray-100 border-2 border-gray-200/70 rounded-lg m-2 p-4 shadow-inner">
-                        <div className="text-sm font-mono text-slate-600 space-y-2">
-                          <div>
-                            <span className="text-cyan-600">{"> "}</span>
-                            <span className="text-gray-500">
-                              Interactive console ready...
-                            </span>
-                          </div>
-                          <div>
-                            <span className="text-cyan-600">{"> "}</span>
-                            <span className="text-gray-700">
-                              print("Hello, World!")
-                            </span>
-                          </div>
-                          <div className="text-gray-600 ml-2">
-                            Hello, World!
-                          </div>
-                          <div>
-                            <span className="text-cyan-600">{"> "}</span>
-                            <span className="text-gray-700">2 + 2</span>
-                          </div>
-                          <div className="text-blue-600 ml-2">4</div>
-                          <div>
-                            <span className="text-cyan-600">{"> "}</span>
-                            <span className="text-gray-700">fibonacci(5)</span>
-                          </div>
-                          <div className="text-blue-600 ml-2">5</div>
-                          <div>
-                            <span className="text-cyan-600">{"> "}</span>
-                            <span className="text-gray-700">
-                              len([1, 2, 3, 4, 5])
-                            </span>
-                          </div>
-                          <div className="text-blue-600 ml-2">5</div>
-                          <div>
-                            <span className="text-cyan-600">{"> "}</span>
-                            <span className="text-gray-500">
-                              You can evaluate expressions here during
-                              debugging...
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </ScrollArea>
-                    <Separator />
-                    <div className="p-3 bg-white border-t flex-shrink-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-cyan-600 font-mono text-sm flex-shrink-0">
-                          {"> "}
-                        </span>
-                        <input
-                          type="text"
-                          placeholder="Evaluate expression..."
-                          className="flex-1 text-sm font-mono bg-transparent border-none outline-none text-gray-700 placeholder-gray-400"
-                          onKeyPress={(e) => {
-                            if (e.key === "Enter") {
-                              // Handle console input
-                              console.log("Console input:", e.target.value);
-                              e.target.value = "";
-                            }
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-          </div>
-        )}
       </div>
 
       {/* Status Bar */}
@@ -1730,6 +1458,8 @@ export function CodeEditorLight({
               <span className="flex items-center gap-2 text-green-600">
                 <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
                 Debugging
+                {currentLine && ` - Line ${currentLine}`}
+                {debugWaitingForInput && " (Waiting for input)"}
               </span>
             )}
             <span

@@ -1,0 +1,136 @@
+import { useEffect, useState } from "react";
+
+export default function HardcodedFileTest() {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const testFetchFiles = async () => {
+      const userId = "dd7e5366-feb8-4189-8e92-8419fe77c1f2";
+      const apiUrl = `https://isipython-dev.onrender.com/api/saved/${userId}`;
+
+      try {
+        setLoading(true);
+        const response = await fetch(apiUrl);
+        const result = await response.json();
+        setData({ response, result, apiUrl, userId });
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    testFetchFiles();
+  }, []);
+
+  if (loading) {
+    return (
+      <div style={{ padding: "20px", fontFamily: "monospace" }}>
+        <p>🔄 Loading...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{ padding: "20px", fontFamily: "monospace" }}>
+        <p>💥 Error: {error}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      style={{ padding: "20px", fontFamily: "monospace", lineHeight: "1.6" }}
+    >
+      <p>
+        <strong>🚀 Testing API call for user:</strong> {data.userId}
+      </p>
+      <p>
+        <strong>🔗 API URL:</strong> {data.apiUrl}
+      </p>
+      <p>
+        <strong>📡 Response status:</strong> {data.response.status}
+      </p>
+      <p>
+        <strong>✅ Response OK:</strong> {data.response.ok ? "true" : "false"}
+      </p>
+      <p>
+        <strong>📊 API Success:</strong>{" "}
+        {data.result.success ? "true" : "false"}
+      </p>
+      <p>
+        <strong>🔢 Number of files:</strong>{" "}
+        {data.result.data ? data.result.data.length : 0}
+      </p>
+
+      <hr />
+
+      <p>
+        <strong>📄 Full API Response:</strong>
+      </p>
+      <pre style={{ background: "#f5f5f5", padding: "10px", overflow: "auto" }}>
+        {JSON.stringify(data.result, null, 2)}
+      </pre>
+
+      {data.result.data && data.result.data.length > 0 ? (
+        <div>
+          <p>
+            <strong>🎉 FILES FOUND!</strong>
+          </p>
+          {data.result.data.map((file, index) => (
+            <div
+              key={index}
+              style={{
+                marginBottom: "15px",
+                border: "1px solid #ddd",
+                padding: "10px",
+              }}
+            >
+              <p>
+                <strong>📄 File {index + 1}:</strong>
+              </p>
+              <p>
+                <strong>ID:</strong> {file.id}
+              </p>
+              <p>
+                <strong>Title:</strong> {file.title}
+              </p>
+              <p>
+                <strong>Code Length:</strong> {file.data ? file.data.length : 0}{" "}
+                characters
+              </p>
+              <p>
+                <strong>Created:</strong> {file.created_at}
+              </p>
+              <p>
+                <strong>Updated:</strong> {file.updated_at}
+              </p>
+              <p>
+                <strong>Code Preview:</strong>
+              </p>
+              <pre
+                style={{
+                  background: "#f9f9f9",
+                  padding: "5px",
+                  fontSize: "12px",
+                }}
+              >
+                {file.data
+                  ? file.data.substring(0, 200) +
+                    (file.data.length > 200 ? "..." : "")
+                  : "No code"}
+              </pre>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p>
+          <strong>😔 No files found for this user</strong>
+        </p>
+      )}
+    </div>
+  );
+}
