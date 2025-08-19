@@ -30,6 +30,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 const challenges = [
   {
@@ -145,6 +146,7 @@ const categories = [
 ];
 
 export function ChallengesLight() {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedDifficulty, setSelectedDifficulty] = useState("All");
@@ -204,16 +206,16 @@ export function ChallengesLight() {
           <div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-purple-800 bg-clip-text text-transparent mb-2 flex items-center gap-3">
               <Trophy className="w-8 h-8 text-cyan-500" />
-              Coding Challenges
+              {t("Coding Challenges")}
             </h1>
             <p className="text-gray-600">
-              Test your Python skills with our curated challenges
+              {t("Test your Python skills with our curated challenges")}
             </p>
           </div>
           <div className="flex items-center gap-2 text-cyan-600">
             <Flame className="w-4 h-4 animate-pulse" />
             <span className="text-sm font-medium bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent">
-              CHALLENGE MODE
+              {t("CHALLENGE MODE")}
             </span>
           </div>
         </div>
@@ -231,7 +233,7 @@ export function ChallengesLight() {
                   <p className="text-2xl font-bold bg-gradient-to-r from-cyan-600 to-blue-700 bg-clip-text text-transparent">
                     2
                   </p>
-                  <p className="text-xs text-gray-600">Completed</p>
+                  <p className="text-xs text-gray-600">{t("Completed")}</p>
                 </div>
               </div>
             </CardContent>
@@ -248,7 +250,7 @@ export function ChallengesLight() {
                   <p className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-700 bg-clip-text text-transparent">
                     125
                   </p>
-                  <p className="text-xs text-gray-600">Points Earned</p>
+                  <p className="text-xs text-gray-600">{t("Points Earned")}</p>
                 </div>
               </div>
             </CardContent>
@@ -265,7 +267,7 @@ export function ChallengesLight() {
                   <p className="text-2xl font-bold bg-gradient-to-r from-green-600 to-emerald-700 bg-clip-text text-transparent">
                     87%
                   </p>
-                  <p className="text-xs text-gray-600">Success Rate</p>
+                  <p className="text-xs text-gray-600">{t("Success Rate")}</p>
                 </div>
               </div>
             </CardContent>
@@ -282,7 +284,7 @@ export function ChallengesLight() {
                   <p className="text-2xl font-bold bg-gradient-to-r from-orange-600 to-red-700 bg-clip-text text-transparent">
                     #73
                   </p>
-                  <p className="text-xs text-gray-600">Global Rank</p>
+                  <p className="text-xs text-gray-600">{t("Class Rank")}</p>
                 </div>
               </div>
             </CardContent>
@@ -294,7 +296,7 @@ export function ChallengesLight() {
           <div className="relative flex-1 min-w-64">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
             <Input
-              placeholder="Search challenges..."
+              placeholder={t("Search challenges...")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 bg-white/70 border-gray-300/50 text-gray-900 placeholder-gray-500 focus:border-cyan-400 focus:ring-cyan-400/30 focus:ring-2 backdrop-blur-sm shadow-sm"
@@ -303,7 +305,7 @@ export function ChallengesLight() {
 
           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
             <SelectTrigger className="w-48 bg-white/70 border-gray-300/50 text-gray-900 focus:border-cyan-400 focus:ring-cyan-400/30 backdrop-blur-sm shadow-sm">
-              <SelectValue placeholder="All" />
+              <SelectValue placeholder={t("All")} />
             </SelectTrigger>
             <SelectContent className="bg-white/95 backdrop-blur-xl border-gray-200/50 shadow-xl">
               {categories.map((category) => (
@@ -323,7 +325,7 @@ export function ChallengesLight() {
             onValueChange={setSelectedDifficulty}
           >
             <SelectTrigger className="w-32 bg-white/70 border-gray-300/50 text-gray-900 focus:border-cyan-400 focus:ring-cyan-400/30 backdrop-blur-sm shadow-sm">
-              <SelectValue placeholder="All" />
+              <SelectValue placeholder={t("All")} />
             </SelectTrigger>
             <SelectContent className="bg-white/95 backdrop-blur-xl border-gray-200/50 shadow-xl">
               <SelectItem
@@ -418,7 +420,7 @@ export function ChallengesLight() {
                     {challenge.isCompleted && (
                       <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-white border-0 shadow-md">
                         <Sparkles className="w-3 h-3 mr-1" />
-                        Complete
+                        {t("Complete")}
                       </Badge>
                     )}
                   </div>
@@ -498,12 +500,12 @@ export function ChallengesLight() {
                       {challenge.isCompleted ? (
                         <>
                           <Activity className="w-4 h-4" />
-                          Review Solution
+                          {t("Review Solution")}
                         </>
                       ) : (
                         <>
                           <Zap className="w-4 h-4" />
-                          Start Challenge
+                          {t("Start Challenge")}
                         </>
                       )}
                       <ChevronRight className="w-4 h-4" />
@@ -521,10 +523,10 @@ export function ChallengesLight() {
               <Search className="w-8 h-8 text-gray-500" />
             </div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">
-              No challenges found
+              {t("No challenges found")}
             </h3>
             <p className="text-gray-600">
-              Try adjusting your search or filter criteria
+              {t("Try adjusting your search or filter criteria")}
             </p>
           </div>
         )}

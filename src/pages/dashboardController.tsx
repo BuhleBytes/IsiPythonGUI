@@ -7,6 +7,7 @@ import { DashboardLight } from "./Dashboard Light Mode/dashboard-light";
 import EditorLightPage from "./Dashboard Light Mode/editor-light-page";
 import Component from "./Dashboard Light Mode/glossary";
 import { QuizzesLight } from "./Dashboard Light Mode/quizzes-light";
+import { SettingsLight } from "./Dashboard Light Mode/settings-light";
 import { SidebarLight } from "./Dashboard Light Mode/sidebar-light";
 
 export default function DashboardLightPage() {
@@ -99,7 +100,7 @@ export default function DashboardLightPage() {
       case "learn":
         return <div className="p-8">Learn Component Coming Soon...</div>;
       case "settings":
-        return <div className="p-8">Settings Component Coming Soon...</div>;
+        return <SettingsLight />;
       default:
         return (
           <DashboardLight

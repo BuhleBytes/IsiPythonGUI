@@ -50,12 +50,9 @@ export function DebugPanel({
     const handleMouseMove = (e: MouseEvent) => {
       if (!isResizing) return;
 
-      // Get the debug panel container
-      const debugContainer = e.target?.closest(".flex-1")?.parentElement;
-      if (!debugContainer) return;
-
-      const containerRect = debugContainer.getBoundingClientRect();
-      const newHeight = containerRect.bottom - e.clientY;
+      // Calculate new height based on mouse position from bottom of viewport
+      const viewportHeight = window.innerHeight;
+      const newHeight = viewportHeight - e.clientY;
       const minHeight = 180;
       const maxHeight = window.innerHeight * 0.4;
 
@@ -89,7 +86,7 @@ export function DebugPanel({
 
   return (
     <div
-      className="border-t border-gray-200/50 bg-white/95 backdrop-blur-xl relative flex-shrink-0"
+      className="border-t border-gray-200/50 bg-white/95 backdrop-blur-xl relative flex-shrink-0 flex flex-col"
       style={{
         height: `${panelHeight}px`,
         marginLeft: "81px", // 32px (w-8 breakpoint) + 48px (w-12 line numbers) + 1px border

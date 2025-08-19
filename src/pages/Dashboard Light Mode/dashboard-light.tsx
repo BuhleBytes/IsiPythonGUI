@@ -35,6 +35,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useUser } from "../../useUser";
 import { useUserFiles } from "../../useUserFiles"; // Import the new hook
 interface DashboardLightProps {
@@ -57,6 +58,7 @@ export function DashboardLight({
   const [fileID, setFileID] = useState<string | null>();
 
   const { firstName } = useUser();
+  const { t } = useTranslation();
 
   // Use the custom hook for file operations
   const {
@@ -69,14 +71,20 @@ export function DashboardLight({
     getFilteredFiles,
   } = useUserFiles();
 
-  const fileTypes = ["All", "IsiPython"];
-  const timePeriods = ["All", "Today", "This Week", "This Month", "Older"];
+  const fileTypes = [t("All"), "IsiPython"];
+  const timePeriods = [
+    t("All"),
+    t("Today"),
+    t("This Week"),
+    t("This Month"),
+    t("Older"),
+  ];
 
   // Updated quickActions with proper handleCreateFile function
   const handleCreateFile = () => {
     if (onViewChange) {
       onViewChange("editor", {
-        content: "# Write code for your new file",
+        content: t("# Write code for your new file"),
         filename: "untitled.isi",
         isNewFile: true,
       });
@@ -85,24 +93,24 @@ export function DashboardLight({
 
   const quickActions = [
     {
-      title: "Yenza ifayile entsha",
-      description: "Qala iprojekthi entsha ka-IsiPython",
+      title: t("Creat New File"),
+      description: t("Start your coding journey"),
       icon: FileText,
       gradient: "from-cyan-500 via-blue-500 to-indigo-600",
       hoverGradient: "from-cyan-600 via-blue-600 to-indigo-700",
       action: handleCreateFile,
     },
     {
-      title: "Qalisa iprojekthi entsha ye-IsiPython",
-      description: "Ziqeqeshe ngemingeni yokukoda",
+      title: t("Start Challenge"),
+      description: t("Practice with coding challenges"),
       icon: Trophy,
       gradient: "from-purple-500 via-pink-500 to-rose-600",
       hoverGradient: "from-purple-600 via-pink-600 to-rose-700",
       action: () => onViewChange && onViewChange("challenges"),
     },
     {
-      title: "Yenza Ikhwizi",
-      description: "Vavanya ulwazi lwakho lwe-IsiPython",
+      title: t("Take Quiz"),
+      description: t("Test your python knowledge"),
       icon: GraduationCap,
       gradient: "from-green-500 via-emerald-500 to-teal-600",
       hoverGradient: "from-green-600 via-emerald-600 to-teal-700",
@@ -110,6 +118,7 @@ export function DashboardLight({
     },
   ];
 
+  //Change this to recent actions
   const learningPath = [
     {
       title: "IsiPython Basics",
@@ -257,7 +266,7 @@ export function DashboardLight({
           <div className="flex items-center gap-3">
             <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-white border-0 flex items-center gap-2 px-3 py-1 shadow-md">
               <Activity className="w-3 h-3 animate-pulse" />
-              ACTIVE
+              {t("ACTIVE")}
             </Badge>
             <Button
               variant="ghost"
@@ -290,11 +299,11 @@ export function DashboardLight({
         {/* Welcome Section */}
         <div className="space-y-3">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-purple-800 bg-clip-text text-transparent flex items-center gap-3">
-            Wamkelekile kwakhona , {firstName}
+            {t("Welcome back")} , {firstName}
             <Sparkles className="w-8 h-8 text-cyan-500 animate-pulse" />
           </h1>
           <p className="text-lg text-gray-600">
-            Qhubeka nohambo lwakho lwePython ngeIsiPython IDE
+            {t("Continue your Python journey with IsiPython IDE")}
           </p>
         </div>
 
@@ -304,7 +313,7 @@ export function DashboardLight({
             <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-blue-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
               <CardTitle className="text-sm font-medium text-gray-700">
-                Iifayile ozenzileyo
+                {t("Created files")}
               </CardTitle>
               <div className="p-2 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-lg shadow-md">
                 <FileText className="w-5 h-5 text-white" />
@@ -328,10 +337,10 @@ export function DashboardLight({
                 <div className="flex justify-between items-center">
                   <p className="text-sm text-gray-600 flex items-center gap-1">
                     <Star className="w-3 h-3 text-yellow-500" />
-                    Iifayile zika-IsiPython
+                    {t("IsiPython files")}
                   </p>
                   <Badge className="bg-cyan-100 text-cyan-700 border-cyan-300">
-                    Active
+                    {t("Active")}
                   </Badge>
                 </div>
               </div>
@@ -342,7 +351,7 @@ export function DashboardLight({
             <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-pink-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
               <CardTitle className="text-sm font-medium text-gray-700">
-                Iikhwizi Ezizanyiweyo
+                {t("Attempted Quizzes")}
               </CardTitle>
               <div className="p-2 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg shadow-md">
                 <GraduationCap className="w-5 h-5 text-white" />
@@ -362,7 +371,7 @@ export function DashboardLight({
                 <div className="flex justify-between items-center">
                   <p className="text-sm text-gray-600 flex items-center gap-1">
                     <Flame className="w-3 h-3 text-orange-500" />
-                    Umndilili wamanqaku: 87%
+                    {t("Average")}: 87%
                   </p>
                   <Badge className="bg-purple-100 text-purple-700 border-purple-300">
                     65%
@@ -376,7 +385,7 @@ export function DashboardLight({
             <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-emerald-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
               <CardTitle className="text-sm font-medium text-gray-700">
-                Inkqubela iyonke
+                {t("Overall progress")}
               </CardTitle>
               <div className="p-2 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg shadow-md">
                 <TrendingUp className="w-5 h-5 text-white" />
@@ -396,7 +405,7 @@ export function DashboardLight({
                 <div className="flex justify-between items-center">
                   <p className="text-sm text-gray-600 flex items-center gap-1">
                     <Sparkles className="w-3 h-3 text-green-500" />
-                    Inkqubela entle kakhulu!
+                    {t("Excellent!")}
                   </p>
                   <Badge className="bg-green-100 text-green-700 border-green-300">
                     92%
@@ -412,7 +421,7 @@ export function DashboardLight({
           <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-xl">
             <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-                Iifayile Zakutshanje
+                {t("Recent Files")}
               </CardTitle>
               <div className="flex items-center gap-3">
                 <Button
@@ -424,7 +433,7 @@ export function DashboardLight({
                   {filesLoading ? (
                     <Loader2 className="w-4 h-4 animate-spin mr-2" />
                   ) : null}
-                  Hlaziya
+                  {t("Refresh")}
                 </Button>
                 {files.length > 4 && (
                   <Button
@@ -432,7 +441,7 @@ export function DashboardLight({
                     onClick={() => setViewAllFiles(true)}
                     className="text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50 font-medium transition-all duration-300 hover:scale-105"
                   >
-                    Bona Konke
+                    {t("View all")}
                   </Button>
                 )}
               </div>
@@ -442,7 +451,7 @@ export function DashboardLight({
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="w-8 h-8 animate-spin text-cyan-600" />
                   <span className="ml-3 text-gray-600">
-                    Kulayishwa iifayile zakho...
+                    {t("Loading your files...")}
                   </span>
                 </div>
               ) : files.length === 0 ? (
@@ -451,17 +460,17 @@ export function DashboardLight({
                     <FileText className="w-8 h-8 text-gray-500" />
                   </div>
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    Akukho fayile okwangoku
+                    {t("There's currently no files")}
                   </h3>
                   <p className="text-gray-600 mb-4">
-                    Yenza ifayile yakho yokuqala ye-IsiPython ukuze uqalise
+                    {t("Create your first IsiPython file to get started")}
                   </p>
                   <Button
                     onClick={handleCreateFile}
                     className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white"
                   >
                     <FileText className="w-4 h-4 mr-2" />
-                    Yenza ifayile entsha
+                    {t("Creat New File")}
                   </Button>
                 </div>
               ) : (
@@ -481,10 +490,10 @@ export function DashboardLight({
                 <div>
                   <CardTitle className="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-2 flex items-center gap-3">
                     <FileText className="w-7 h-7 text-cyan-500" />
-                    Zonke Iifayile
+                    {t("All files")}
                   </CardTitle>
                   <p className="text-gray-600">
-                    Khangela uze ulawule iifayile zakho ze-IsiPython
+                    {t("Look and manage your Python files")}
                   </p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -497,14 +506,14 @@ export function DashboardLight({
                     {filesLoading ? (
                       <Loader2 className="w-4 h-4 animate-spin mr-2" />
                     ) : null}
-                    Hlaziya
+                    {t("Refresh")}
                   </Button>
                   <Button
                     variant="ghost"
                     onClick={() => setViewAllFiles(false)}
                     className="text-gray-600 hover:text-cyan-600 hover:bg-cyan-50 font-medium transition-all duration-300 hover:scale-105"
                   >
-                    Buyela kwiDashboard
+                    {t("Go back to Dashboard")}
                   </Button>
                 </div>
               </div>
@@ -523,7 +532,7 @@ export function DashboardLight({
                           {files.length}
                         </p>
                         <p className="text-xs text-gray-600">
-                          Iifayile Zizonke
+                          {t("All files")}
                         </p>
                       </div>
                     </div>
@@ -542,7 +551,7 @@ export function DashboardLight({
                           {fileTypes.length - 1}
                         </p>
                         <p className="text-xs text-gray-600">
-                          Iintlobo Zeefayile
+                          {t("File Types")}
                         </p>
                       </div>
                     </div>
@@ -561,10 +570,10 @@ export function DashboardLight({
                           {
                             files.filter(
                               (f) =>
-                                f.time.includes("hour") ||
-                                f.time.includes("day") ||
-                                f.time.includes("minute") ||
-                                f.time.includes("Just now")
+                                f.time.includes(t("hour")) ||
+                                f.time.includes(t("day")) ||
+                                f.time.includes(t("minute")) ||
+                                f.time.includes(t("Just now"))
                             ).length
                           }
                         </p>
@@ -592,7 +601,9 @@ export function DashboardLight({
                           ) / 10}
                           KB
                         </p>
-                        <p className="text-xs text-gray-600">Ubukhulu Bonke</p>
+                        <p className="text-xs text-gray-600">
+                          {t("Total Size")}
+                        </p>
                       </div>
                     </div>
                   </CardContent>
@@ -604,7 +615,7 @@ export function DashboardLight({
                 <div className="relative flex-1 min-w-64">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
                   <Input
-                    placeholder="Search files..."
+                    placeholder={t("Search files...")}
                     value={fileSearchQuery}
                     onChange={(e) => setFileSearchQuery(e.target.value)}
                     className="pl-10 bg-white/70 border-gray-300/50 text-gray-900 placeholder-gray-500 focus:border-cyan-400 focus:ring-cyan-400/30 focus:ring-2 backdrop-blur-sm shadow-sm"
@@ -658,7 +669,7 @@ export function DashboardLight({
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="w-8 h-8 animate-spin text-cyan-600" />
                   <span className="ml-3 text-gray-600">
-                    Kulayishwa iifayile zakho...
+                    {t("Loading your files...")}
                   </span>
                 </div>
               ) : (
@@ -688,8 +699,8 @@ export function DashboardLight({
                     </h3>
                     <p className="text-gray-600">
                       {files.length === 0
-                        ? "Create your first IsiPython file to get started"
-                        : "Try adjusting your search or filter criteria"}
+                        ? t("Create your first IsiPython file to get started")
+                        : t("Try adjusting your search or filter criteria")}
                     </p>
                   </div>
                 )}
@@ -704,7 +715,7 @@ export function DashboardLight({
             <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-xl">
               <CardHeader>
                 <CardTitle className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-                  Izenzo Ezikhawulezayo
+                  {t("Quick Actions")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -733,7 +744,7 @@ export function DashboardLight({
             <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-xl">
               <CardHeader>
                 <CardTitle className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-                  Indlela Yokufunda
+                  {t("Recent Activities")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">

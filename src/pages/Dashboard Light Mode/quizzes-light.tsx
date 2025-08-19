@@ -30,6 +30,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
 const quizzes = [
@@ -172,6 +173,7 @@ const categories = [
 ];
 
 export function QuizzesLight() {
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedStatus, setSelectedStatus] = useState("All");
@@ -302,15 +304,15 @@ export function QuizzesLight() {
               <div className="w-8 h-8 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-lg flex items-center justify-center shadow-lg">
                 <Brain className="w-5 h-5 text-white" />
               </div>
-              Python Quizzes
+              {t("IsiPython Quizzes")}
             </h1>
             <p className="text-gray-600">
-              Test your Python knowledge with interactive quizzes
+              {t("Test your isiPython knowledge with interactive quizzes")}
             </p>
           </div>
           <div className="flex items-center gap-2 bg-gradient-to-r from-cyan-400 to-blue-500 text-white px-4 py-2 rounded-full shadow-lg">
             <Zap className="w-4 h-4" />
-            <span className="text-sm font-medium">QUIZ MODE</span>
+            <span className="text-sm font-medium">{t("QUIZ MODE")}</span>
           </div>
         </div>
 
@@ -326,7 +328,7 @@ export function QuizzesLight() {
                   <p className="text-2xl font-bold text-gray-900">
                     {completedQuizzes}
                   </p>
-                  <p className="text-xs text-gray-600">Completed</p>
+                  <p className="text-xs text-gray-600">{t("Completed")}</p>
                 </div>
               </div>
             </CardContent>
@@ -342,7 +344,7 @@ export function QuizzesLight() {
                   <p className="text-2xl font-bold text-gray-900">
                     {averageScore}%
                   </p>
-                  <p className="text-xs text-gray-600">Average Score</p>
+                  <p className="text-xs text-gray-600">{t("Average Score")}</p>
                 </div>
               </div>
             </CardContent>
@@ -358,7 +360,7 @@ export function QuizzesLight() {
                   <p className="text-2xl font-bold text-gray-900">
                     {totalScore}/{totalPossible}
                   </p>
-                  <p className="text-xs text-gray-600">Total Points</p>
+                  <p className="text-xs text-gray-600">{t("Total Points")}</p>
                 </div>
               </div>
             </CardContent>
@@ -374,7 +376,7 @@ export function QuizzesLight() {
                   <p className="text-2xl font-bold text-gray-900">
                     #{Math.floor(Math.random() * 50) + 1}
                   </p>
-                  <p className="text-xs text-gray-600">Class Rank</p>
+                  <p className="text-xs text-gray-600">{t("Class Rank")}</p>
                 </div>
               </div>
             </CardContent>
@@ -386,7 +388,7 @@ export function QuizzesLight() {
           <div className="relative flex-1 min-w-64">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
             <Input
-              placeholder="Search quizzes..."
+              placeholder={t("Search quizzes...")}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10 bg-white/20 backdrop-blur-xl border-white/30 text-gray-900 placeholder-gray-500 shadow-lg"
@@ -412,9 +414,9 @@ export function QuizzesLight() {
             </SelectTrigger>
             <SelectContent className="bg-white/90 backdrop-blur-xl border-white/30">
               <SelectItem value="All">All</SelectItem>
-              <SelectItem value="available">Available</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-              <SelectItem value="upcoming">Upcoming</SelectItem>
+              <SelectItem value="available">{t("Available")}</SelectItem>
+              <SelectItem value="completed">{t("Completed")}</SelectItem>
+              <SelectItem value="upcoming">{t("Upcoming")}</SelectItem>
             </SelectContent>
           </Select>
 
@@ -423,10 +425,10 @@ export function QuizzesLight() {
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
             <SelectContent className="bg-white/90 backdrop-blur-xl border-white/30">
-              <SelectItem value="dueDate">Due Date</SelectItem>
-              <SelectItem value="datePosted">Date Posted</SelectItem>
-              <SelectItem value="totalMarks">Total Marks</SelectItem>
-              <SelectItem value="progress">Progress</SelectItem>
+              <SelectItem value="dueDate">{t("Due Date")}</SelectItem>
+              <SelectItem value="datePosted">{t("Date Posted")}</SelectItem>
+              <SelectItem value="totalMarks">{t("Total Marks")}</SelectItem>
+              <SelectItem value="progress">{t("Progress")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -490,7 +492,7 @@ export function QuizzesLight() {
                       <div className="flex items-center gap-2 mb-1">
                         <FileText className="w-4 h-4 text-cyan-600" />
                         <span className="text-xs text-gray-600">
-                          Total Marks
+                          {t("Total Marks")}
                         </span>
                       </div>
                       <p className="text-lg font-bold text-gray-900">
@@ -501,7 +503,9 @@ export function QuizzesLight() {
                     <div className="bg-white/30 backdrop-blur-xl rounded-lg p-3 shadow-lg">
                       <div className="flex items-center gap-2 mb-1">
                         <Calendar className="w-4 h-4 text-purple-600" />
-                        <span className="text-xs text-gray-600">Posted</span>
+                        <span className="text-xs text-gray-600">
+                          {t("Posted")}
+                        </span>
                       </div>
                       <p className="text-sm font-medium text-gray-900">
                         {formatDate(quiz.datePosted)}
@@ -519,7 +523,9 @@ export function QuizzesLight() {
                               : "text-green-600"
                           }`}
                         />
-                        <span className="text-xs text-gray-600">Due Date</span>
+                        <span className="text-xs text-gray-600">
+                          {t("Due Date")}
+                        </span>
                       </div>
                       <p
                         className={`text-sm font-medium ${
@@ -533,23 +539,27 @@ export function QuizzesLight() {
                         {formatDate(quiz.dueDate)}
                       </p>
                       {isOverdue && (
-                        <p className="text-xs text-red-600">Overdue</p>
+                        <p className="text-xs text-red-600">{t("Overdue")}</p>
                       )}
                       {isDueSoon && !isOverdue && (
-                        <p className="text-xs text-yellow-600">Due soon</p>
+                        <p className="text-xs text-yellow-600">
+                          {t("Due soon")}
+                        </p>
                       )}
                     </div>
 
                     <div className="bg-white/30 backdrop-blur-xl rounded-lg p-3 shadow-lg">
                       <div className="flex items-center gap-2 mb-1">
                         <Timer className="w-4 h-4 text-orange-600" />
-                        <span className="text-xs text-gray-600">Duration</span>
+                        <span className="text-xs text-gray-600">
+                          {t("Duration")}
+                        </span>
                       </div>
                       <p className="text-sm font-medium text-gray-900">
                         {quiz.duration}
                       </p>
                       <p className="text-xs text-gray-600">
-                        {quiz.questions} questions
+                        {quiz.questions} {t("questions")}
                       </p>
                     </div>
                   </div>
@@ -559,7 +569,7 @@ export function QuizzesLight() {
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-600 flex items-center gap-2">
                         <Users className="w-4 h-4" />
-                        Class Progress
+                        {t("Class Progress")}
                       </span>
                       <span className="text-gray-900 font-medium">
                         {quiz.completedStudents}/{quiz.totalStudents} (
@@ -579,7 +589,7 @@ export function QuizzesLight() {
                     <div className="bg-gradient-to-r from-green-400/20 to-emerald-500/20 backdrop-blur-xl border border-green-400/30 rounded-lg p-3 shadow-lg">
                       <div className="flex items-center justify-between">
                         <span className="text-green-700 font-medium">
-                          Your Score
+                          {t("Your Score")}
                         </span>
                         <div className="text-right">
                           <span className="text-2xl font-bold text-green-700">
@@ -589,7 +599,7 @@ export function QuizzesLight() {
                             {Math.round(
                               (quiz.userScore / quiz.totalMarks) * 100
                             )}
-                            % • {quiz.attempts} attempt(s)
+                            % • {quiz.attempts} {t("attempts")}
                           </p>
                         </div>
                       </div>
@@ -622,10 +632,10 @@ export function QuizzesLight() {
                     onClick={() => handleQuizNavigation(quiz.id, quiz.status)}
                   >
                     {quiz.status === "completed"
-                      ? "Review Quiz"
+                      ? t("Review Quiz")
                       : quiz.status === "upcoming"
-                      ? "Coming Soon"
-                      : "Start Quiz"}
+                      ? t("Coming Soon")
+                      : t("Start Quiz")}
                     <ChevronRight className="w-4 h-4 ml-2" />
                   </Button>
                 </CardContent>
@@ -640,10 +650,10 @@ export function QuizzesLight() {
               <Search className="w-8 h-8 text-gray-500" />
             </div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">
-              No quizzes found
+              {t("No quizzes found")}
             </h3>
             <p className="text-gray-600">
-              Try adjusting your search or filter criteria
+              {t("Try adjusting your search or filter criteria")}
             </p>
           </div>
         )}

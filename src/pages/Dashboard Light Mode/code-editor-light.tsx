@@ -35,6 +35,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { debugHelper, isDebugError } from "../../debugHelper";
 import { registerIsiPython } from "../../languages/isiPython";
 import { useUserFiles } from "../../useUserFiles";
@@ -113,6 +114,7 @@ export function CodeEditorLight({
     registerIsiPython(monaco);
   };
   const { saveNewFile } = useUserFiles();
+  const { t } = useTranslation();
   // #endregion
 
   // #region Basic Editor States
@@ -148,6 +150,7 @@ export function CodeEditorLight({
 
   // #region Auto-save States
   const outputRef = useRef<HTMLDivElement>(null);
+  const debugAllOutputRef = useRef<string[]>([]);
   const [autoSaveStatus, setAutoSaveStatus] = useState<
     "idle" | "saving" | "saved" | "error"
   >("idle");
@@ -177,6 +180,7 @@ export function CodeEditorLight({
       console.log("🚀 Starting debug session...");
       setIsDebugging(true);
       setShowDebugPanel(true);
+      debugAllOutputRef.current = []; // Reset the ref too
 
       const response = await debugHelper.startDebugSession(code);
       console.log("📥 Debug start response:", response);
@@ -194,24 +198,17 @@ export function CodeEditorLight({
       setCurrentLine(newCurrentLine);
       setDebugSessionId(response.session_id);
 
+      let debugMessage = "";
+      if (response.output) {
+        debugMessage += `${response.output}\n`;
+        debugAllOutputRef.current = [response.output]; // Update ref too
+      } else {
+        setOutput("");
+      }
+
       // Check if waiting for input
       if (isWaitingForInput(response)) {
         setDebugWaitingForInput(true);
-        setOutput(
-          `🚀 Debug session started at ${new Date().toLocaleTimeString()}\n` +
-            `🔧 Session ID: ${response.session_id}\n` +
-            `📍 Starting at line: ${newCurrentLine}\n` +
-            `${response.output || ""}\n` +
-            `⌨️  Program is waiting for input. Please enter input in the input box and press Enter.\n`
-        );
-      } else {
-        setOutput(
-          `🚀 Debug session started at ${new Date().toLocaleTimeString()}\n` +
-            `🔧 Session ID: ${response.session_id}\n` +
-            `📍 Starting at line: ${newCurrentLine}\n` +
-            `${response.output || ""}\n` +
-            `\n✅ Ready to step through code! Click "Step" to continue.\n`
-        );
       }
 
       // Update variables
@@ -227,6 +224,10 @@ export function CodeEditorLight({
       console.log("📊 Initial variables:", apiVariables);
       setDebugVariables(apiVariables);
 
+      if (debugMessage) {
+        setOutput((prev) => prev + debugMessage);
+      }
+
       console.log("✅ Debug session started successfully");
     } catch (error) {
       console.error("❌ Failed to start debugging:", error);
@@ -235,6 +236,7 @@ export function CodeEditorLight({
     }
   };
 
+  // Replace your stepDebug function:
   const stepDebug = async () => {
     if (!debugSessionId || isStepInProgress) return;
 
@@ -257,12 +259,35 @@ export function CodeEditorLight({
       console.log("📍 Moving to line:", newCurrentLine);
       setCurrentLine(newCurrentLine);
 
-      // Format debug output
-      const timestamp = new Date().toLocaleTimeString();
-      const currentLineCode = lines[newCurrentLine - 1]?.trim() || "N/A";
+      let debugMessage = "";
 
-      let debugMessage = `\n[${timestamp}] STEP: line ${newCurrentLine}\n`;
-      debugMessage += `🔍 Executing: ${currentLineCode}\n`;
+      // Handle output with deduplication using ref (like normal execution)
+      if (response.output) {
+        const currentOutput = response.output;
+        const currentDebugOutput = debugAllOutputRef.current;
+
+        if (!currentDebugOutput.includes(currentOutput)) {
+          if (currentDebugOutput.length > 0) {
+            const lastOutput =
+              currentDebugOutput[currentDebugOutput.length - 1];
+            if (currentOutput.startsWith(lastOutput)) {
+              const newPart = currentOutput
+                .slice(lastOutput.length)
+                .replace(/^\n+/, "");
+              if (newPart) {
+                debugMessage += `${newPart}\n`;
+              }
+            } else {
+              debugMessage += `${currentOutput}\n`;
+            }
+          } else {
+            debugMessage += `${currentOutput}\n`;
+          }
+
+          // Update both ref and state
+          debugAllOutputRef.current.push(currentOutput);
+        }
+      }
 
       // Update variables
       if (response.variables && typeof response.variables === "object") {
@@ -273,22 +298,13 @@ export function CodeEditorLight({
             type: typeof value,
           })
         );
-
         setDebugVariables(apiVariables);
-        debugMessage += `🔢 Variables in scope: ${apiVariables.length}\n`;
-      }
-
-      // Add program output if any
-      if (response.output) {
-        debugMessage += `📤 Program output: ${response.output}\n`;
       }
 
       // Check if waiting for input
       if (isWaitingForInput(response)) {
         setDebugWaitingForInput(true);
-        debugMessage += `⌨️  Waiting for user input: ${
-          response.prompt || "Enter input"
-        }\n`;
+        debugMessage += `${response.prompt || "Enter input"}\n`;
       } else {
         setDebugWaitingForInput(false);
       }
@@ -299,7 +315,9 @@ export function CodeEditorLight({
         stopDebugging();
       }
 
-      setOutput((prev) => prev + debugMessage);
+      if (debugMessage) {
+        setOutput((prev) => prev + debugMessage);
+      }
 
       console.log("✅ Step completed successfully");
     } catch (error) {
@@ -310,6 +328,7 @@ export function CodeEditorLight({
     }
   };
 
+  // Replace your provideDebugInput function:
   const provideDebugInput = async (inputValue: string) => {
     if (!debugSessionId) return;
 
@@ -335,12 +354,35 @@ export function CodeEditorLight({
       console.log("📍 Moving to line:", newCurrentLine);
       setCurrentLine(newCurrentLine);
 
-      // Format debug output
-      const timestamp = new Date().toLocaleTimeString();
-      const currentLineCode = lines[newCurrentLine - 1]?.trim() || "N/A";
+      let debugMessage = "";
 
-      let debugMessage = `\n[${timestamp}] INPUT PROVIDED: "${inputValue}"\n`;
-      debugMessage += `🔍 Executing: ${currentLineCode}\n`;
+      // Handle output with deduplication using ref (like normal execution)
+      if (response.output) {
+        const currentOutput = response.output;
+        const currentDebugOutput = debugAllOutputRef.current;
+
+        if (!currentDebugOutput.includes(currentOutput)) {
+          if (currentDebugOutput.length > 0) {
+            const lastOutput =
+              currentDebugOutput[currentDebugOutput.length - 1];
+            if (currentOutput.startsWith(lastOutput)) {
+              const newPart = currentOutput
+                .slice(lastOutput.length)
+                .replace(/^\n+/, "");
+              if (newPart) {
+                debugMessage += `${newPart}\n`;
+              }
+            } else {
+              debugMessage += `${currentOutput}\n`;
+            }
+          } else {
+            debugMessage += `${currentOutput}\n`;
+          }
+
+          // Update both ref and state
+          debugAllOutputRef.current.push(currentOutput);
+        }
+      }
 
       // Update variables
       if (response.variables && typeof response.variables === "object") {
@@ -351,22 +393,13 @@ export function CodeEditorLight({
             type: typeof value,
           })
         );
-
         setDebugVariables(apiVariables);
-        debugMessage += `🔢 Variables in scope: ${apiVariables.length}\n`;
-      }
-
-      // Add program output if any
-      if (response.output) {
-        debugMessage += `📤 Program output: ${response.output}\n`;
       }
 
       // Check if still waiting for more input
       if (isWaitingForInput(response)) {
         setDebugWaitingForInput(true);
-        debugMessage += `⌨️  Waiting for more input: ${
-          response.prompt || "Enter input"
-        }\n`;
+        debugMessage += `${response.prompt || "Enter input"}\n`;
       } else {
         setDebugWaitingForInput(false);
       }
@@ -377,7 +410,9 @@ export function CodeEditorLight({
         stopDebugging();
       }
 
-      setOutput((prev) => prev + debugMessage);
+      if (debugMessage) {
+        setOutput((prev) => prev + debugMessage);
+      }
 
       console.log("✅ Debug input provided successfully");
     } catch (error) {
@@ -395,16 +430,8 @@ export function CodeEditorLight({
     setCurrentLine(null);
     setDebugSessionId(null);
     setDebugVariables([]);
+    debugAllOutputRef.current = [];
     setDebugWaitingForInput(false);
-
-    setOutput(
-      (prev) =>
-        prev +
-        `\n🛑 Debug session ended at ${new Date().toLocaleTimeString()}\n` +
-        `✅ All resources cleaned up\n` +
-        `🎯 Session completed successfully!\n\n` +
-        `>>> Debug session terminated. Ready for next session.\n`
-    );
   };
   // #endregion
 
@@ -593,22 +620,17 @@ export function CodeEditorLight({
           const result = await saveNewFile(newFileName, code, fileId);
 
           if (result && (result.data || result.message)) {
-            setOutput(
-              `📝 File renamed to: ${newFileName}\n✨ Backend updated successfully!\n${
-                result.message || "Rename completed!"
-              }\n`
-            );
             setHasUnsavedChanges(false);
             lastSavedCodeRef.current = code;
           } else {
-            setOutput(
+            console.log(
               `❌ Failed to rename file to: ${newFileName}\n🔧 Backend update failed: ${
                 result?.error || result?.message || "Unknown error"
               }\n🔧 Please try again!\n`
             );
           }
         } catch (error) {
-          setOutput(
+          console.log(
             `❌ Network error while renaming file\n🔧 Please check your connection and try again!\n`
           );
         }
@@ -616,7 +638,7 @@ export function CodeEditorLight({
         if (onSave) {
           onSave(code, newFileName);
         }
-        setOutput(
+        console.log(
           `📝 File renamed to: ${newFileName}\n✨ Save the file to persist the name!\n`
         );
       }
@@ -674,9 +696,6 @@ export function CodeEditorLight({
   const handleRunCode = async () => {
     setIsRunning(true);
     setWaitingForInput(false);
-    setOutput(
-      "🚀 Initializing IsiPython execution environment...\n⚡ Loading IsiPython interpreter...\n🔥 Running your code...\n\n"
-    );
 
     let allOutput = [];
     let allErrors = [];
@@ -818,10 +837,7 @@ export function CodeEditorLight({
       } else if (result.completed) {
         setOutput(
           (prev) =>
-            prev +
-            `\n${"=".repeat(
-              50
-            )}\n✅ Process completed successfully\n💫 Execution finished`
+            prev + `\n${"=".repeat(50)}\n✅ Inkqubo igqibile ngempumelelo`
         );
       }
     } catch (error) {
@@ -890,7 +906,7 @@ export function CodeEditorLight({
       onSave(code, newFileName);
     }
     setHasUnsavedChanges(false);
-    setOutput(
+    console.log(
       `💾 File saved successfully: ${newFileName}\n✨ Your code is safe and sound!\n`
     );
   };
@@ -911,26 +927,12 @@ export function CodeEditorLight({
         lastSavedCodeRef.current = code;
         setLastAutoSaveTime(new Date());
         setAutoSaveStatus("saved");
-        setOutput(
-          `💾 File ${
-            fileId ? "updated" : "saved"
-          } successfully: ${currentFileName}\n✨ Your code is safe and sound!\n${
-            result.message || "Operation completed successfully!"
-          }\n`
-        );
 
         setTimeout(() => {
           setAutoSaveStatus("idle");
         }, 2000);
       } else {
         setAutoSaveStatus("error");
-        setOutput(
-          `❌ Failed to ${
-            fileId ? "update" : "save"
-          } file: ${currentFileName}\n🔧 Error: ${
-            result?.error || result?.message || "Invalid server response"
-          }\n🔧 Please try again!\n`
-        );
 
         setTimeout(() => {
           setAutoSaveStatus("idle");
@@ -938,13 +940,6 @@ export function CodeEditorLight({
       }
     } catch (error) {
       setAutoSaveStatus("error");
-      setOutput(
-        `❌ Network error while ${
-          fileId ? "updating" : "saving"
-        } file: ${currentFileName}\n🔧 Error: ${
-          error.message
-        }\n🔧 Please check your connection and try again!\n`
-      );
 
       setTimeout(() => {
         setAutoSaveStatus("idle");
@@ -954,9 +949,6 @@ export function CodeEditorLight({
 
   const handleCopyCode = () => {
     navigator.clipboard.writeText(code);
-    setOutput(
-      "📋 Code copied to clipboard!\n🎉 Ready to paste anywhere you need it!\n"
-    );
   };
 
   const handleDownloadCode = () => {
@@ -967,9 +959,6 @@ export function CodeEditorLight({
     a.download = currentFileName;
     a.click();
     URL.revokeObjectURL(url);
-    setOutput(
-      `📥 File downloaded: ${currentFileName}\n🎯 Check your downloads folder!\n`
-    );
   };
 
   const getAutoSaveStatusDisplay = () => {
@@ -1091,7 +1080,7 @@ export function CodeEditorLight({
                 size="sm"
               >
                 <Bug className="h-4 w-4 mr-2" />
-                Debug
+                {t("Debug")}
               </Button>
             ) : (
               <>
@@ -1173,12 +1162,12 @@ export function CodeEditorLight({
               {isRunning ? (
                 <>
                   <Square className="w-4 h-4 mr-2 animate-pulse" />
-                  Running
+                  {t("Running")}
                 </>
               ) : (
                 <>
                   <Play className="w-4 h-4 mr-2" />
-                  Run
+                  {t("Run")}
                 </>
               )}
             </Button>
@@ -1313,7 +1302,7 @@ export function CodeEditorLight({
               <CardHeader className="pb-3 flex-shrink-0">
                 <CardTitle className="text-sm font-semibold bg-gradient-to-r from-cyan-600 to-blue-700 bg-clip-text text-transparent flex items-center gap-2">
                   <Terminal className="w-4 h-4 text-cyan-600" />
-                  Python Input
+                  {t("Program Input")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="flex-1 space-y-3 p-3">
@@ -1330,10 +1319,14 @@ export function CodeEditorLight({
                     onKeyDown={handleInputKeyPress}
                     placeholder={
                       debugWaitingForInput
-                        ? "Debug is waiting for input... Press Enter to submit"
+                        ? t(
+                            "The debugger is waiting for your input! Write it above and press enter ro continue debugging..."
+                          )
                         : waitingForInput
-                        ? "Program is waiting for input... Press Enter to submit"
-                        : "Enter input for your program..."
+                        ? t(
+                            "The program is waiting for input! Write it above and press enter to continue"
+                          )
+                        : t("Enter input for your program...")
                     }
                     className={`relative z-10 resize-none h-20 focus:ring-2 transition-all duration-300 ${
                       waitingForInput || debugWaitingForInput
@@ -1356,7 +1349,7 @@ export function CodeEditorLight({
                         className="absolute right-2 bottom-2 z-20 bg-cyan-500 hover:bg-cyan-600 text-white px-3 py-1 rounded text-xs font-medium transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                         disabled={!input.trim()}
                       >
-                        Send
+                        {t("Send")}
                       </button>
                     </>
                   )}
@@ -1371,10 +1364,16 @@ export function CodeEditorLight({
                     }`}
                   >
                     {debugWaitingForInput
-                      ? "🐛 Debug session is waiting for your input! Type above and press Enter to continue debugging..."
+                      ? t(
+                          "🐛 The debugger is waiting for your input! Write it above and press enter ro continue debugging..."
+                        )
                       : waitingForInput
-                      ? "⚡ Program is waiting for your input! Type above and press Enter to continue..."
-                      : "💡 If your code takes input, add it in the above box before running"}
+                      ? t(
+                          "⚡ The program is waiting for input! Write it above and press enter to continue..."
+                        )
+                      : t(
+                          "💡 If your code requires input, enter it in the above box"
+                        )}
                   </p>
                 </div>
               </CardContent>
@@ -1386,7 +1385,7 @@ export function CodeEditorLight({
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm font-semibold bg-gradient-to-r from-purple-600 to-pink-700 bg-clip-text text-transparent flex items-center gap-2">
                     <ChevronRight className="w-4 h-4 text-purple-600" />
-                    Output
+                    {t("Output")}
                     {isRunning && (
                       <Activity className="w-3 h-3 text-green-500 animate-pulse" />
                     )}
@@ -1407,8 +1406,8 @@ export function CodeEditorLight({
                   className="bg-gradient-to-br from-slate-50 to-gray-100 border-2 border-gray-200/70 rounded-lg p-4 h-full overflow-y-auto shadow-inner"
                 >
                   <pre className="font-mono text-sm text-slate-700 whitespace-pre-wrap break-words">
-                    {output ||
-                      "🚀Output will appear here \n  \n  \n  \n  \n  \n"}
+                    {t(output) ||
+                      t("🚀Output will appear here \n  \n  \n  \n  \n  \n")}
                   </pre>
                 </div>
               </CardContent>
@@ -1447,7 +1446,7 @@ export function CodeEditorLight({
               ) : (
                 <ChevronUp className="w-3 h-3 mr-1" />
               )}
-              Debug Panel
+              Phonononga
             </Button>
           </div>
           <div className="flex items-center gap-4">
@@ -1472,7 +1471,7 @@ export function CodeEditorLight({
                   isRunning ? "bg-green-500 animate-pulse" : "bg-gray-400"
                 }`}
               ></div>
-              {isRunning ? "Executing" : "Ready"}
+              {isRunning ? t("Executing") : t("Ready")}
             </span>
           </div>
         </div>

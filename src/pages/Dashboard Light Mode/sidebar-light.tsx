@@ -13,38 +13,8 @@ import {
   Upload,
 } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { FileImport } from "../file-import";
-
-const mainItems = [
-  { title: "Ikhaya", url: "/dashboard-light", icon: Home, key: "home" },
-  {
-    title: "Umhleli Wekhowudi",
-    url: "/editor-light",
-    icon: Code,
-    key: "editor",
-  },
-  {
-    title: "Imingeni",
-    url: "/challenges-light",
-    icon: Trophy,
-    key: "challenges",
-  },
-  {
-    title: "IiKhwizi",
-    url: "/quizzes-light",
-    icon: GraduationCap,
-    key: "quizzes",
-  },
-];
-
-const exploreItems = [
-  {
-    title: "Uxwebhu",
-    url: "/documentation-light",
-    icon: HelpCircle,
-    key: "documentation",
-  },
-];
 
 interface SidebarLightProps {
   isOpen: boolean;
@@ -68,7 +38,38 @@ export function SidebarLight({
   onViewChange,
 }: SidebarLightProps) {
   const [showFileImport, setShowFileImport] = useState(false);
+  const { t } = useTranslation();
 
+  const mainItems = [
+    { title: t("Home"), url: "/dashboard-light", icon: Home, key: "home" },
+    {
+      title: t("Code Editor"),
+      url: "/editor-light",
+      icon: Code,
+      key: "editor",
+    },
+    {
+      title: t("Challenges"),
+      url: "/challenges-light",
+      icon: Trophy,
+      key: "challenges",
+    },
+    {
+      title: t("Quizzes"),
+      url: "/quizzes-light",
+      icon: GraduationCap,
+      key: "quizzes",
+    },
+  ];
+
+  const exploreItems = [
+    {
+      title: t("Documentation"),
+      url: "/documentation-light",
+      icon: HelpCircle,
+      key: "documentation",
+    },
+  ];
   const isActive = (key: string) => {
     return activeView === key;
   };
@@ -81,7 +82,7 @@ export function SidebarLight({
   const handleCreateFile = () => {
     // Create new file with empty content and switch to editor
     onViewChange("editor", {
-      content: "# Write code for your new file", // New default content
+      content: t("# Write code for your new file"), // New default content
       filename: "untitled.isi",
       isNewFile: true, // Flag to indicate this is a new file creation
     });
@@ -123,7 +124,9 @@ export function SidebarLight({
                 <h1 className="text-lg font-bold text-gray-900">
                   IsiPython IDE
                 </h1>
-                <p className="text-xs text-gray-500">Python Development</p>
+                <p className="text-xs text-gray-500">
+                  {t("IsiPython Development")}
+                </p>
               </div>
             )}
           </div>
@@ -153,7 +156,9 @@ export function SidebarLight({
               }`}
             >
               <FileText className="w-4 h-4 flex-shrink-0" />
-              {isOpen && <span className="truncate ml-3">Yenza ifayile</span>}
+              {isOpen && (
+                <span className="truncate ml-3">{t("Create File")}</span>
+              )}
             </Button>
             <Button
               variant="ghost"
@@ -163,7 +168,9 @@ export function SidebarLight({
               }`}
             >
               <Upload className="w-4 h-4 flex-shrink-0" />
-              {isOpen && <span className="truncate ml-3">Ngenisa ifayile</span>}
+              {isOpen && (
+                <span className="truncate ml-3">{t("Import File")}</span>
+              )}
             </Button>
           </div>
 
@@ -192,7 +199,7 @@ export function SidebarLight({
           <div className="space-y-2">
             {isOpen && (
               <h3 className="text-gray-500 text-xs font-medium uppercase tracking-wider px-3">
-                Explore Python
+                {t("EXPLORE ISIPYTHON")}
               </h3>
             )}
             <div className="space-y-1">
@@ -229,7 +236,7 @@ export function SidebarLight({
             }`}
           >
             <Settings className="w-4 h-4 flex-shrink-0" />
-            {isOpen && <span className="truncate">Settings</span>}
+            {isOpen && <span className="truncate">{t("Settings")}</span>}
           </Button>
         </div>
       </div>

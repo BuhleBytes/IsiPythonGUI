@@ -12,8 +12,10 @@ import {
   Info,
 } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 export default function Component() {
+  const { t } = useTranslation();
   const [expandedSections, setExpandedSections] = useState<
     Record<string, boolean>
   >({
@@ -69,8 +71,12 @@ export default function Component() {
             </svg>
           </div>
           <div>
-            <h1 className="text-xl font-semibold text-gray-800">Glossary</h1>
-            <p className="text-gray-500 text-sm">Basics • Beginner</p>
+            <h1 className="text-xl font-semibold text-gray-800">
+              {t("Glossary")}
+            </h1>
+            <p className="text-gray-500 text-sm">
+              {t("Basics")} • {t("Beginner")}
+            </p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -82,14 +88,14 @@ export default function Component() {
             <Bookmark className="w-5 h-5" />
           </Button>
           <div className="bg-green-500 text-white text-sm px-3 py-1 rounded-full">
-            Beginner
+            {t("Beginner")}
           </div>
           <Button
             onClick={downloadPdf}
             className="bg-green-500 hover:bg-green-600 text-white flex items-center gap-2"
           >
             <Download className="w-4 h-4" />
-            Download
+            {t("Download")}
           </Button>
         </div>
       </header>
@@ -102,7 +108,7 @@ export default function Component() {
             <CardContent className="p-8">
               <div className="mb-6">
                 <h2 className="text-2xl font-bold text-gray-800 mb-2">
-                  Glossary
+                  {t("Glossary")}
                 </h2>
               </div>
 
@@ -110,7 +116,7 @@ export default function Component() {
                 {/* Python Version Column */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">
-                    Python Version
+                    {t("Python Version")}
                   </h3>
                   <div className="space-y-3">
                     <div className="text-gray-700">if</div>
@@ -134,7 +140,7 @@ export default function Component() {
                 {/* IsiPython Version Column */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">
-                    IsiPython Version
+                    {t("IsiPython Version")}
                   </h3>
                   <div className="space-y-3">
                     <div className="text-gray-700">ukuba</div>

@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import type React from "react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
 interface FormData {
@@ -40,6 +41,8 @@ export function LoginLight() {
     password: "",
     rememberMe: false,
   });
+
+  const { t } = useTranslation();
 
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -256,7 +259,7 @@ export function LoginLight() {
                 >
                   <div className="space-y-2">
                     <Label htmlFor="resetEmail" className="text-gray-700">
-                      Email Address
+                      {t("Email Address")}
                     </Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -332,13 +335,15 @@ export function LoginLight() {
                 </div>
                 <div>
                   <h1 className="text-lg font-bold text-gray-900">IsiPython</h1>
-                  <p className="text-xs text-gray-600">Welcome Back</p>
+                  <p className="text-xs text-gray-600">{t("Welcome back")}</p>
                 </div>
               </div>
             </div>
 
             <div className="flex items-center gap-4">
-              <span className="text-sm text-gray-600">New to IsiPython?</span>
+              <span className="text-sm text-gray-600">
+                {t("New to IsiPython?")}
+              </span>
               <Button
                 variant="outline"
                 className="border-gray-300 text-gray-700 hover:bg-gray-50 bg-white shadow-sm"
@@ -365,18 +370,18 @@ export function LoginLight() {
               <div className="space-y-4">
                 <Badge className="bg-gradient-to-r from-cyan-100 to-blue-100 text-cyan-700 border-cyan-200 shadow-sm">
                   <Sparkles className="w-3 h-3 mr-1" />
-                  Wamkelekile kwakhona ku-IsiPython
+                  {t("Welcome back to IsiPython")}
                 </Badge>
                 <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 leading-tight">
-                  Qhubekeka noHambo
+                  {t("Continue Your")}
                   <span className="block text-transparent bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text">
-                    Lwakho lokuFunda
+                    {t("Learning Journey")}
                   </span>
                 </h1>
                 <p className="text-xl text-gray-700 leading-relaxed">
-                  Ngena ukuze ufikelele kwi-dashboard yakho yokufunda eyenziwe
-                  ngokukodwa, ulandelele inkqubela yakho, kwaye uqhubekeke
-                  nokukhohlakala iPython ngolwimi lwakho lwemvelo.
+                  {t(
+                    "Sign in to access your personalized learning dashboard, track your progress, and continue mastering Python in your native language."
+                  )}
                 </p>
               </div>
 
@@ -389,7 +394,7 @@ export function LoginLight() {
                   <div>
                     <h3 className="text-gray-900 font-medium">Your Progress</h3>
                     <p className="text-gray-600 text-sm">
-                      Track learning milestones
+                      {t("Track learning milestones")}
                     </p>
                   </div>
                 </div>
@@ -400,9 +405,11 @@ export function LoginLight() {
                   </div>
                   <div>
                     <h3 className="text-gray-900 font-medium">
-                      Interactive Coding
+                      {t("Interactive Coding")}
                     </h3>
-                    <p className="text-gray-600 text-sm">Hands-on practice</p>
+                    <p className="text-gray-600 text-sm">
+                      {t("Hands-on practice")}
+                    </p>
                   </div>
                 </div>
 
@@ -412,10 +419,10 @@ export function LoginLight() {
                   </div>
                   <div>
                     <h3 className="text-gray-900 font-medium">
-                      Native Language
+                      {t("Native Language")}
                     </h3>
                     <p className="text-gray-600 text-sm">
-                      Learn in IsiXhosa & more
+                      {t("Learn in IsiXhosa & more")}
                     </p>
                   </div>
                 </div>
@@ -425,8 +432,12 @@ export function LoginLight() {
                     <Shield className="w-5 h-5 text-orange-600" />
                   </div>
                   <div>
-                    <h3 className="text-gray-900 font-medium">Community</h3>
-                    <p className="text-gray-600 text-sm">Connect with peers</p>
+                    <h3 className="text-gray-900 font-medium">
+                      {t("Community")}
+                    </h3>
+                    <p className="text-gray-600 text-sm">
+                      {t("Nxibelelana nabalingani")}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -436,10 +447,10 @@ export function LoginLight() {
             <Card className="bg-white/80 border-gray-200/80 backdrop-blur-sm shadow-xl relative">
               <CardHeader>
                 <CardTitle className="text-2xl font-bold text-gray-900">
-                  Ngena
+                  {t("Sign In")}
                 </CardTitle>
                 <p className="text-gray-600">
-                  Fikelela kwi-dashboard yakho yokufunda u-IsiPython
+                  {t("Access your IsiPython Learning Dashboard")}
                 </p>
               </CardHeader>
 
@@ -464,7 +475,7 @@ export function LoginLight() {
                       onClick={() => handleSocialLogin("google")}
                     >
                       <Chrome className="w-4 h-4 mr-2" />
-                      Continue with Google
+                      {t("Continue with Google")}
                     </Button>
                   </div>
 
@@ -482,7 +493,7 @@ export function LoginLight() {
                   {/* Email Field */}
                   <div className="space-y-2">
                     <Label htmlFor="email" className="text-gray-700">
-                      Email Address
+                      {t("Email Address")}
                     </Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -509,7 +520,7 @@ export function LoginLight() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="password" className="text-gray-700">
-                        Password
+                        {t("Password")}
                       </Label>
                       <Button
                         type="button"
@@ -563,12 +574,12 @@ export function LoginLight() {
                     {isLoading ? (
                       <>
                         <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
-                        Signing In...
+                        {t("Signing In...")}
                       </>
                     ) : (
                       <>
                         <Rocket className="w-5 h-5 mr-2" />
-                        Sign In
+                        {t("Sign In")}
                       </>
                     )}
                   </Button>
@@ -576,13 +587,13 @@ export function LoginLight() {
                   {/* Sign Up Link */}
                   <div className="text-center">
                     <p className="text-sm text-gray-600">
-                      Don't have an account?{" "}
+                      {t("Don't have an account?")}{" "}
                       <button
                         type="button"
                         onClick={() => navigate("/signup")}
                         className="text-cyan-600 hover:text-cyan-700 font-medium underline"
                       >
-                        Sign up for free
+                        {t("Sign up for free")}
                       </button>
                     </p>
                   </div>
@@ -593,11 +604,12 @@ export function LoginLight() {
                       <CheckCircle className="w-5 h-5 text-cyan-600 mt-0.5 flex-shrink-0" />
                       <div>
                         <h4 className="text-sm font-medium text-gray-900 mb-1">
-                          Secure & Private
+                          {t("Secure & Private")}
                         </h4>
                         <p className="text-xs text-gray-600">
-                          Your data is encrypted and secure. We never share your
-                          information with third parties.
+                          {t(
+                            "Your data is encrypted and secure. We never share your information with third parties."
+                          )}
                         </p>
                       </div>
                     </div>

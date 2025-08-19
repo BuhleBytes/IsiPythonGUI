@@ -4,8 +4,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Activity,
-  ArrowRight,
   BookOpen,
   Code,
   FileText,
@@ -18,42 +16,47 @@ import {
   Users,
 } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-
-const navigationLinks = [
-  { name: "Izijikelez (Loops)", icon: ArrowRight },
-  { name: "Iimeko (Conditionals)", icon: ArrowRight },
-  { name: "Iimisebenzi (Functions)", icon: ArrowRight },
-  { name: "Iimpazamo (Errors)", icon: ArrowRight },
-  { name: "Inguqulelo  (Variables)", icon: ArrowRight },
-  { name: "Imibuzo emfutshane (Mini Quizes)", icon: ArrowRight },
-  { name: "Uphononogo lwe  IDE (Explore IDE)", icon: ArrowRight },
-  { name: "Izijilezi (Loops)", icon: ArrowRight },
-];
 
 export function HomepageLight() {
   const [activeFeature, setActiveFeature] = useState(0);
+  const { t } = useTranslation();
+
+  const navigationLinks = [
+    { name: t("Loops") },
+    { name: t("Conditionals") },
+    { name: t("Functions") },
+    { name: t("Errors") },
+    { name: t("Variables") },
+    { name: t("Mini Quizzes") },
+    { name: t("Explore IDE") },
+    { name: t("Documentation") },
+  ];
 
   const navigate = useNavigate();
 
   const features = [
     {
       icon: Users,
-      title: "Kubafundi, ngabafundi bendawo",
-      description:
-        "I-IsiPython yadalwa ngabafundi bendawo abaqonda imingeni yokufunda ukuprograma ngolwimi lwesibini. Iqonga lethu livala umsantsa phakathi kwemfundo yeprogramu yesiko nokuqonda kwenkcubeko.",
+      title: t("For learners, by local students"),
+      description: t(
+        "IsiPython was created by local students who understand the challenges of learning programming in a second language. Our platform bridges the gap between traditional programming education and cultural understanding."
+      ),
     },
     {
       icon: Languages,
-      title: "Ulwimi njengomqobo",
-      description:
-        "Abafundi abaninzi bayasokola ngeprogramu kuba kufuneka baqale bakwazi isingesi phambi kokuba baqonde iingcamango zekhowudi. I-IsiPython isusa lo mqobo ngokufundisa iingcamango zokuprograma ngolwimi lwakho lwemvelo kuqala.",
+      title: t("Language as a barrier"),
+      description: t(
+        "Many students struggle with programming because they must first master English before understanding code concepts. IsiPython removes this barrier by teaching programming concepts in your native language first."
+      ),
     },
     {
       icon: Lightbulb,
-      title: "Funda ngokwenza",
-      description:
-        "Iqonga lethu elinxibelelwano likhuthaza ukufunda ngesandla. Bhala ikhowudi, ubone iziphumo ngoko nangoko, kwaye wakhe ukuzithemba ngokuzama okusebenzayo kwindawo yolwimi eyaziwayo.",
+      title: t("Learn by experimenting"),
+      description: t(
+        "Our interactive platform encourages hands-on learning. Write code, see immediate results, and build confidence through practical experimentation in a familiar linguistic environment."
+      ),
     },
   ];
 
@@ -70,7 +73,7 @@ export function HomepageLight() {
               <div>
                 <h1 className="text-xl font-bold text-gray-900">IsiPython</h1>
                 <p className="text-xs text-gray-600">
-                  Ziqhelisele neProgramu eseSekwe kwisiXhosa
+                  {t("Practice IsiXhosa Based Programming")}
                 </p>
               </div>
             </div>
@@ -129,14 +132,13 @@ export function HomepageLight() {
                 <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 leading-normal">
                   IsiPython
                   <span className="block text-transparent bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text">
-                    Funda ukuKhowuda goLwimi Lwakho
+                    {t("Learn to Code in Your Language")}
                   </span>
                 </h1>
                 <p className="text-xl text-gray-700 leading-relaxed">
-                  IsiPython liqonga elinobuhlobo nabantu abaqalayo elifundisa
-                  iingcamango zokukhouda ngolwimi lwakho lwemvelo, okwenza
-                  ukuprogram kufinyeleleke kuye wonke umntu nokuba akakho
-                  mgxagxo kangakanani kwisingesi.
+                  {t(
+                    "IsiPython is a beginner-friendly programming platform that teaches coding concepts in your native language, making programming accessible to everyone regardless of their English proficiency."
+                  )}
                 </p>
               </div>
 
@@ -146,7 +148,7 @@ export function HomepageLight() {
                   className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white px-8 shadow-lg"
                 >
                   <Rocket className="w-5 h-5 mr-2" />
-                  Qala uhambo lwakho
+                  {t("Get Started")}
                 </Button>
                 <Button
                   size="lg"
@@ -154,22 +156,22 @@ export function HomepageLight() {
                   className="border-gray-300 text-gray-700 hover:bg-gray-50 bg-white shadow-sm"
                 >
                   <Play className="w-5 h-5 mr-2" />
-                  Bukela iDemo
+                  {t("Watch Demo")}
                 </Button>
               </div>
 
               <div className="flex items-center gap-6 text-sm text-gray-600">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                  <span>Yisebenzise mahala</span>
+                  <span>{t("Free to use")}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-cyan-500 rounded-full animate-pulse"></div>
-                  <span>Umthombo ovulekileyo</span>
+                  <span>{t("Open source")}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse"></div>
-                  <span>Qhutywa ngumphakathi</span>
+                  <span>{t("Community driven")}</span>
                 </div>
               </div>
             </div>
@@ -184,7 +186,7 @@ export function HomepageLight() {
                       <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                     </div>
                     <span className="text-gray-600 text-sm ml-2">
-                      Umzekelo wekhowudi kuIsiPython
+                      {t("IsiPython Code Examples")}
                     </span>
                   </div>
                 </CardHeader>
@@ -226,11 +228,10 @@ export function HomepageLight() {
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Kutheni umele ukhethe uIsiPython?
+              {t("Why Choose IsiPython")}
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Sidiliza imiqobo yolwimi kwimfundo yokuprograma thina
-              singuIsiPython
+              {t("Breaking down language barriers in programming education")}
             </p>
           </div>
 
@@ -272,17 +273,17 @@ export function HomepageLight() {
         <div className="container mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Ziqhelisele neProgramu eseSekwe kwisiXhosa
+              {t("Practice IsiXhosa Based Programming")}
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Funda iziseko zokukhowda ngokusebenzisa imisebenzi yokusebenzisana
-              eyenzelwe ngokukodwa abathetha isiXhosa
+              {t(
+                "Learn coding fundamentals through interactive exercises designed specifically for IsiXhosa speakers"
+              )}
             </p>
           </div>
 
           <div className="grid md:grid-cols-4 gap-4 mb-12">
             {navigationLinks.map((link, index) => {
-              const IconComponent = link.icon;
               return (
                 <Button
                   key={index}
@@ -290,7 +291,6 @@ export function HomepageLight() {
                   className="bg-white/80 border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-cyan-300 hover:text-cyan-700 justify-between group shadow-sm"
                 >
                   <span>{link.name}</span>
-                  <IconComponent className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Button>
               );
             })}
@@ -303,20 +303,20 @@ export function HomepageLight() {
                   <Terminal className="w-6 h-6 text-purple-600" />
                 </div>
                 <CardTitle className="text-xl font-semibold text-gray-900">
-                  Yakha kwaye uSebenzise iKhowudi yesiXhosa Kwi-intanethi
+                  {t("Build and Run IsiXhosa Code Online")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-gray-700 leading-relaxed mb-6">
-                  Bhala, udibanise, kwaye usebenzise ikhowudi yePython esekelwe
-                  kwisiXhosa ngqo kwibrawuza yakho. Akukho kufakwa kufunekayo -
-                  qala nje ukukhouda kwaye ubone iziphumo ngoko nangoko.
+                  {t(
+                    "Write, compile, and execute IsiXhosa-based Python code directly in your browser. No installation required - just start coding and see immediate results."
+                  )}
                   <br />
                   <br />
                 </p>
                 <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg">
                   <Play className="w-4 h-4 mr-2" />
-                  Zama i-Online Editor (Try Online Editor)
+                  {t("Try Online Editor")}
                 </Button>
               </CardContent>
             </Card>
@@ -327,19 +327,18 @@ export function HomepageLight() {
                   <BookOpen className="w-6 h-6 text-green-600" />
                 </div>
                 <CardTitle className="text-xl font-semibold text-gray-900">
-                  Izixhobo & Izikhokelo
+                  {t("Tools & Guides")}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-gray-700 leading-relaxed mb-6">
-                  Fikelela kwithala lethu elibanzi lezikkhokelo, amaxwebhu,
-                  kunye nezixhobo zoluntu. Nokuba ungumqali ogqibeleleyo okanye
-                  ujonge ukuphakamisa izakhono zakho, sinezixhobo eziyilelwe
-                  ngokukodwa abathi siXhosa abafunda iingcamango zokuprograma.
+                  {t(
+                    "Access our extensive library of tutorials, documents, and community tools. Whether you're a complete beginner or looking to enhance your skills, we have tools specifically designed for Xhosa speakers learning programming concepts."
+                  )}
                 </p>
                 <Button className="bg-gradient-to-r from-green-600 to-lime-600 hover:from-green-700 hover:to-emarald-700 text-white shadow-lg">
                   <FileText className="w-4 h-4 mr-2" />
-                  Uxwebhu
+                  {t("Documentation")}
                 </Button>
               </CardContent>
             </Card>
@@ -353,13 +352,12 @@ export function HomepageLight() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-6">
               <h2 className="text-4xl font-bold text-gray-900">
-                Qala nge-IsiPython
+                {t("Get Started With IsiPython")}
               </h2>
               <p className="text-xl text-gray-700 leading-relaxed">
-                Qala uhambo lwakho lokuprograma namhlanje ngeqonga lethu
-                elinobuhlobo nabantu abaqalayo eliyilelwe ngokukodwa abathi
-                siXhosa. Joyina amawaka abafundi abafunda ukukhouda ngolwimi
-                lwabo lwemvelo.
+                {t(
+                  "Start your programming journey today with our beginner-friendly platform designed specifically for IsiXhosa speakers. Join thousands of students who are learning to code in their native language."
+                )}
               </p>
               <div className="flex flex-wrap gap-4">
                 <Button
@@ -367,7 +365,7 @@ export function HomepageLight() {
                   className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white px-8 shadow-lg"
                 >
                   <Rocket className="w-5 h-5 mr-2" />
-                  Qala ukufunda isiPython
+                  {t("Start learning")}
                 </Button>
               </div>
             </div>
@@ -395,30 +393,23 @@ export function HomepageLight() {
                     <div className="h-px bg-gray-700"></div>
                     <div className="space-y-1 text-sm font-mono">
                       <div className="text-purple-400">
-                        # Welcome to IsiPython!
+                        {t("# Welcome to IsiPython!")}
                       </div>
                       <div>
-                        <span className="text-cyan-400">igama</span> ={" "}
-                        <span className="text-green-400">"World"</span>
+                        <span className="text-cyan-400">
+                          sentence = "Lets get started with IsiPython"
+                        </span>{" "}
+                        ={""}
+                        <span className="text-green-400"></span>
                       </div>
                       <div>
-                        <span className="text-yellow-400">printa</span>(
-                        <span className="text-green-400">f"Molo, World!"</span>)
+                        <span className="text-yellow-400">print</span>(
+                        <span className="text-green-400">(sentence)</span>)
                       </div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-
-              {/* Floating activity indicator */}
-              <div className="absolute -top-2 -right-2">
-                <div className="flex items-center gap-1 bg-green-100 border border-green-200 rounded-full px-2 py-1 shadow-sm">
-                  <Activity className="w-3 h-3 text-green-600" />
-                  <span className="text-xs text-green-700 font-medium">
-                    Live
-                  </span>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -435,18 +426,17 @@ export function HomepageLight() {
               <div>
                 <h3 className="text-xl font-bold text-gray-900">Isi-Python</h3>
                 <p className="text-sm text-gray-600">
-                  Iqonga Lokukoda Ngolwimi Lwakho
+                  {t("A Coding Platform in Your Language")}
                 </p>
               </div>
             </div>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              I-IsiPython liqonga lokufunda ukukoda elinobubele kubaqalayo
-              elifundisa iingcamango zokukoda ngolwimi lwakho lwendalo, yenza
-              ukukoda kufumaneke wonke umntu kungakhathaliseki ubuchule bakhe
-              besiNges
+              {t(
+                "IsiPython is a beginner-friendly programming platform that teaches coding concepts in your native language, making programming accessible to everyone regardless of their English proficiency."
+              )}
             </p>
             <div className="flex items-center justify-center gap-6 text-sm text-gray-500">
-              <span>© 2024 IsiPython</span>
+              <span>© 2025 IsiPython</span>
               <span>•</span>
               <a href="#" className="hover:text-cyan-600 transition-colors">
                 Privacy Policy

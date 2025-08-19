@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import type React from "react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
 interface FormData {
@@ -40,6 +41,8 @@ export function SignUpLight() {
     password: "",
     confirmPassword: "",
   });
+
+  const { t } = useTranslation();
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -209,18 +212,18 @@ export function SignUpLight() {
               <div className="space-y-4">
                 <Badge className="bg-gradient-to-r from-cyan-100 to-blue-100 text-cyan-700 border-cyan-200 shadow-sm">
                   <Sparkles className="w-3 h-3 mr-1" />
-                  Wamkelekile ku-IsiPython
+                  {t("Welcome to IsiPython")}
                 </Badge>
                 <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 leading-tight">
-                  Qala uHambo
+                  {t("Start Your")}
                   <span className="block text-transparent bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text">
-                    Lwakho lokuKhowuda
+                    {t("Coding Journey")}
                   </span>
                 </h1>
                 <p className="text-xl text-gray-700 leading-relaxed">
-                  Joyina amawaka abafundi abafunda ukuprograma ngolwimi lwabo
-                  lwemvelo. Diliza imiqobo yolwimi kwaye wakhe ikamva lakho
-                  kwezobuchwepheshe.
+                  {t(
+                    "Join thousands of students learning programming in their native language. Break down language barriers and build your future in tech."
+                  )}
                 </p>
               </div>
 
@@ -231,7 +234,7 @@ export function SignUpLight() {
                     <CheckCircle className="w-4 h-4 text-green-600" />
                   </div>
                   <span className="text-gray-700">
-                    Funda iingcamango zokuprograma ngolwimi lwakho lwemvelo
+                    {t("Learn programming concepts in your native language")}
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
@@ -239,8 +242,7 @@ export function SignUpLight() {
                     <CheckCircle className="w-4 h-4 text-green-600" />
                   </div>
                   <span className="text-gray-700">
-                    Fikelela kwimisebenzi yokukhouda enxibelelwano kunye
-                    neeprojekthi
+                    {t("Access to interactive coding exercises and projects")}i
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
@@ -248,7 +250,7 @@ export function SignUpLight() {
                     <CheckCircle className="w-4 h-4 text-green-600" />
                   </div>
                   <span className="text-gray-700">
-                    Joyina uluntu oluxhasayo lwabaphuhlisi bendawo
+                    {t("Join a supportive community of local developers")}
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
@@ -256,7 +258,7 @@ export function SignUpLight() {
                     <CheckCircle className="w-4 h-4 text-green-600" />
                   </div>
                   <span className="text-gray-700">
-                    Ukufikelela simahla kuzo zonke izixhobo zokufunda nezixhobo
+                    {t("Free access to all learning materials and tools")}
                   </span>
                 </div>
               </div>
@@ -266,10 +268,10 @@ export function SignUpLight() {
             <Card className="bg-white/80 border-gray-200/80 backdrop-blur-sm shadow-xl">
               <CardHeader>
                 <CardTitle className="text-2xl font-bold text-gray-900">
-                  Yenza i-Akhawunti
+                  {t("Create Account")}
                 </CardTitle>
                 <p className="text-gray-600">
-                  Masiqale ngolwazi lwakho olusisiseko
+                  {t("Let's start with your basic information")}
                 </p>
               </CardHeader>
 
@@ -294,7 +296,7 @@ export function SignUpLight() {
                       onClick={() => handleSocialSignUp("google")}
                     >
                       <Chrome className="w-4 h-4 mr-2" />
-                      Continue with Google
+                      {t("Continue with Google")}
                     </Button>
                   </div>
 
@@ -304,7 +306,7 @@ export function SignUpLight() {
                     </div>
                     <div className="relative flex justify-center text-sm">
                       <span className="bg-white px-2 text-gray-600">
-                        or continue with email
+                        {t("or continue with email")}
                       </span>
                     </div>
                   </div>
@@ -313,7 +315,7 @@ export function SignUpLight() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="firstName" className="text-gray-700">
-                        First Name
+                        {t("First Name")}
                       </Label>
                       <div className="relative">
                         <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -338,7 +340,7 @@ export function SignUpLight() {
 
                     <div className="space-y-2">
                       <Label htmlFor="lastName" className="text-gray-700">
-                        Last Name
+                        {t("Last Name")}
                       </Label>
                       <Input
                         id="lastName"
@@ -362,7 +364,7 @@ export function SignUpLight() {
                   {/* Email */}
                   <div className="space-y-2">
                     <Label htmlFor="email" className="text-gray-700">
-                      Email Address
+                      {t("Email Address")}
                     </Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -388,7 +390,7 @@ export function SignUpLight() {
                   {/* Password */}
                   <div className="space-y-2">
                     <Label htmlFor="password" className="text-gray-700">
-                      Password
+                      {t("Password")}
                     </Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -427,7 +429,7 @@ export function SignUpLight() {
                   {/* Confirm Password */}
                   <div className="space-y-2">
                     <Label htmlFor="confirmPassword" className="text-gray-700">
-                      Confirm Password
+                      {t("Confirm Password")}
                     </Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -474,12 +476,12 @@ export function SignUpLight() {
                     {isLoading ? (
                       <>
                         <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
-                        Creating Account...
+                        {t("Creating Account...")}
                       </>
                     ) : (
                       <>
                         <Rocket className="w-4 h-4 mr-2" />
-                        Create Account
+                        {t("Create Account")}
                       </>
                     )}
                   </Button>
