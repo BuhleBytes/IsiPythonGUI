@@ -27,6 +27,7 @@ import {
   Copy,
   Download,
   FileText,
+  Languages,
   Play,
   RotateCcw,
   Save,
@@ -100,6 +101,12 @@ const isWaitingForInput = (response: any) =>
   response?.waiting_for_input === true;
 const isCompleted = (response: any) => response?.completed === true;
 
+// Simple reflection function - will be replaced with actual translation logic
+const translateIsiPythonToPython = (isiCode: string): string => {
+  // For now, just return the same code to reflect what's typed
+  return isiCode;
+};
+
 export function CodeEditorLight({
   initialCode,
   fileName,
@@ -119,6 +126,7 @@ export function CodeEditorLight({
 
   // #region Basic Editor States
   const [code, setCode] = useState(initialCode || defaultCode);
+  const [translatedCode, setTranslatedCode] = useState("");
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
@@ -133,6 +141,11 @@ export function CodeEditorLight({
   const [isResizing, setIsResizing] = useState(false);
   const [isEditingFileName, setIsEditingFileName] = useState(false);
   const [tempFileName, setTempFileName] = useState(currentFileName);
+
+  // Live Translation States
+  const [liveTranslationEnabled, setLiveTranslationEnabled] = useState(false);
+  const [translationPanelWidth, setTranslationPanelWidth] = useState(400);
+  const [isResizingTranslation, setIsResizingTranslation] = useState(false);
   // #endregion
 
   // #region Debug States
@@ -157,6 +170,107 @@ export function CodeEditorLight({
   const [lastAutoSaveTime, setLastAutoSaveTime] = useState<Date | null>(null);
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastSavedCodeRef = useRef<string>(initialCode || defaultCode);
+  const translationTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // #endregion
+
+  // #region Live Translation Logic
+  useEffect(() => {
+    if (!liveTranslationEnabled) {
+      setTranslatedCode("");
+      return;
+    }
+
+    // Clear existing timer
+    if (translationTimerRef.current) {
+      clearTimeout(translationTimerRef.current);
+    }
+
+    // Debounce translation to avoid excessive updates
+    translationTimerRef.current = setTimeout(() => {
+      const translated = translateIsiPythonToPython(code);
+      setTranslatedCode(translated);
+    }, 200); // 200ms delay for more responsive feel
+
+    return () => {
+      if (translationTimerRef.current) {
+        clearTimeout(translationTimerRef.current);
+      }
+    };
+  }, [code, liveTranslationEnabled]);
+
+  // Cleanup translation timer on unmount
+  useEffect(() => {
+    return () => {
+      if (translationTimerRef.current) {
+        clearTimeout(translationTimerRef.current);
+      }
+    };
+  }, []);
+
+  const toggleLiveTranslation = () => {
+    const newState = !liveTranslationEnabled;
+    setLiveTranslationEnabled(newState);
+
+    if (newState) {
+      // When enabling, immediately translate current code
+      const translated = translateIsiPythonToPython(code);
+      setTranslatedCode(translated);
+    } else {
+      // When disabling, clear translation
+      setTranslatedCode("");
+    }
+  };
+  // #endregion
+
+  // #region Translation Panel Resize Logic
+  const handleTranslationMouseDown = (e) => {
+    setIsResizingTranslation(true);
+    e.preventDefault();
+  };
+
+  useEffect(() => {
+    const handleTranslationMouseMove = (e) => {
+      if (!isResizingTranslation) return;
+
+      const containerRect = document
+        .querySelector(".editor-container")
+        ?.getBoundingClientRect();
+      if (!containerRect) return;
+
+      // Calculate new width based on mouse position
+      const mouseX = e.clientX;
+      const newWidth = containerRect.right - rightPanelWidth - mouseX;
+      const minWidth = 250;
+      const maxWidth = Math.min(
+        600,
+        (containerRect.width - rightPanelWidth) * 0.7
+      );
+
+      if (newWidth >= minWidth && newWidth <= maxWidth) {
+        setTranslationPanelWidth(newWidth);
+      }
+    };
+
+    const handleTranslationMouseUp = () => {
+      setIsResizingTranslation(false);
+    };
+
+    if (isResizingTranslation) {
+      document.addEventListener("mousemove", handleTranslationMouseMove);
+      document.addEventListener("mouseup", handleTranslationMouseUp);
+      document.body.style.cursor = "col-resize";
+      document.body.style.userSelect = "none";
+    }
+
+    return () => {
+      document.removeEventListener("mousemove", handleTranslationMouseMove);
+      document.removeEventListener("mouseup", handleTranslationMouseUp);
+      if (!isResizing) {
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+      }
+    };
+  }, [isResizingTranslation, rightPanelWidth, isResizing]);
   // #endregion
 
   // #region Breakpoint Functions
@@ -180,10 +294,10 @@ export function CodeEditorLight({
       console.log("🚀 Starting debug session...");
       setIsDebugging(true);
       setShowDebugPanel(true);
-      debugAllOutputRef.current = []; // Reset the ref too
+      debugAllOutputRef.current = [];
 
       const response = await debugHelper.startDebugSession(code);
-      console.log("📥 Debug start response:", response);
+      console.log("🔥 Debug start response:", response);
 
       if (isDebugError(response)) {
         console.error("❌ Debug failed:", response);
@@ -192,7 +306,6 @@ export function CodeEditorLight({
         return;
       }
 
-      // Update states with API response
       const newCurrentLine = response.current_line ?? 1;
       console.log("📍 Starting at line:", newCurrentLine);
       setCurrentLine(newCurrentLine);
@@ -201,17 +314,15 @@ export function CodeEditorLight({
       let debugMessage = "";
       if (response.output) {
         debugMessage += `${response.output}\n`;
-        debugAllOutputRef.current = [response.output]; // Update ref too
+        debugAllOutputRef.current = [response.output];
       } else {
         setOutput("");
       }
 
-      // Check if waiting for input
       if (isWaitingForInput(response)) {
         setDebugWaitingForInput(true);
       }
 
-      // Update variables
       const apiVariables =
         response.variables && typeof response.variables === "object"
           ? Object.entries(response.variables).map(([name, value]) => ({
@@ -236,7 +347,6 @@ export function CodeEditorLight({
     }
   };
 
-  // Replace your stepDebug function:
   const stepDebug = async () => {
     if (!debugSessionId || isStepInProgress) return;
 
@@ -245,7 +355,7 @@ export function CodeEditorLight({
       console.log("🔄 Stepping over with session:", debugSessionId);
 
       const response = await debugHelper.stepOnly(debugSessionId);
-      console.log("📥 Step response:", response);
+      console.log("🔥 Step response:", response);
 
       if (isDebugError(response)) {
         console.error("❌ Debug step error:", response.error);
@@ -254,14 +364,12 @@ export function CodeEditorLight({
         return;
       }
 
-      // Update current line
       const newCurrentLine = response.current_line;
       console.log("📍 Moving to line:", newCurrentLine);
       setCurrentLine(newCurrentLine);
 
       let debugMessage = "";
 
-      // Handle output with deduplication using ref (like normal execution)
       if (response.output) {
         const currentOutput = response.output;
         const currentDebugOutput = debugAllOutputRef.current;
@@ -284,12 +392,10 @@ export function CodeEditorLight({
             debugMessage += `${currentOutput}\n`;
           }
 
-          // Update both ref and state
           debugAllOutputRef.current.push(currentOutput);
         }
       }
 
-      // Update variables
       if (response.variables && typeof response.variables === "object") {
         const apiVariables = Object.entries(response.variables).map(
           ([name, value]) => ({
@@ -301,7 +407,6 @@ export function CodeEditorLight({
         setDebugVariables(apiVariables);
       }
 
-      // Check if waiting for input
       if (isWaitingForInput(response)) {
         setDebugWaitingForInput(true);
         debugMessage += `${response.prompt || "Enter input"}\n`;
@@ -309,7 +414,6 @@ export function CodeEditorLight({
         setDebugWaitingForInput(false);
       }
 
-      // Check if completed
       if (isCompleted(response)) {
         debugMessage += `✅ Program execution completed\n`;
         stopDebugging();
@@ -328,7 +432,6 @@ export function CodeEditorLight({
     }
   };
 
-  // Replace your provideDebugInput function:
   const provideDebugInput = async (inputValue: string) => {
     if (!debugSessionId) return;
 
@@ -340,7 +443,7 @@ export function CodeEditorLight({
         debugSessionId,
         inputValue
       );
-      console.log("📥 Debug input response:", response);
+      console.log("🔥 Debug input response:", response);
 
       if (isDebugError(response)) {
         console.error("❌ Debug input error:", response.error);
@@ -349,14 +452,12 @@ export function CodeEditorLight({
         return;
       }
 
-      // Update current line
       const newCurrentLine = response.current_line;
       console.log("📍 Moving to line:", newCurrentLine);
       setCurrentLine(newCurrentLine);
 
       let debugMessage = "";
 
-      // Handle output with deduplication using ref (like normal execution)
       if (response.output) {
         const currentOutput = response.output;
         const currentDebugOutput = debugAllOutputRef.current;
@@ -379,12 +480,10 @@ export function CodeEditorLight({
             debugMessage += `${currentOutput}\n`;
           }
 
-          // Update both ref and state
           debugAllOutputRef.current.push(currentOutput);
         }
       }
 
-      // Update variables
       if (response.variables && typeof response.variables === "object") {
         const apiVariables = Object.entries(response.variables).map(
           ([name, value]) => ({
@@ -396,7 +495,6 @@ export function CodeEditorLight({
         setDebugVariables(apiVariables);
       }
 
-      // Check if still waiting for more input
       if (isWaitingForInput(response)) {
         setDebugWaitingForInput(true);
         debugMessage += `${response.prompt || "Enter input"}\n`;
@@ -404,7 +502,6 @@ export function CodeEditorLight({
         setDebugWaitingForInput(false);
       }
 
-      // Check if completed
       if (isCompleted(response)) {
         debugMessage += `✅ Program execution completed\n`;
         stopDebugging();
@@ -593,10 +690,12 @@ export function CodeEditorLight({
     return () => {
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
-      document.body.style.cursor = "";
-      document.body.style.userSelect = "";
+      if (!isResizingTranslation) {
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+      }
     };
-  }, [isResizing, sidebarOpen, onCloseSidebar]);
+  }, [isResizing, sidebarOpen, onCloseSidebar, isResizingTranslation]);
   // #endregion
 
   // #region Filename editing (keeping original logic)
@@ -869,14 +968,11 @@ export function CodeEditorLight({
   const handleInputSubmit = () => {
     if (!input.trim()) return;
 
-    // Check if we're in debug mode and waiting for debug input
     if (isDebugging && debugWaitingForInput) {
-      // Provide debug input
       provideDebugInput(input.trim());
       setInput("");
       setDebugWaitingForInput(false);
     } else if (inputResolver && waitingForInput) {
-      // Handle normal execution input
       clearTimeout(inputResolver.current.timeout);
       inputResolver.current(input.trim());
       setInputResolver(null);
@@ -888,7 +984,6 @@ export function CodeEditorLight({
     if (e.key === "Enter") {
       e.preventDefault();
 
-      // Check if we're waiting for any kind of input (debug or normal execution)
       if (
         (isDebugging && debugWaitingForInput) ||
         (waitingForInput && inputResolver)
@@ -949,6 +1044,12 @@ export function CodeEditorLight({
 
   const handleCopyCode = () => {
     navigator.clipboard.writeText(code);
+  };
+
+  const handleCopyTranslatedCode = () => {
+    if (translatedCode.trim()) {
+      navigator.clipboard.writeText(translatedCode);
+    }
   };
 
   const handleDownloadCode = () => {
@@ -1072,6 +1173,26 @@ export function CodeEditorLight({
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Live Translation Toggle */}
+            <Button
+              onClick={toggleLiveTranslation}
+              className={`px-4 py-2 font-semibold shadow-md transition-all duration-300 ${
+                liveTranslationEnabled
+                  ? "bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white"
+                  : "bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white"
+              } border-0 hover:scale-105`}
+              title={
+                liveTranslationEnabled
+                  ? "Disable Live Reflection"
+                  : "Enable Live Reflection"
+              }
+            >
+              <Languages className="w-4 h-4 mr-2" />
+              {liveTranslationEnabled ? "Disable" : "Live Reflection"}
+            </Button>
+
+            <Separator orientation="vertical" className="h-6" />
+
             {/* Debug Controls */}
             {!isDebugging ? (
               <Button
@@ -1146,7 +1267,7 @@ export function CodeEditorLight({
               size="icon"
               onClick={handleCopyCode}
               className="text-gray-600 hover:text-purple-600 hover:bg-purple-50 transition-all duration-200"
-              title="Copy Code"
+              title="Copy IsiPython Code"
             >
               <Copy className="w-4 h-4" />
             </Button>
@@ -1177,9 +1298,9 @@ export function CodeEditorLight({
 
       {/* Main Editor Area */}
       <div className="flex-1 flex flex-col relative z-10 min-h-0">
-        {/* Editor and Right Panel Container */}
+        {/* Editor Container */}
         <div className="flex flex-1 min-h-0">
-          {/* Left Side - Code Editor with Breakpoints */}
+          {/* Left Side - IsiPython Code Editor with Breakpoints */}
           <div className="flex-1 flex flex-col border-r border-gray-200/50 min-w-0 editor-left-column">
             <div className="flex flex-1 min-h-0">
               {/* Breakpoint gutter and line numbers */}
@@ -1228,7 +1349,7 @@ export function CodeEditorLight({
                 </div>
               </div>
 
-              {/* Code Area */}
+              {/* IsiPython Code Area */}
               <div className="flex-1 relative min-w-0 monaco-editor-container">
                 <Editor
                   height="100%"
@@ -1283,6 +1404,57 @@ export function CodeEditorLight({
             )}
           </div>
 
+          {/* Translation Panel - Only show when live translation is enabled */}
+          {liveTranslationEnabled && (
+            <div
+              className="flex flex-col border-r border-gray-200/50 relative bg-white/95 backdrop-blur-sm"
+              style={{ width: `${translationPanelWidth}px` }}
+            >
+              {/* Translation resize handle */}
+              <div
+                className="absolute left-0 top-0 bottom-0 w-1 bg-transparent hover:bg-orange-400 cursor-col-resize z-10 transition-colors duration-200"
+                onMouseDown={handleTranslationMouseDown}
+                title="Drag to resize translation panel"
+              >
+                <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-16 bg-gray-300 rounded-full opacity-0 hover:opacity-100 transition-opacity duration-200"></div>
+              </div>
+
+              {/* Reflection Editor - No header, direct editor */}
+              <div className="flex-1 relative">
+                <Editor
+                  height="100%"
+                  language="python"
+                  value={translatedCode}
+                  theme="vs-light"
+                  options={{
+                    readOnly: true,
+                    minimap: { enabled: false },
+                    fontSize: 14,
+                    lineNumbers: "on",
+                    scrollBeyondLastLine: false,
+                    automaticLayout: true,
+                    wordWrap: "on",
+                    lineHeight: 22,
+                    glyphMargin: false,
+                    folding: false,
+                    padding: { top: 0, bottom: 0 },
+                  }}
+                />
+
+                {/* Overlay when no code */}
+                {!translatedCode.trim() && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-white/90 backdrop-blur-sm">
+                    <div className="text-center text-gray-500">
+                      <Languages className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                      <p className="text-sm">Start typing IsiPython code</p>
+                      <p className="text-xs">to see it reflected here</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Right Panel - Input/Output */}
           <div
             className="flex flex-col flex-shrink-0 relative space-y-0"
@@ -1320,7 +1492,7 @@ export function CodeEditorLight({
                     placeholder={
                       debugWaitingForInput
                         ? t(
-                            "The debugger is waiting for your input! Write it above and press enter ro continue debugging..."
+                            "The debugger is waiting for your input! Write it above and press enter to continue debugging..."
                           )
                         : waitingForInput
                         ? t(
@@ -1365,7 +1537,7 @@ export function CodeEditorLight({
                   >
                     {debugWaitingForInput
                       ? t(
-                          "🐛 The debugger is waiting for your input! Write it above and press enter ro continue debugging..."
+                          "🐛 The debugger is waiting for your input! Write it above and press enter to continue debugging..."
                         )
                       : waitingForInput
                       ? t(
@@ -1430,6 +1602,13 @@ export function CodeEditorLight({
             {fileId && (
               <span className="text-gray-500">
                 Auto-save: {fileId ? "On" : "Off"}
+              </span>
+            )}
+            {/* Live Reflection Status */}
+            {liveTranslationEnabled && (
+              <span className="flex items-center gap-1 text-orange-600">
+                <Languages className="w-3 h-3" />
+                Live Reflection Active
               </span>
             )}
             {/* Debug Panel Toggle */}
