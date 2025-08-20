@@ -214,6 +214,7 @@ export const useUserChallenges = () => {
         const response = await fetch(apiUrl);
 
         if (!response.ok) {
+          console.log("VVO1 fetchChallenges userId", targetUserId);
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
@@ -298,6 +299,7 @@ export const useUserChallenges = () => {
         console.log("📡 DEBUG - Stats Response Status:", response.status);
 
         if (!response.ok) {
+          console.log("VVO1 fetchStats userId", targetUserId);
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
@@ -332,7 +334,6 @@ export const useUserChallenges = () => {
 
   /*Tested Works Perfectly*/
   // Replace the existing getChallengeDetails function in useUserChallenges.js with this:
-
   const getChallengeDetails = useCallback(
     async (challengeId, userIdOverride) => {
       try {
@@ -362,6 +363,12 @@ export const useUserChallenges = () => {
         );
 
         if (!response.ok) {
+          console.log(
+            "VVO1 getChallengeDetails userId",
+            targetUserId,
+            "challengeID",
+            challengeId
+          );
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 

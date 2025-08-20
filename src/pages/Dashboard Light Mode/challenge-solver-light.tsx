@@ -74,13 +74,7 @@ interface Challenge {
 }
 
 // Default starter code if none provided
-const defaultStarterCode = `# Bhala isisombululo sakho apha
-chaza solution():
-    """
-    Write your solution here
-    """
-    # Your code here
-    pass`;
+const defaultStarterCode = `# Write your code here`;
 
 export function ChallengeSolverLight() {
   const { t } = useTranslation();
@@ -134,14 +128,12 @@ export function ChallengeSolverLight() {
         }
 
         console.log("✅ Challenge details loaded:", challengeDetails);
+
+        // Set challenge directly - Examples will be generated from testCases
         setChallenge(challengeDetails);
 
-        // Set initial code - use starter code if available, otherwise default
-        const initialCode =
-          challengeDetails.starterCode ||
-          challengeDetails.problemStatement ||
-          defaultStarterCode;
-        setCode(initialCode);
+        // Set initial code - always start with clean template
+        setCode(defaultStarterCode);
       } catch (err) {
         console.error("💥 Error fetching challenge:", err);
         setError(err.message || "Failed to load challenge");
@@ -434,50 +426,101 @@ export function ChallengeSolverLight() {
                     </p>
                   </div>
 
-                  {challenge.examples && challenge.examples.length > 0 && (
+                  {challenge.testCases && challenge.testCases.length > 0 && (
                     <div>
                       <h3 className="text-md font-semibold bg-gradient-to-r from-gray-900 to-purple-800 bg-clip-text text-transparent mb-3">
                         {t("Examples")}
                       </h3>
                       <div className="space-y-4">
-                        {challenge.examples.map((example, index) => (
-                          <Card
-                            key={index}
-                            className="bg-white/90 backdrop-blur-sm border border-gray-200/50 shadow-md hover:shadow-lg transition-all duration-300"
-                          >
-                            <CardContent className="p-4">
-                              <div className="space-y-2">
-                                <div>
-                                  <span className="text-sm font-medium text-gray-600">
-                                    {t("Input")}:
-                                  </span>
-                                  <code className="ml-2 text-cyan-600 font-mono bg-cyan-50/50 px-2 py-1 rounded border border-cyan-200/50">
-                                    {example.input}
-                                  </code>
+                        {challenge.testCases.map((testCase, index) => {
+                          // Display input_data with spaces instead of newlines for cleaner formatting
+                          const inputDisplay = Array.isArray(
+                            testCase.input_data
+                          )
+                            ? testCase.input_data.join(" ")
+                            : testCase.input_data || "";
+
+                          // Check if there's actually input data to display
+                          const hasInput = inputDisplay.trim().length > 0;
+
+                          return (
+                            <Card
+                              key={index}
+                              className="bg-white/90 backdrop-blur-sm border border-gray-200/50 shadow-md hover:shadow-lg transition-all duration-300"
+                            >
+                              <CardContent className="p-4">
+                                <div className="space-y-3">
+                                  {/* Input Section - Only show if there's input data */}
+                                  {hasInput && (
+                                    <div>
+                                      <div className="text-sm font-medium text-gray-600 mb-1">
+                                        {t("Input")}:
+                                      </div>
+                                      <code className="block text-cyan-600 font-mono bg-cyan-50/50 px-3 py-2 rounded border border-cyan-200/50 whitespace-pre-line">
+                                        {inputDisplay}
+                                      </code>
+                                    </div>
+                                  )}
+
+                                  {/* Output Section - Always show if there's expected output */}
+                                  {testCase.expected_output && (
+                                    <div>
+                                      <div className="text-sm font-medium text-gray-600 mb-1">
+                                        {t("Output")}:
+                                      </div>
+                                      <code className="block text-green-600 font-mono bg-green-50/50 px-3 py-2 rounded border border-green-200/50 whitespace-pre-line">
+                                        {testCase.expected_output}
+                                      </code>
+                                    </div>
+                                  )}
+
+                                  {/* Explanation Section - Only show if there's an explanation */}
+                                  {testCase.explanation && (
+                                    <div>
+                                      <div className="text-sm font-medium text-gray-600 mb-1">
+                                        {t("Explanation")}:
+                                      </div>
+                                      <div className="text-gray-700 whitespace-pre-line bg-gray-50/50 px-3 py-2 rounded border border-gray-200/50">
+                                        {testCase.explanation}
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
-                                <div>
-                                  <span className="text-sm font-medium text-gray-600">
-                                    {t("Output")}:
-                                  </span>
-                                  <code className="ml-2 text-green-600 font-mono bg-green-50/50 px-2 py-1 rounded border border-green-200/50">
-                                    {example.output}
-                                  </code>
-                                </div>
-                                <div>
-                                  <span className="text-sm font-medium text-gray-600">
-                                    {t("Explaination")}:
-                                  </span>
-                                  <span className="ml-2 text-gray-700">
-                                    {example.explanation}
-                                  </span>
-                                </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))}
+                              </CardContent>
+                            </Card>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
+
+                  {challenge.constraints &&
+                    challenge.constraints.length > 0 && (
+                      <div>
+                        <h3 className="text-md font-semibold bg-gradient-to-r from-gray-900 to-purple-800 bg-clip-text text-transparent mb-3">
+                          Constraints
+                        </h3>
+                        <Card className="bg-white/90 backdrop-blur-sm border border-gray-200/50 shadow-md">
+                          <CardContent className="p-4">
+                            <ul className="space-y-1">
+                              {challenge.constraints.map(
+                                (constraint, index) => (
+                                  <li
+                                    key={index}
+                                    className="text-gray-700 text-sm flex items-start gap-2"
+                                  >
+                                    <span className="text-cyan-600 mt-1">
+                                      •
+                                    </span>
+                                    <span>{constraint}</span>
+                                  </li>
+                                )
+                              )}
+                            </ul>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    )}
 
                   {challenge.tags && challenge.tags.length > 0 && (
                     <div>
@@ -759,7 +802,7 @@ export function ChallengeSolverLight() {
                           <span className="text-gray-600 min-w-16">
                             {t("Input")}:
                           </span>
-                          <code className="text-cyan-600 font-mono bg-white/60 px-2 py-1 rounded border border-gray-200/50">
+                          <code className="text-cyan-600 font-mono bg-white/60 px-2 py-1 rounded border border-gray-200/50 whitespace-pre-line">
                             {result.input}
                           </code>
                         </div>
@@ -767,7 +810,7 @@ export function ChallengeSolverLight() {
                           <span className="text-gray-600 min-w-16">
                             {t("Expected Output")}:
                           </span>
-                          <code className="text-green-600 font-mono bg-white/60 px-2 py-1 rounded border border-gray-200/50">
+                          <code className="text-green-600 font-mono bg-white/60 px-2 py-1 rounded border border-gray-200/50 whitespace-pre-line">
                             {result.expectedOutput}
                           </code>
                         </div>
@@ -777,7 +820,7 @@ export function ChallengeSolverLight() {
                               {t("Your program produced")}:
                             </span>
                             <code
-                              className={`font-mono bg-white/60 px-2 py-1 rounded border border-gray-200/50 ${
+                              className={`font-mono bg-white/60 px-2 py-1 rounded border border-gray-200/50 whitespace-pre-line ${
                                 result.passed
                                   ? "text-green-600"
                                   : "text-red-600"
