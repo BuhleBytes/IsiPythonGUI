@@ -41,6 +41,8 @@ import { debugHelper, isDebugError } from "../../debugHelper";
 import { registerIsiPython } from "../../languages/isiPython";
 import { useUserFiles } from "../../useUserFiles";
 import { DebugPanel } from "./DebugPanel";
+
+import { translateIsiPythonToPython } from "../../languages/isiPythonTranslator";
 // #endregion
 
 // #region Debug Interfaces
@@ -72,28 +74,29 @@ interface CodeEditorLightProps {
 }
 // #endregion
 
-const defaultCode = `# Write code for your new file
-def fibonacci(n):
-    if n <= 1:
-        return n
-    else:
+// Default code in IsiPython to demonstrate translation
+const defaultCode = `# Write code for your new file using IsiPython
+chaza fibonacci(n):
+    ukuba n <= 1:
+        buyisela n
+    enye:
         a, b = 0, 1
-        for i in range(2, n + 1):
+        ngokulandelelana i ku range(2, n + 1):
             a, b = b, a + b
-        return b
+        buyisela b
 
-def main():
+chaza main():
     numbers = [5, 8, 10, 12]
     results = []
     
-    for num in numbers:
+    ngokulandelelana num ku numbers:
         fib_result = fibonacci(num)
         results.append(fib_result)
         print(f"Fibonacci({num}) = {fib_result}")
     
-    return results
+    buyisela results
 
-if __name__ == "__main__":
+ukuba __name__ == "__main__":
     main()`;
 
 // Helper functions to check API response status
@@ -101,11 +104,7 @@ const isWaitingForInput = (response: any) =>
   response?.waiting_for_input === true;
 const isCompleted = (response: any) => response?.completed === true;
 
-// Simple reflection function - will be replaced with actual translation logic
-const translateIsiPythonToPython = (isiCode: string): string => {
-  // For now, just return the same code to reflect what's typed
-  return isiCode;
-};
+// 🎯 TRANSLATION IS HANDLED BY THE IMPORTED isiPythonTranslator.ts FILE
 
 export function CodeEditorLight({
   initialCode,
@@ -187,6 +186,7 @@ export function CodeEditorLight({
 
     // Debounce translation to avoid excessive updates
     translationTimerRef.current = setTimeout(() => {
+      // 🔥 USING THE IMPORTED TRANSLATION FUNCTION FROM isiPythonTranslator.ts
       const translated = translateIsiPythonToPython(code);
       setTranslatedCode(translated);
     }, 200); // 200ms delay for more responsive feel
@@ -212,7 +212,7 @@ export function CodeEditorLight({
     setLiveTranslationEnabled(newState);
 
     if (newState) {
-      // When enabling, immediately translate current code
+      // 🔥 USING THE IMPORTED TRANSLATION FUNCTION FROM isiPythonTranslator.ts
       const translated = translateIsiPythonToPython(code);
       setTranslatedCode(translated);
     } else {
@@ -1173,22 +1173,24 @@ export function CodeEditorLight({
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Live Translation Toggle */}
+            {/* Live Translation Toggle - Better Design */}
             <Button
               onClick={toggleLiveTranslation}
-              className={`px-4 py-2 font-semibold shadow-md transition-all duration-300 ${
+              variant={liveTranslationEnabled ? "default" : "outline"}
+              size="sm"
+              className={`font-medium transition-all duration-300 ${
                 liveTranslationEnabled
-                  ? "bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white"
-                  : "bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-600 hover:to-cyan-700 text-white"
-              } border-0 hover:scale-105`}
+                  ? "bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white border-0 shadow-md"
+                  : "border-cyan-300 text-cyan-700 hover:bg-cyan-50 hover:border-cyan-400"
+              } hover:scale-105`}
               title={
                 liveTranslationEnabled
-                  ? "Disable Live Reflection"
-                  : "Enable Live Reflection"
+                  ? "Disable Live Translation"
+                  : "Enable Live Translation"
               }
             >
               <Languages className="w-4 h-4 mr-2" />
-              {liveTranslationEnabled ? "Disable" : "Live Reflection"}
+              {liveTranslationEnabled ? "Live ON" : "Live Translation"}
             </Button>
 
             <Separator orientation="vertical" className="h-6" />
@@ -1271,6 +1273,19 @@ export function CodeEditorLight({
             >
               <Copy className="w-4 h-4" />
             </Button>
+            {/* Copy Python Translation Button - Only show when translation is active */}
+            {liveTranslationEnabled && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleCopyTranslatedCode}
+                className="text-gray-600 hover:text-emerald-600 hover:bg-emerald-50 transition-all duration-200"
+                title="Copy Python Translation"
+                disabled={!translatedCode.trim()}
+              >
+                <Copy className="w-4 h-4" />
+              </Button>
+            )}
             <Button
               onClick={handleRunCode}
               disabled={isRunning}
@@ -1419,7 +1434,7 @@ export function CodeEditorLight({
                 <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-16 bg-gray-300 rounded-full opacity-0 hover:opacity-100 transition-opacity duration-200"></div>
               </div>
 
-              {/* Reflection Editor - No header, direct editor */}
+              {/* Python Translation Editor - No header, direct editor */}
               <div className="flex-1 relative">
                 <Editor
                   height="100%"
@@ -1447,7 +1462,7 @@ export function CodeEditorLight({
                     <div className="text-center text-gray-500">
                       <Languages className="w-8 h-8 mx-auto mb-2 text-gray-400" />
                       <p className="text-sm">Start typing IsiPython code</p>
-                      <p className="text-xs">to see it reflected here</p>
+                      <p className="text-xs">to see Python translation</p>
                     </div>
                   </div>
                 )}
@@ -1604,11 +1619,11 @@ export function CodeEditorLight({
                 Auto-save: {fileId ? "On" : "Off"}
               </span>
             )}
-            {/* Live Reflection Status */}
+            {/* Live Translation Status */}
             {liveTranslationEnabled && (
-              <span className="flex items-center gap-1 text-orange-600">
+              <span className="flex items-center gap-1 text-emerald-600">
                 <Languages className="w-3 h-3" />
-                Live Reflection Active
+                Live Translation Active
               </span>
             )}
             {/* Debug Panel Toggle */}

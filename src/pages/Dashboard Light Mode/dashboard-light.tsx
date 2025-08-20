@@ -577,7 +577,7 @@ export function DashboardLight({
                             ).length
                           }
                         </p>
-                        <p className="text-xs text-gray-600">Zakutshanje</p>
+                        <p className="text-xs text-gray-600">{t("Recent")}</p>
                       </div>
                     </div>
                   </CardContent>

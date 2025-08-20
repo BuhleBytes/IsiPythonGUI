@@ -11,23 +11,26 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
+import Editor from "@monaco-editor/react";
 import {
   Activity,
   AlertCircle,
   ArrowLeft,
   CheckCircle,
-  Code,
+  Clock,
+  FileCheck,
   FileText,
   Play,
   Send,
   Target,
   Terminal,
-  Users,
+  X,
   Zap,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import { registerIsiPython } from "../../languages/isiPython";
 
 interface TestCase {
   id: number;
@@ -36,6 +39,16 @@ interface TestCase {
   actualOutput?: string;
   passed?: boolean;
   hidden?: boolean;
+}
+
+interface Submission {
+  id: number;
+  timestamp: Date;
+  passed: boolean;
+  passedTests: number;
+  totalTests: number;
+  code: string;
+  executionTime?: number;
 }
 
 interface Challenge {
@@ -103,7 +116,7 @@ You can return the answer in any order.`,
     },
   ],
   starterCode: `# Bhala isisombululo sakho apha
-def twoSum(nums, target):
+chaza twoSum(nums, target):
     """
     :type nums: List[int]
     :type target: int
@@ -114,17 +127,70 @@ def twoSum(nums, target):
 };
 
 export function ChallengeSolverLight() {
+  const { t } = useTranslation();
   const [code, setCode] = useState(sampleChallenge.starterCode);
   const [isRunning, setIsRunning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [testResults, setTestResults] = useState<TestCase[]>([]);
-  const [activeTab, setActiveTab] = useState("inkazeelo");
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [activeTab, setActiveTab] = useState(t("Explaination"));
   const [language, setLanguage] = useState("IsiPython");
   const [output, setOutput] = useState("");
+  const [outputPanelHeight, setOutputPanelHeight] = useState(300);
+  const [isResizingOutput, setIsResizingOutput] = useState(false);
   const navigate = useNavigate();
+
+  // Monaco Editor setup
+  const handleEditorWillMount = (monaco) => {
+    registerIsiPython(monaco);
+  };
+
   const goBack = () => {
     navigate("/dash", { state: { activeView: "challenges" } });
   };
+
+  // Output panel resize functionality
+  const handleOutputResizeStart = (e) => {
+    setIsResizingOutput(true);
+    e.preventDefault();
+  };
+
+  useEffect(() => {
+    const handleOutputMouseMove = (e) => {
+      if (!isResizingOutput) return;
+
+      const container = document.querySelector(".challenge-container");
+      if (!container) return;
+
+      const containerRect = container.getBoundingClientRect();
+      const newHeight = containerRect.bottom - e.clientY;
+      const minHeight = 150;
+      const maxHeight = containerRect.height * 0.6; // Max 60% of container height
+
+      if (newHeight >= minHeight && newHeight <= maxHeight) {
+        setOutputPanelHeight(newHeight);
+      }
+    };
+
+    const handleOutputMouseUp = () => {
+      setIsResizingOutput(false);
+    };
+
+    if (isResizingOutput) {
+      document.addEventListener("mousemove", handleOutputMouseMove);
+      document.addEventListener("mouseup", handleOutputMouseUp);
+      document.body.style.cursor = "row-resize";
+      document.body.style.userSelect = "none";
+    }
+
+    return () => {
+      document.removeEventListener("mousemove", handleOutputMouseMove);
+      document.removeEventListener("mouseup", handleOutputMouseUp);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+  }, [isResizingOutput]);
+
   const runCode = async () => {
     setIsRunning(true);
     setOutput("🚀 Qalisa ukusebenza...\n⚡ Layisha i-Python interpreter...\n");
@@ -143,7 +209,7 @@ export function ChallengeSolverLight() {
           .map(
             (r, i) =>
               `Uvavanyo ${i + 1}: ${
-                r.passed ? "✓ KUPHUMELELE" : "✗ KUHLULEKILE"
+                r.passed ? "✅ KUPHUMELELE" : "❌ KUHLULEKILE"
               }\nInput: ${r.input}\nOkulindelwe: ${
                 r.expectedOutput
               }\nOkufunyenwe: ${r.actualOutput}\n`
@@ -157,18 +223,64 @@ export function ChallengeSolverLight() {
 
   const submitCode = async () => {
     setIsSubmitting(true);
+
+    // Run tests first if not already run
+    let currentResults = testResults;
+    if (testResults.length === 0) {
+      currentResults = sampleChallenge.testCases.map((testCase) => ({
+        ...testCase,
+        actualOutput: testCase.expectedOutput,
+        passed: Math.random() > 0.3,
+      }));
+      setTestResults(currentResults);
+    }
+
     setTimeout(() => {
-      setOutput(
-        "🎉 Isisombululo singenisiwe ngempumelelo!\n✅ Zonke izivivinyo ziphumelele!"
-      );
+      const passedCount = currentResults.filter((r) => r.passed).length;
+      const totalCount = currentResults.length;
+      const allPassed = passedCount === totalCount;
+      const executionTime = Math.floor(Math.random() * 1000) + 100; // Mock execution time
+
+      // Create new submission
+      const newSubmission: Submission = {
+        id: submissions.length + 1,
+        timestamp: new Date(),
+        passed: allPassed,
+        passedTests: passedCount,
+        totalTests: totalCount,
+        code: code,
+        executionTime: executionTime,
+      };
+
+      // Add to submissions list
+      setSubmissions((prev) => [newSubmission, ...prev]);
+
+      if (allPassed) {
+        setOutput(
+          "🎉 Isisombululo singenisiwe ngempumelelo!\n✅ Zonke izivivinyo ziphumelele!"
+        );
+      } else {
+        setOutput(
+          `📝 Isisombululo singenisiwe!\n⚠️ ${passedCount}/${totalCount} izivivinyo ziphumelele\n💡 Zama kwakhona!`
+        );
+      }
+
       setIsSubmitting(false);
     }, 1500);
   };
 
-  const lineNumbers = code.split("\n").map((_, index) => index + 1);
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString() + " " + date.toLocaleTimeString();
+  };
+
+  const getSubmissionStatusColor = (passed: boolean) => {
+    return passed
+      ? "text-green-600 bg-green-50 border-green-200"
+      : "text-red-600 bg-red-50 border-red-200";
+  };
 
   return (
-    <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30 text-gray-900 flex flex-col relative overflow-hidden">
+    <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30 text-gray-900 flex flex-col relative overflow-hidden challenge-container">
       {/* Animated Background Elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <div className="absolute top-20 left-20 w-72 h-72 bg-gradient-to-r from-cyan-200/10 to-blue-300/10 rounded-full blur-3xl animate-pulse"></div>
@@ -206,7 +318,7 @@ export function ChallengeSolverLight() {
           <div className="flex items-center gap-2">
             <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-white border-0 shadow-md">
               <Zap className="w-3 h-3 mr-1" />
-              UKUSOMBULULA
+              {t("SOLVING")}
             </Badge>
           </div>
         </div>
@@ -224,35 +336,33 @@ export function ChallengeSolverLight() {
             {/* Tab Headers - Fixed */}
             <TabsList className="bg-white/90 backdrop-blur-sm border-b border-gray-200/50 rounded-none justify-start p-0 h-12 flex-shrink-0">
               <TabsTrigger
-                value="inkazeelo"
+                value={t("Explaination")}
                 className="data-[state=active]:bg-cyan-500/10 data-[state=active]:text-cyan-600 data-[state=active]:border-b-2 data-[state=active]:border-cyan-500 rounded-none h-full px-4 text-gray-700 hover:text-cyan-600 hover:bg-cyan-50/50"
               >
                 <FileText className="w-4 h-4 mr-2" />
-                Inkazeelo
+                {t("Explaination")}
               </TabsTrigger>
               <TabsTrigger
-                value="isisombululo"
+                value="submissions"
                 className="data-[state=active]:bg-cyan-500/10 data-[state=active]:text-cyan-600 data-[state=active]:border-b-2 data-[state=active]:border-cyan-500 rounded-none h-full px-4 text-gray-700 hover:text-cyan-600 hover:bg-cyan-50/50"
               >
-                <Code className="w-4 h-4 mr-2" />
-                Isisombululo
-              </TabsTrigger>
-              <TabsTrigger
-                value="isubmissions"
-                className="data-[state=active]:bg-cyan-500/10 data-[state=active]:text-cyan-600 data-[state=active]:border-b-2 data-[state=active]:border-cyan-500 rounded-none h-full px-4 text-gray-700 hover:text-cyan-600 hover:bg-cyan-50/50"
-              >
-                <Users className="w-4 h-4 mr-2" />
-                iSubmissions
+                <FileCheck className="w-4 h-4 mr-2" />
+                {t("Submissions")}
+                {submissions.length > 0 && (
+                  <Badge className="ml-2 bg-cyan-100 text-cyan-700 text-xs px-1.5 py-0.5">
+                    {submissions.length}
+                  </Badge>
+                )}
               </TabsTrigger>
             </TabsList>
 
             {/* Tab Content - Scrollable */}
             <div className="flex-1 min-h-0 overflow-hidden">
-              <TabsContent value="inkazeelo" className="h-full m-0 p-0">
+              <TabsContent value={t("Explaination")} className="h-full m-0 p-0">
                 <div className="h-full overflow-y-auto p-6 space-y-6">
                   <div>
                     <h2 className="text-lg font-semibold bg-gradient-to-r from-gray-900 to-blue-800 bg-clip-text text-transparent mb-3">
-                      Problem Statement
+                      {t("Problem Statement")}
                     </h2>
                     <p className="text-gray-700 leading-relaxed whitespace-pre-line">
                       {sampleChallenge.description}
@@ -261,7 +371,7 @@ export function ChallengeSolverLight() {
 
                   <div>
                     <h3 className="text-md font-semibold bg-gradient-to-r from-gray-900 to-purple-800 bg-clip-text text-transparent mb-3">
-                      Examples
+                      {t("Examples")}
                     </h3>
                     <div className="space-y-4">
                       {sampleChallenge.examples.map((example, index) => (
@@ -273,7 +383,7 @@ export function ChallengeSolverLight() {
                             <div className="space-y-2">
                               <div>
                                 <span className="text-sm font-medium text-gray-600">
-                                  Input:
+                                  {t("Input")}:
                                 </span>
                                 <code className="ml-2 text-cyan-600 font-mono bg-cyan-50/50 px-2 py-1 rounded border border-cyan-200/50">
                                   {example.input}
@@ -281,7 +391,7 @@ export function ChallengeSolverLight() {
                               </div>
                               <div>
                                 <span className="text-sm font-medium text-gray-600">
-                                  Output:
+                                  {t("Output")}:
                                 </span>
                                 <code className="ml-2 text-green-600 font-mono bg-green-50/50 px-2 py-1 rounded border border-green-200/50">
                                   {example.output}
@@ -289,7 +399,7 @@ export function ChallengeSolverLight() {
                               </div>
                               <div>
                                 <span className="text-sm font-medium text-gray-600">
-                                  Explanation:
+                                  {t("Explaination")}:
                                 </span>
                                 <span className="ml-2 text-gray-700">
                                   {example.explanation}
@@ -301,118 +411,116 @@ export function ChallengeSolverLight() {
                       ))}
                     </div>
                   </div>
-
-                  <div>
-                    <h3 className="text-md font-semibold bg-gradient-to-r from-gray-900 to-green-800 bg-clip-text text-transparent mb-3">
-                      Constraints
-                    </h3>
-                    <div className="bg-white/90 backdrop-blur-sm border border-gray-200/50 rounded-lg p-4 shadow-md">
-                      <ul className="space-y-2">
-                        {sampleChallenge.constraints.map(
-                          (constraint, index) => (
-                            <li
-                              key={index}
-                              className="text-gray-700 flex items-center gap-3"
-                            >
-                              <div className="w-1.5 h-1.5 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full flex-shrink-0"></div>
-                              <code className="font-mono text-sm bg-gray-100/80 px-2 py-1 rounded border border-gray-200/50">
-                                {constraint}
-                              </code>
-                            </li>
-                          )
-                        )}
-                      </ul>
-                    </div>
-                  </div>
-
-                  {/* Additional content to demonstrate scrolling */}
-                  <div>
-                    <h3 className="text-md font-semibold bg-gradient-to-r from-gray-900 to-orange-800 bg-clip-text text-transparent mb-3">
-                      Hints
-                    </h3>
-                    <div className="space-y-3">
-                      <Card className="bg-gradient-to-r from-yellow-50/80 to-orange-50/80 backdrop-blur-sm border border-yellow-200/50 shadow-md">
-                        <CardContent className="p-4">
-                          <div className="flex items-start gap-3">
-                            <div className="w-6 h-6 bg-gradient-to-r from-yellow-500 to-orange-600 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                              <span className="text-white text-xs font-bold">
-                                1
-                              </span>
-                            </div>
-                            <p className="text-gray-700 text-sm">
-                              Think about using a hash map to store the numbers
-                              you've seen and their indices.
-                            </p>
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      <Card className="bg-gradient-to-r from-blue-50/80 to-cyan-50/80 backdrop-blur-sm border border-blue-200/50 shadow-md">
-                        <CardContent className="p-4">
-                          <div className="flex items-start gap-3">
-                            <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-cyan-600 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                              <span className="text-white text-xs font-bold">
-                                2
-                              </span>
-                            </div>
-                            <p className="text-gray-700 text-sm">
-                              For each number, check if (target -
-                              current_number) exists in your hash map.
-                            </p>
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      <Card className="bg-gradient-to-r from-purple-50/80 to-pink-50/80 backdrop-blur-sm border border-purple-200/50 shadow-md">
-                        <CardContent className="p-4">
-                          <div className="flex items-start gap-3">
-                            <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-pink-600 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                              <span className="text-white text-xs font-bold">
-                                3
-                              </span>
-                            </div>
-                            <p className="text-gray-700 text-sm">
-                              The time complexity should be O(n) and space
-                              complexity O(n).
-                            </p>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </div>
                 </div>
               </TabsContent>
 
-              <TabsContent value="isisombululo" className="h-full m-0 p-0">
-                <div className="h-full flex items-center justify-center p-6">
-                  <div className="text-center">
-                    <div className="w-16 h-16 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                      <Code className="w-8 h-8 text-gray-500" />
+              <TabsContent value="submissions" className="h-full m-0 p-0">
+                <div className="h-full overflow-y-auto p-6">
+                  {submissions.length === 0 ? (
+                    <div className="h-full flex items-center justify-center">
+                      <div className="text-center">
+                        <div className="w-16 h-16 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                          <FileCheck className="w-8 h-8 text-gray-500" />
+                        </div>
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                          {t("No submissions yet")}
+                        </h3>
+                        <p className="text-gray-600">
+                          {t(
+                            "Write code & submit to see your submission history"
+                          )}
+                        </p>
+                      </div>
                     </div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      Isisombululo sizofika maduze
-                    </h3>
-                    <p className="text-gray-600">
-                      Qedela umngeni ukuze uvule isisombululo.
-                    </p>
-                  </div>
-                </div>
-              </TabsContent>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-semibold bg-gradient-to-r from-gray-900 to-blue-800 bg-clip-text text-transparent">
+                          {t("Submission History")}
+                        </h3>
+                        <Badge className="bg-gray-100 text-gray-700">
+                          {submissions.length} submission
+                          {submissions.length !== 1 ? "s" : ""}
+                        </Badge>
+                      </div>
 
-              <TabsContent value="isubmissions" className="h-full m-0 p-0">
-                <div className="h-full flex items-center justify-center p-6">
-                  <div className="text-center">
-                    <div className="w-16 h-16 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                      <Users className="w-8 h-8 text-gray-500" />
+                      {submissions.map((submission) => (
+                        <Card
+                          key={submission.id}
+                          className={`bg-white/90 backdrop-blur-sm border shadow-md hover:shadow-lg transition-all duration-300 ${getSubmissionStatusColor(
+                            submission.passed
+                          )}`}
+                        >
+                          <CardContent className="p-4">
+                            <div className="flex items-start justify-between mb-3">
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                                    submission.passed
+                                      ? "bg-green-500 text-white"
+                                      : "bg-red-500 text-white"
+                                  }`}
+                                >
+                                  {submission.passed ? (
+                                    <CheckCircle className="w-4 h-4" />
+                                  ) : (
+                                    <X className="w-4 h-4" />
+                                  )}
+                                </div>
+                                <div>
+                                  <p className="font-medium text-gray-900">
+                                    Submission #{submission.id}
+                                  </p>
+                                  <p className="text-sm text-gray-600 flex items-center gap-1">
+                                    <Clock className="w-3 h-3" />
+                                    {formatDate(submission.timestamp)}
+                                  </p>
+                                </div>
+                              </div>
+                              <Badge
+                                className={`${
+                                  submission.passed
+                                    ? "bg-green-100 text-green-700 border-green-300"
+                                    : "bg-red-100 text-red-700 border-red-300"
+                                }`}
+                              >
+                                {submission.passed ? "Accepted" : "Failed"}
+                              </Badge>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                              <div>
+                                <span className="text-gray-600">
+                                  Test Results:
+                                </span>
+                                <p className="font-medium">
+                                  {submission.passedTests}/
+                                  {submission.totalTests} passed
+                                </p>
+                              </div>
+                              <div>
+                                <span className="text-gray-600">
+                                  Execution Time:
+                                </span>
+                                <p className="font-medium">
+                                  {submission.executionTime}ms
+                                </p>
+                              </div>
+                            </div>
+
+                            {!submission.passed && (
+                              <div className="mt-3 p-2 bg-red-50/50 rounded border border-red-200/50">
+                                <p className="text-sm text-red-700">
+                                  💡 Some test cases failed. Review your
+                                  solution and try again.
+                                </p>
+                              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      ))}
                     </div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      Izingeniso zakho
-                    </h3>
-                    <p className="text-gray-600">
-                      Akukho zingeniso okwamanje. Qala ukubhala ikhodi ukuze
-                      ubone umlando!
-                    </p>
-                  </div>
+                  )}
                 </div>
               </TabsContent>
             </div>
@@ -451,12 +559,12 @@ export function ChallengeSolverLight() {
                   {isRunning ? (
                     <>
                       <Activity className="w-4 h-4 mr-2 animate-spin" />
-                      Iyasebenza
+                      {t("Running")}
                     </>
                   ) : (
                     <>
                       <Play className="w-4 h-4 mr-2" />
-                      Qhuba
+                      {t("Run")}
                     </>
                   )}
                 </Button>
@@ -468,12 +576,12 @@ export function ChallengeSolverLight() {
                   {isSubmitting ? (
                     <>
                       <Activity className="w-4 h-4 mr-2 animate-spin" />
-                      Iyagenisa
+                      {t("Submitting")}
                     </>
                   ) : (
                     <>
                       <Send className="w-4 h-4 mr-2" />
-                      Ngenisa
+                      {t("Submit")}
                     </>
                   )}
                 </Button>
@@ -481,41 +589,55 @@ export function ChallengeSolverLight() {
             </div>
           </div>
 
-          {/* Code Editor */}
-          <div className="flex-1 flex min-h-0">
-            {/* Line Numbers */}
-            <div className="bg-gray-100/80 backdrop-blur-sm px-3 py-4 border-r border-gray-200/50 select-none flex-shrink-0">
-              <div className="font-mono text-sm text-gray-500 space-y-1">
-                {lineNumbers.map((num) => (
-                  <div
-                    key={num}
-                    className="h-6 flex items-center justify-end pr-2"
-                  >
-                    {num}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Code Area */}
-            <div className="flex-1 bg-white/60 backdrop-blur-sm min-w-0">
-              <Textarea
+          {/* Code Editor with Monaco */}
+          <div
+            className="flex-1 flex flex-col min-h-0"
+            style={{ height: `calc(100% - ${outputPanelHeight}px)` }}
+          >
+            <div className="flex-1 relative min-w-0">
+              <Editor
+                height="100%"
+                language="isipython"
                 value={code}
-                onChange={(e) => setCode(e.target.value)}
-                className="w-full h-full bg-transparent border-0 resize-none font-mono text-sm text-gray-900 placeholder-gray-500 focus:ring-0 focus:outline-none p-4"
-                placeholder="# Bhala isisombululo sakho apha..."
-                style={{ lineHeight: "1.5" }}
+                onChange={(value) => setCode(value || "")}
+                theme="isipython-theme"
+                beforeMount={handleEditorWillMount}
+                options={{
+                  minimap: { enabled: false },
+                  fontSize: 14,
+                  lineNumbers: "on",
+                  scrollBeyondLastLine: false,
+                  automaticLayout: true,
+                  wordWrap: "on",
+                  glyphMargin: false,
+                  folding: true,
+                  lineDecorationsWidth: 0,
+                  padding: { top: 12, bottom: 12 },
+                }}
               />
             </div>
           </div>
 
-          {/* Output Panel */}
-          <div className="border-t border-gray-200/50 bg-white/90 backdrop-blur-sm flex-shrink-0">
-            <div className="bg-gray-100/80 backdrop-blur-sm border-b border-gray-200/50 p-3">
+          {/* Resizable Output Panel */}
+          <div
+            className="border-t border-gray-200/50 bg-white/90 backdrop-blur-sm flex flex-col"
+            style={{ height: `${outputPanelHeight}px` }}
+          >
+            {/* Resize Handle */}
+            <div
+              className="w-full h-1 bg-transparent hover:bg-cyan-400 cursor-row-resize transition-colors duration-200 flex-shrink-0"
+              onMouseDown={handleOutputResizeStart}
+              title="Drag to resize output panel"
+            >
+              <div className="w-full h-1 bg-gray-300 opacity-0 hover:opacity-100 transition-opacity duration-200"></div>
+            </div>
+
+            {/* Output Header */}
+            <div className="bg-gray-100/80 backdrop-blur-sm border-b border-gray-200/50 p-3 flex-shrink-0">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-medium bg-gradient-to-r from-purple-600 to-pink-700 bg-clip-text text-transparent flex items-center gap-2">
                   <Terminal className="w-4 h-4 text-purple-600" />
-                  Iziphumo zowavano
+                  {t("Test Case Outputs")}
                 </h3>
                 {isRunning && (
                   <Activity className="w-4 h-4 text-green-500 animate-spin" />
@@ -523,7 +645,8 @@ export function ChallengeSolverLight() {
               </div>
             </div>
 
-            <div className="max-h-64 overflow-y-auto p-4">
+            {/* Output Content */}
+            <div className="flex-1 overflow-y-auto p-4 min-h-0">
               {testResults.length > 0 ? (
                 <div className="space-y-3">
                   {testResults.map((result, index) => (
@@ -537,7 +660,7 @@ export function ChallengeSolverLight() {
                     >
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-medium text-gray-900">
-                          Uvavanyo {index + 1}
+                          {t("Test")} {index + 1}
                         </span>
                         {result.passed ? (
                           <CheckCircle className="w-4 h-4 text-green-600" />
@@ -547,14 +670,16 @@ export function ChallengeSolverLight() {
                       </div>
                       <div className="text-xs space-y-1">
                         <div className="flex items-center gap-2">
-                          <span className="text-gray-600 min-w-16">Input:</span>
+                          <span className="text-gray-600 min-w-16">
+                            {t("Input")}:
+                          </span>
                           <code className="text-cyan-600 font-mono bg-white/60 px-2 py-1 rounded border border-gray-200/50">
                             {result.input}
                           </code>
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-gray-600 min-w-16">
-                            Okulindelwe:
+                            {t("Expected Output")}:
                           </span>
                           <code className="text-green-600 font-mono bg-white/60 px-2 py-1 rounded border border-gray-200/50">
                             {result.expectedOutput}
@@ -563,7 +688,7 @@ export function ChallengeSolverLight() {
                         {result.actualOutput && (
                           <div className="flex items-center gap-2">
                             <span className="text-gray-600 min-w-16">
-                              Okufunyenwe:
+                              {t("Your program produced")}:
                             </span>
                             <code
                               className={`font-mono bg-white/60 px-2 py-1 rounded border border-gray-200/50 ${
@@ -581,14 +706,16 @@ export function ChallengeSolverLight() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8">
-                  <div className="w-12 h-12 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-3 shadow-md">
-                    <Terminal className="w-6 h-6 text-gray-500" />
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center">
+                    <div className="w-12 h-12 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-3 shadow-md">
+                      <Terminal className="w-6 h-6 text-gray-500" />
+                    </div>
+                    <p className="text-gray-600 text-sm">
+                      {output ||
+                        t("Run your code to see the test results here...")}
+                    </p>
                   </div>
-                  <p className="text-gray-600 text-sm">
-                    {output ||
-                      "Qhuba ikhodi yakho ukuze ubone iziphumo zowavano lapha..."}
-                  </p>
                 </div>
               )}
             </div>
