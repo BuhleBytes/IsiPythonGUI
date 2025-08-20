@@ -20,6 +20,7 @@ import {
   Clock,
   FileCheck,
   FileText,
+  Loader2,
   Play,
   Send,
   Target,
@@ -29,8 +30,10 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { registerIsiPython } from "../../languages/isiPython";
+import { useUser } from "../../useUser";
+import { useUserChallenges } from "../../useUserChallenges";
 
 interface TestCase {
   id: number;
@@ -56,79 +59,43 @@ interface Challenge {
   title: string;
   difficulty: "Low" | "Medium" | "High";
   description: string;
-  examples: Array<{
+  problemStatement?: string;
+  examples?: Array<{
     input: string;
     output: string;
     explanation: string;
   }>;
-  constraints: string[];
-  testCases: TestCase[];
-  starterCode: string;
+  constraints?: string[];
+  testCases?: TestCase[];
+  starterCode?: string;
+  category?: string;
+  tags?: string[];
+  points?: number;
 }
 
-const sampleChallenge: Challenge = {
-  id: 1,
-  title: "Two Sum",
-  difficulty: "Low",
-  description: `Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.
-
-You may assume that each input would have exactly one solution, and you may not use the same element twice.
-
-You can return the answer in any order.`,
-  examples: [
-    {
-      input: "nums = [2,7,11,15], target = 9",
-      output: "[0,1]",
-      explanation: "Because nums[0] + nums[1] == 9, we return [0, 1].",
-    },
-    {
-      input: "nums = [3,2,4], target = 6",
-      output: "[1,2]",
-      explanation: "Because nums[1] + nums[2] == 6, we return [1, 2].",
-    },
-    {
-      input: "nums = [3,3], target = 6",
-      output: "[0,1]",
-      explanation: "Because nums[0] + nums[1] == 6, we return [0, 1].",
-    },
-  ],
-  constraints: [
-    "2 ≤ nums.length ≤ 10⁴",
-    "-10⁹ ≤ nums[i] ≤ 10⁹",
-    "-10⁹ ≤ target ≤ 10⁹",
-    "Only one valid answer exists.",
-  ],
-  testCases: [
-    {
-      id: 1,
-      input: "nums = [2,7,11,15], target = 9",
-      expectedOutput: "[0,1]",
-    },
-    {
-      id: 2,
-      input: "nums = [3,2,4], target = 6",
-      expectedOutput: "[1,2]",
-    },
-    {
-      id: 3,
-      input: "nums = [3,3], target = 6",
-      expectedOutput: "[0,1]",
-    },
-  ],
-  starterCode: `# Bhala isisombululo sakho apha
-chaza twoSum(nums, target):
+// Default starter code if none provided
+const defaultStarterCode = `# Bhala isisombululo sakho apha
+chaza solution():
     """
-    :type nums: List[int]
-    :type target: int
-    :rtype: List[int]
+    Write your solution here
     """
-    # Write your solution here
-    pass`,
-};
+    # Your code here
+    pass`;
 
 export function ChallengeSolverLight() {
   const { t } = useTranslation();
-  const [code, setCode] = useState(sampleChallenge.starterCode);
+  const { id: challengeId } = useParams<{ id: string }>();
+  const { userId } = useUser();
+  const { getChallengeDetails } = useUserChallenges();
+  const navigate = useNavigate();
+
+  // Challenge data state
+  const [challenge, setChallenge] = useState<Challenge | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Editor and execution state
+  const [code, setCode] = useState(defaultStarterCode);
   const [isRunning, setIsRunning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [testResults, setTestResults] = useState<TestCase[]>([]);
@@ -138,7 +105,53 @@ export function ChallengeSolverLight() {
   const [output, setOutput] = useState("");
   const [outputPanelHeight, setOutputPanelHeight] = useState(300);
   const [isResizingOutput, setIsResizingOutput] = useState(false);
-  const navigate = useNavigate();
+
+  // Fetch challenge details when component mounts
+  useEffect(() => {
+    const fetchChallengeData = async () => {
+      if (!challengeId) {
+        setError("No challenge ID provided");
+        setLoading(false);
+        return;
+      }
+
+      if (!userId) {
+        setError("User not authenticated");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+
+        console.log("🚀 Fetching challenge details for ID:", challengeId);
+        const challengeDetails = await getChallengeDetails(challengeId, userId);
+
+        if (challengeDetails.error) {
+          setError(challengeDetails.error);
+          return;
+        }
+
+        console.log("✅ Challenge details loaded:", challengeDetails);
+        setChallenge(challengeDetails);
+
+        // Set initial code - use starter code if available, otherwise default
+        const initialCode =
+          challengeDetails.starterCode ||
+          challengeDetails.problemStatement ||
+          defaultStarterCode;
+        setCode(initialCode);
+      } catch (err) {
+        console.error("💥 Error fetching challenge:", err);
+        setError(err.message || "Failed to load challenge");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchChallengeData();
+  }, [challengeId, userId, getChallengeDetails]);
 
   // Monaco Editor setup
   const handleEditorWillMount = (monaco) => {
@@ -165,7 +178,7 @@ export function ChallengeSolverLight() {
       const containerRect = container.getBoundingClientRect();
       const newHeight = containerRect.bottom - e.clientY;
       const minHeight = 150;
-      const maxHeight = containerRect.height * 0.6; // Max 60% of container height
+      const maxHeight = containerRect.height * 0.6;
 
       if (newHeight >= minHeight && newHeight <= maxHeight) {
         setOutputPanelHeight(newHeight);
@@ -196,16 +209,18 @@ export function ChallengeSolverLight() {
     setOutput("🚀 Qalisa ukusebenza...\n⚡ Layisha i-Python interpreter...\n");
 
     setTimeout(() => {
-      const results = sampleChallenge.testCases.map((testCase) => ({
-        ...testCase,
-        actualOutput: testCase.expectedOutput,
-        passed: Math.random() > 0.3,
-      }));
+      // Mock test results - in real implementation, send code to execution API
+      const mockResults =
+        challenge?.testCases?.map((testCase) => ({
+          ...testCase,
+          actualOutput: testCase.expectedOutput,
+          passed: Math.random() > 0.3,
+        })) || [];
 
-      setTestResults(results);
-      const passedCount = results.filter((r) => r.passed).length;
+      setTestResults(mockResults);
+      const passedCount = mockResults.filter((r) => r.passed).length;
       setOutput(
-        `✨ Iziphumo zowavano:\n${results
+        `✨ Iziphumo zowavano:\n${mockResults
           .map(
             (r, i) =>
               `Uvavanyo ${i + 1}: ${
@@ -215,7 +230,7 @@ export function ChallengeSolverLight() {
               }\nOkufunyenwe: ${r.actualOutput}\n`
           )
           .join("\n")}
-\n${passedCount}/${results.length} izivivinyo ziphumelele`
+\n${passedCount}/${mockResults.length} izivivinyo ziphumelele`
       );
       setIsRunning(false);
     }, 2000);
@@ -227,11 +242,12 @@ export function ChallengeSolverLight() {
     // Run tests first if not already run
     let currentResults = testResults;
     if (testResults.length === 0) {
-      currentResults = sampleChallenge.testCases.map((testCase) => ({
-        ...testCase,
-        actualOutput: testCase.expectedOutput,
-        passed: Math.random() > 0.3,
-      }));
+      currentResults =
+        challenge?.testCases?.map((testCase) => ({
+          ...testCase,
+          actualOutput: testCase.expectedOutput,
+          passed: Math.random() > 0.3,
+        })) || [];
       setTestResults(currentResults);
     }
 
@@ -239,9 +255,8 @@ export function ChallengeSolverLight() {
       const passedCount = currentResults.filter((r) => r.passed).length;
       const totalCount = currentResults.length;
       const allPassed = passedCount === totalCount;
-      const executionTime = Math.floor(Math.random() * 1000) + 100; // Mock execution time
+      const executionTime = Math.floor(Math.random() * 1000) + 100;
 
-      // Create new submission
       const newSubmission: Submission = {
         id: submissions.length + 1,
         timestamp: new Date(),
@@ -252,7 +267,6 @@ export function ChallengeSolverLight() {
         executionTime: executionTime,
       };
 
-      // Add to submissions list
       setSubmissions((prev) => [newSubmission, ...prev]);
 
       if (allPassed) {
@@ -261,7 +275,7 @@ export function ChallengeSolverLight() {
         );
       } else {
         setOutput(
-          `📝 Isisombululo singenisiwe!\n⚠️ ${passedCount}/${totalCount} izivivinyo ziphumelele\n💡 Zama kwakhona!`
+          `🔍 Isisombululo singenisiwe!\n⚠️ ${passedCount}/${totalCount} izivivinyo ziphumelele\n💡 Zama kwakhona!`
         );
       }
 
@@ -278,6 +292,45 @@ export function ChallengeSolverLight() {
       ? "text-green-600 bg-green-50 border-green-200"
       : "text-red-600 bg-red-50 border-red-200";
   };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 animate-spin text-cyan-600 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            Loading Challenge...
+          </h3>
+          <p className="text-gray-600">
+            Please wait while we fetch the challenge details
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error || !challenge) {
+    return (
+      <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30 flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            Failed to Load Challenge
+          </h3>
+          <p className="text-gray-600 mb-4">{error || "Challenge not found"}</p>
+          <Button
+            onClick={goBack}
+            className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Challenges
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30 text-gray-900 flex flex-col relative overflow-hidden challenge-container">
@@ -306,10 +359,22 @@ export function ChallengeSolverLight() {
               </div>
               <div>
                 <h1 className="text-xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-purple-800 bg-clip-text text-transparent">
-                  {sampleChallenge.title}
+                  {challenge.title}
                 </h1>
-                <p className="text-xs text-gray-600">
-                  Intwayamanzi yomgeni • IsiPython
+                <p className="text-xs text-gray-600 flex items-center gap-2">
+                  {challenge.category && (
+                    <>
+                      <span>{challenge.category}</span>
+                      <span>•</span>
+                    </>
+                  )}
+                  <span>{challenge.difficulty}</span>
+                  {challenge.points && (
+                    <>
+                      <span>•</span>
+                      <span>{challenge.points} points</span>
+                    </>
+                  )}
                 </p>
               </div>
             </div>
@@ -333,7 +398,7 @@ export function ChallengeSolverLight() {
             onValueChange={setActiveTab}
             className="flex-1 flex flex-col min-h-0"
           >
-            {/* Tab Headers - Fixed */}
+            {/* Tab Headers */}
             <TabsList className="bg-white/90 backdrop-blur-sm border-b border-gray-200/50 rounded-none justify-start p-0 h-12 flex-shrink-0">
               <TabsTrigger
                 value={t("Explaination")}
@@ -356,7 +421,7 @@ export function ChallengeSolverLight() {
               </TabsTrigger>
             </TabsList>
 
-            {/* Tab Content - Scrollable */}
+            {/* Tab Content */}
             <div className="flex-1 min-h-0 overflow-hidden">
               <TabsContent value={t("Explaination")} className="h-full m-0 p-0">
                 <div className="h-full overflow-y-auto p-6 space-y-6">
@@ -365,52 +430,73 @@ export function ChallengeSolverLight() {
                       {t("Problem Statement")}
                     </h2>
                     <p className="text-gray-700 leading-relaxed whitespace-pre-line">
-                      {sampleChallenge.description}
+                      {challenge.problemStatement || challenge.description}
                     </p>
                   </div>
 
-                  <div>
-                    <h3 className="text-md font-semibold bg-gradient-to-r from-gray-900 to-purple-800 bg-clip-text text-transparent mb-3">
-                      {t("Examples")}
-                    </h3>
-                    <div className="space-y-4">
-                      {sampleChallenge.examples.map((example, index) => (
-                        <Card
-                          key={index}
-                          className="bg-white/90 backdrop-blur-sm border border-gray-200/50 shadow-md hover:shadow-lg transition-all duration-300"
-                        >
-                          <CardContent className="p-4">
-                            <div className="space-y-2">
-                              <div>
-                                <span className="text-sm font-medium text-gray-600">
-                                  {t("Input")}:
-                                </span>
-                                <code className="ml-2 text-cyan-600 font-mono bg-cyan-50/50 px-2 py-1 rounded border border-cyan-200/50">
-                                  {example.input}
-                                </code>
+                  {challenge.examples && challenge.examples.length > 0 && (
+                    <div>
+                      <h3 className="text-md font-semibold bg-gradient-to-r from-gray-900 to-purple-800 bg-clip-text text-transparent mb-3">
+                        {t("Examples")}
+                      </h3>
+                      <div className="space-y-4">
+                        {challenge.examples.map((example, index) => (
+                          <Card
+                            key={index}
+                            className="bg-white/90 backdrop-blur-sm border border-gray-200/50 shadow-md hover:shadow-lg transition-all duration-300"
+                          >
+                            <CardContent className="p-4">
+                              <div className="space-y-2">
+                                <div>
+                                  <span className="text-sm font-medium text-gray-600">
+                                    {t("Input")}:
+                                  </span>
+                                  <code className="ml-2 text-cyan-600 font-mono bg-cyan-50/50 px-2 py-1 rounded border border-cyan-200/50">
+                                    {example.input}
+                                  </code>
+                                </div>
+                                <div>
+                                  <span className="text-sm font-medium text-gray-600">
+                                    {t("Output")}:
+                                  </span>
+                                  <code className="ml-2 text-green-600 font-mono bg-green-50/50 px-2 py-1 rounded border border-green-200/50">
+                                    {example.output}
+                                  </code>
+                                </div>
+                                <div>
+                                  <span className="text-sm font-medium text-gray-600">
+                                    {t("Explaination")}:
+                                  </span>
+                                  <span className="ml-2 text-gray-700">
+                                    {example.explanation}
+                                  </span>
+                                </div>
                               </div>
-                              <div>
-                                <span className="text-sm font-medium text-gray-600">
-                                  {t("Output")}:
-                                </span>
-                                <code className="ml-2 text-green-600 font-mono bg-green-50/50 px-2 py-1 rounded border border-green-200/50">
-                                  {example.output}
-                                </code>
-                              </div>
-                              <div>
-                                <span className="text-sm font-medium text-gray-600">
-                                  {t("Explaination")}:
-                                </span>
-                                <span className="ml-2 text-gray-700">
-                                  {example.explanation}
-                                </span>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
+
+                  {challenge.tags && challenge.tags.length > 0 && (
+                    <div>
+                      <h3 className="text-md font-semibold bg-gradient-to-r from-gray-900 to-purple-800 bg-clip-text text-transparent mb-3">
+                        Tags
+                      </h3>
+                      <div className="flex flex-wrap gap-2">
+                        {challenge.tags.map((tag, index) => (
+                          <Badge
+                            key={index}
+                            variant="outline"
+                            className="text-xs bg-white/60 text-gray-700 border-gray-300/50"
+                          >
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </TabsContent>
 
@@ -589,7 +675,7 @@ export function ChallengeSolverLight() {
             </div>
           </div>
 
-          {/* Code Editor with Monaco */}
+          {/* Code Editor */}
           <div
             className="flex-1 flex flex-col min-h-0"
             style={{ height: `calc(100% - ${outputPanelHeight}px)` }}

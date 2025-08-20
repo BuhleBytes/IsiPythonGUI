@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { useUserChallenges } from "../../useUserChallenges"; // Import the new hook
 
 export function ChallengesLight() {
@@ -36,6 +37,11 @@ export function ChallengesLight() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedDifficulty, setSelectedDifficulty] = useState("All");
+
+  const navigate = useNavigate();
+  const handleStartChallenge = (challengeId: string) => {
+    navigate(`/challenge/${challengeId}`);
+  };
 
   // Use the custom hook for challenge operations
   const {
@@ -419,17 +425,14 @@ export function ChallengesLight() {
                     </div>
 
                     <Button
+                      onClick={() => handleStartChallenge(challenge.id)}
                       className={`w-full ${
                         challenge.isCompleted
                           ? "bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white shadow-lg"
                           : "bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white shadow-lg"
                       } border-0 transition-all duration-300 hover:scale-105 hover:shadow-xl`}
-                      asChild
                     >
-                      <a
-                        href={`/challenge/${challenge.id}`}
-                        className="flex items-center justify-center gap-2"
-                      >
+                      <div className="flex items-center justify-center gap-2">
                         {challenge.isCompleted ? (
                           <>
                             <Activity className="w-4 h-4" />
@@ -442,7 +445,7 @@ export function ChallengesLight() {
                           </>
                         )}
                         <ChevronRight className="w-4 h-4" />
-                      </a>
+                      </div>
                     </Button>
                   </CardContent>
                 </Card>

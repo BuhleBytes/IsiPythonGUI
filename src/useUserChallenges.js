@@ -197,16 +197,9 @@ export const useUserChallenges = () => {
   // Fetch user challenges from API
   const fetchChallenges = useCallback(
     async (userIdToUse) => {
-      console.log("🚀 =================================");
-      console.log("🚀 FETCH CHALLENGES CALLED");
-      console.log("🚀 =================================");
-
       const targetUserId = userIdToUse || userId;
 
       if (!isValidUserId(targetUserId)) {
-        console.log(
-          "❌ DEBUG - Invalid or missing userId, cannot fetch challenges"
-        );
         setLoading(false);
         setChallenges([]);
         return;
@@ -217,17 +210,14 @@ export const useUserChallenges = () => {
         setError(null);
 
         const apiUrl = `https://isipython-dev.onrender.com/api/challenges?user_id=${targetUserId}`;
-        console.log("🌐 DEBUG - Calling Challenges API:", apiUrl);
 
         const response = await fetch(apiUrl);
-        console.log("📡 DEBUG - Response Status:", response.status);
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const result = await response.json();
-        console.log("📄 DEBUG - Full Challenges API Response:", result);
 
         // Extract challenges from the response
         let challengesData = [];
@@ -236,28 +226,17 @@ export const useUserChallenges = () => {
         } else if (Array.isArray(result)) {
           challengesData = result;
         } else {
-          console.log("❌ DEBUG - Unexpected response format:", typeof result);
           setChallenges([]);
           return;
         }
 
-        console.log(
-          `📁 DEBUG - Found ${challengesData.length} challenges, transforming...`
-        );
-
         if (challengesData.length === 0) {
-          console.log("📝 DEBUG - No challenges found");
           setChallenges([]);
         } else {
           // Transform API data to component format
           const transformedChallenges = challengesData.map(
             transformChallengeData
           );
-          console.log(
-            "🔄 DEBUG - All transformed challenges:",
-            transformedChallenges
-          );
-
           // Sort by user progress and then by creation date
           transformedChallenges.sort((a, b) => {
             // Priority: 1. In Progress, 2. Not Started, 3. Completed
@@ -283,7 +262,6 @@ export const useUserChallenges = () => {
           setChallenges(transformedChallenges);
         }
       } catch (error) {
-        console.error("💥 DEBUG - ERROR in fetchChallenges:", error);
         setError(error.message);
         setChallenges([]);
       } finally {
@@ -350,6 +328,96 @@ export const useUserChallenges = () => {
       }
     },
     [userId]
+  );
+
+  /*Tested Works Perfectly*/
+  // Replace the existing getChallengeDetails function in useUserChallenges.js with this:
+
+  const getChallengeDetails = useCallback(
+    async (challengeId, userIdOverride) => {
+      try {
+        const targetUserId = userIdOverride || userId;
+
+        if (!isValidUserId(targetUserId)) {
+          throw new Error("Invalid userId for challenge details request");
+        }
+
+        if (!challengeId || typeof challengeId !== "string") {
+          throw new Error("A valid challengeId string is required.");
+        }
+
+        console.log(
+          "🌐 DEBUG - Calling Challenge Details API:",
+          challengeId,
+          targetUserId
+        );
+
+        const apiUrl = `https://isipython-dev.onrender.com/api/challenges/${challengeId}?user_id=${targetUserId}`;
+
+        const response = await fetch(apiUrl);
+
+        console.log(
+          "📡 DEBUG - Challenge Details Response Status:",
+          response.status
+        );
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        console.log("📄 DEBUG - Challenge Details API Response:", result);
+
+        const data = result?.data;
+        if (!data) {
+          throw new Error("Invalid challenge details response format.");
+        }
+
+        // Transform the detailed challenge data
+        const base = transformChallengeData(data, 0);
+
+        // Create comprehensive challenge details object
+        const details = {
+          ...base,
+          problemStatement: data.problem_statement ?? base.problemStatement,
+          summary: data.summary || null,
+          testCases: data.test_cases || [],
+          status: data.status || null,
+          shortDescription: data.short_description ?? base.description,
+          createdAt: data.created_at ?? base.createdAt,
+          updatedAt: data.updated_at ?? null,
+          publishedAt: data.published_at ?? base.publishedAt,
+          searchVector: data.search_vector ?? null,
+          sendNotifications: data.send_notifications ?? false,
+          totalSubmissions: data.total_submissions ?? base.totalSubmissions,
+          slug: data.slug ?? base.slug,
+          rewardPoints: data.reward_points ?? base.points,
+          estimatedTime:
+            typeof data.estimated_time === "number"
+              ? `${data.estimated_time} min`
+              : base.estimatedTime,
+          // Enhanced user progress and statistics
+          userProgress: data.user_progress ?? base.userProgress,
+          statistics: data.statistics ?? base.statistics,
+
+          // Additional fields that might be useful for the solver
+          constraints: data.constraints || [],
+          examples: data.examples || [],
+          starterCode: data.starter_code || data.template_code || null,
+          hints: data.hints || [],
+          difficulty: mapDifficulty(data.difficulty_level) || base.difficulty,
+          category: getCategoryFromTags(data.tags) || base.category,
+        };
+
+        console.log("✅ DEBUG - getChallengeDetails transformed:", details);
+        return details;
+      } catch (error) {
+        console.error("💥 DEBUG - ERROR in getChallengeDetails:", error);
+        return { error: error.message || "Failed to fetch challenge details." };
+      }
+    },
+    [userId, transformChallengeData]
   );
 
   // Refresh both challenges and stats
@@ -460,5 +528,6 @@ export const useUserChallenges = () => {
     // Utilities
     getFilteredChallenges,
     getAvailableCategories,
+    getChallengeDetails,
   };
 };
