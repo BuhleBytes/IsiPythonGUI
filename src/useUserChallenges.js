@@ -8,7 +8,7 @@ import {
   Target,
   Zap,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useUser } from "./useUser";
 
 /**
@@ -22,6 +22,10 @@ export const useUserChallenges = () => {
   const [loading, setLoading] = useState(true);
   const [statsLoading, setStatsLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Add refs for AbortControllers
+  const abortControllerRef = useRef(null);
+  const statsAbortControllerRef = useRef(null);
 
   // Predefined icons and gradients for different categories/difficulties
   const challengeStyles = [
@@ -70,7 +74,6 @@ export const useUserChallenges = () => {
   // Helper function to check if userId is valid
   const isValidUserId = (id) => {
     const isValid = id && typeof id === "string" && id.trim().length > 0;
-    console.log("🔍 DEBUG - isValidUserId check:", { id, isValid });
     return isValid;
   };
 
@@ -114,10 +117,8 @@ export const useUserChallenges = () => {
     return "General";
   };
 
-  // Transform API challenge data to component format
+  // Transform API challenge data to component format - STABLE
   const transformChallengeData = useCallback((apiChallenge, index) => {
-    console.log(`🔄 DEBUG - Transforming challenge ${index}:`, apiChallenge);
-
     const style = challengeStyles[index % challengeStyles.length];
     const difficulty = mapDifficulty(apiChallenge.difficulty_level);
     const category = getCategoryFromTags(apiChallenge.tags);
@@ -139,23 +140,13 @@ export const useUserChallenges = () => {
 
     // Use real statistics with intelligent fallbacks
     const passedStudents = usersCompleted;
-    // Ensure totalAttempts is never less than usersCompleted
     const totalAttempts = Math.max(usersAttempted, usersCompleted, 1);
 
-    // If no real stats available, show more modest numbers
     const displayPassedStudents =
       passedStudents === 0 ? 0 : Math.max(passedStudents, 1);
     const displayTotalAttempts = totalAttempts === 0 ? 1 : totalAttempts;
 
-    console.log(`📊 DEBUG - Challenge ${apiChallenge.title} stats:`, {
-      displayPassedStudents,
-      displayTotalAttempts,
-      realPassRate,
-      isCompleted,
-      userAttempts,
-    });
-
-    const transformedChallenge = {
+    return {
       id: apiChallenge.id,
       title: apiChallenge.title,
       description:
@@ -173,7 +164,6 @@ export const useUserChallenges = () => {
       isInProgress: isInProgress,
       gradient: style.gradient,
       bgGradient: style.bgGradient,
-      // Real API statistics and user progress
       realPassRate: realPassRate,
       totalSubmissions: totalSubmissions,
       userAttempts: userAttempts,
@@ -186,18 +176,15 @@ export const useUserChallenges = () => {
       createdAt: apiChallenge.created_at,
       publishedAt: apiChallenge.published_at,
     };
+  }, []); // NO DEPENDENCIES - stable function
 
-    console.log(
-      `✅ DEBUG - Final transformed challenge ${index}:`,
-      transformedChallenge
-    );
-    return transformedChallenge;
-  }, []);
-
-  // Fetch user challenges from API
+  // Fetch user challenges from API with AbortController
   const fetchChallenges = useCallback(
-    async (userIdToUse) => {
-      const targetUserId = userIdToUse || userId;
+    async (targetUserId) => {
+      // Cancel previous request if still running
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
 
       if (!isValidUserId(targetUserId)) {
         setLoading(false);
@@ -209,16 +196,40 @@ export const useUserChallenges = () => {
         setLoading(true);
         setError(null);
 
-        const apiUrl = `https://isipython-dev.onrender.com/api/challenges?user_id=${targetUserId}`;
+        // Create new abort controller for this request
+        abortControllerRef.current = new AbortController();
+        const signal = abortControllerRef.current.signal;
 
-        const response = await fetch(apiUrl);
+        const apiUrl = `https://isipython-dev.onrender.com/api/challenges?user_id=${targetUserId}`;
+        console.log(
+          "🌐 Fetching challenges with abort signal for user:",
+          targetUserId
+        );
+
+        const response = await fetch(apiUrl, {
+          signal,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        // Check if request was aborted
+        if (signal.aborted) {
+          console.log("🚫 Challenges fetch aborted");
+          return;
+        }
 
         if (!response.ok) {
-          console.log("VVO1 fetchChallenges userId", targetUserId);
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const result = await response.json();
+
+        // Check again after parsing
+        if (signal.aborted) {
+          console.log("🚫 Challenges fetch aborted after parsing");
+          return;
+        }
 
         // Extract challenges from the response
         let challengesData = [];
@@ -234,17 +245,16 @@ export const useUserChallenges = () => {
         if (challengesData.length === 0) {
           setChallenges([]);
         } else {
-          // Transform API data to component format
           const transformedChallenges = challengesData.map(
             transformChallengeData
           );
+
           // Sort by user progress and then by creation date
           transformedChallenges.sort((a, b) => {
-            // Priority: 1. In Progress, 2. Not Started, 3. Completed
             const getProgressPriority = (challenge) => {
               if (challenge.isInProgress) return 1;
-              if (!challenge.isCompleted && !challenge.isInProgress) return 2; // not started
-              return 3; // completed
+              if (!challenge.isCompleted && !challenge.isInProgress) return 2;
+              return 3;
             };
 
             const aPriority = getProgressPriority(a);
@@ -254,7 +264,6 @@ export const useUserChallenges = () => {
               return aPriority - bPriority;
             }
 
-            // If same progress status, sort by creation date (newest first)
             return (
               new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
             );
@@ -263,79 +272,102 @@ export const useUserChallenges = () => {
           setChallenges(transformedChallenges);
         }
       } catch (error) {
+        if (error.name === "AbortError") {
+          console.log("🚫 Challenges fetch aborted");
+          return;
+        }
+        console.error("💥 Error fetching challenges:", error);
         setError(error.message);
         setChallenges([]);
       } finally {
         setLoading(false);
+        abortControllerRef.current = null;
       }
     },
-    [userId, transformChallengeData]
+    [transformChallengeData]
   );
 
-  // Fetch user challenge stats from API
-  const fetchStats = useCallback(
-    async (userIdToUse) => {
-      console.log("📊 =================================");
-      console.log("📊 FETCH CHALLENGE STATS CALLED");
-      console.log("📊 =================================");
+  // Fetch user challenge stats from API with AbortController
+  const fetchStats = useCallback(async (targetUserId) => {
+    // Cancel previous stats request if still running
+    if (statsAbortControllerRef.current) {
+      statsAbortControllerRef.current.abort();
+    }
 
-      const targetUserId = userIdToUse || userId;
+    if (!isValidUserId(targetUserId)) {
+      setStatsLoading(false);
+      setStats(null);
+      return;
+    }
 
-      if (!isValidUserId(targetUserId)) {
-        console.log("❌ DEBUG - Invalid or missing userId, cannot fetch stats");
-        setStatsLoading(false);
-        setStats(null);
+    try {
+      setStatsLoading(true);
+      setError(null);
+
+      // Create new abort controller for this request
+      statsAbortControllerRef.current = new AbortController();
+      const signal = statsAbortControllerRef.current.signal;
+
+      const apiUrl = `https://isipython-dev.onrender.com/api/challenges/stats?user_id=${targetUserId}`;
+      console.log(
+        "📊 Fetching stats with abort signal for user:",
+        targetUserId
+      );
+
+      const response = await fetch(apiUrl, {
+        signal,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      // Check if request was aborted
+      if (signal.aborted) {
+        console.log("🚫 Stats fetch aborted");
         return;
       }
 
-      try {
-        setStatsLoading(true);
-        setError(null);
-
-        const apiUrl = `https://isipython-dev.onrender.com/api/challenges/stats?user_id=${targetUserId}`;
-        console.log("🌐 DEBUG - Calling Stats API:", apiUrl);
-
-        const response = await fetch(apiUrl);
-        console.log("📡 DEBUG - Stats Response Status:", response.status);
-
-        if (!response.ok) {
-          console.log("VVO1 fetchStats userId", targetUserId);
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const result = await response.json();
-        console.log("📄 DEBUG - Full Stats API Response:", result);
-
-        // Extract stats from the response
-        if (result && result.data) {
-          const statsData = {
-            completedChallenges: result.data.completed_challenges || 0,
-            totalPointsEarned: result.data.total_points_earned || 0,
-            successRate: result.data.success_rate || 0,
-            userGlobalRank: result.data.user_global_rank ?? null,
-          };
-
-          console.log("✅ DEBUG - Transformed stats:", statsData);
-          setStats(statsData);
-        } else {
-          console.log("❌ DEBUG - Invalid stats response format");
-          setStats(null);
-        }
-      } catch (error) {
-        console.error("💥 DEBUG - ERROR in fetchStats:", error);
-        setError(error.message);
-        setStats(null);
-      } finally {
-        setStatsLoading(false);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    },
-    [userId]
-  );
 
-  /*Tested Works Perfectly*/
-  // Replace the existing getChallengeDetails function in useUserChallenges.js with this:
+      const result = await response.json();
+
+      // Check again after parsing
+      if (signal.aborted) {
+        console.log("🚫 Stats fetch aborted after parsing");
+        return;
+      }
+
+      if (result && result.data) {
+        const statsData = {
+          completedChallenges: result.data.completed_challenges || 0,
+          totalPointsEarned: result.data.total_points_earned || 0,
+          successRate: result.data.success_rate || 0,
+          userGlobalRank: result.data.user_global_rank ?? null,
+        };
+
+        setStats(statsData);
+      } else {
+        setStats(null);
+      }
+    } catch (error) {
+      if (error.name === "AbortError") {
+        console.log("🚫 Stats fetch aborted");
+        return;
+      }
+      console.error("💥 Error fetching stats:", error);
+      setError(error.message);
+      setStats(null);
+    } finally {
+      setStatsLoading(false);
+      statsAbortControllerRef.current = null;
+    }
+  }, []);
+
+  // FIXED getChallengeDetails with proper JavaScript syntax
   const getChallengeDetails = useCallback(
-    async (challengeId, userIdOverride) => {
+    async (challengeId, userIdOverride, signal) => {
       try {
         const targetUserId = userIdOverride || userId;
 
@@ -348,35 +380,39 @@ export const useUserChallenges = () => {
         }
 
         console.log(
-          "🌐 DEBUG - Calling Challenge Details API:",
-          challengeId,
-          targetUserId
+          "🌐 Fetching challenge details with abort signal:",
+          challengeId
         );
 
         const apiUrl = `https://isipython-dev.onrender.com/api/challenges/${challengeId}?user_id=${targetUserId}`;
 
-        const response = await fetch(apiUrl);
+        // Build fetch options
+        const fetchOptions = {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        };
 
-        console.log(
-          "📡 DEBUG - Challenge Details Response Status:",
-          response.status
-        );
+        // Add signal if provided
+        if (signal) {
+          fetchOptions.signal = signal;
+        }
+
+        const response = await fetch(apiUrl, fetchOptions);
+
+        // Check if request was aborted
+        if (signal?.aborted) {
+          throw new Error("Request aborted");
+        }
 
         if (!response.ok) {
-          console.log(
-            "VVO1 getChallengeDetails userId",
-            targetUserId,
-            "challengeID",
-            challengeId
-          );
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
         const result = await response.json();
-
-        console.log("📄 DEBUG - Challenge Details API Response:", result);
-
         const data = result?.data;
+
         if (!data) {
           throw new Error("Invalid challenge details response format.");
         }
@@ -384,7 +420,6 @@ export const useUserChallenges = () => {
         // Transform the detailed challenge data
         const base = transformChallengeData(data, 0);
 
-        // Create comprehensive challenge details object
         const details = {
           ...base,
           problemStatement: data.problem_statement ?? base.problemStatement,
@@ -395,20 +430,8 @@ export const useUserChallenges = () => {
           createdAt: data.created_at ?? base.createdAt,
           updatedAt: data.updated_at ?? null,
           publishedAt: data.published_at ?? base.publishedAt,
-          searchVector: data.search_vector ?? null,
-          sendNotifications: data.send_notifications ?? false,
-          totalSubmissions: data.total_submissions ?? base.totalSubmissions,
-          slug: data.slug ?? base.slug,
-          rewardPoints: data.reward_points ?? base.points,
-          estimatedTime:
-            typeof data.estimated_time === "number"
-              ? `${data.estimated_time} min`
-              : base.estimatedTime,
-          // Enhanced user progress and statistics
           userProgress: data.user_progress ?? base.userProgress,
           statistics: data.statistics ?? base.statistics,
-
-          // Additional fields that might be useful for the solver
           constraints: data.constraints || [],
           examples: data.examples || [],
           starterCode: data.starter_code || data.template_code || null,
@@ -417,33 +440,31 @@ export const useUserChallenges = () => {
           category: getCategoryFromTags(data.tags) || base.category,
         };
 
-        console.log("✅ DEBUG - getChallengeDetails transformed:", details);
         return details;
       } catch (error) {
-        console.error("💥 DEBUG - ERROR in getChallengeDetails:", error);
+        // Don't log errors for aborted requests
+        if (error.name !== "AbortError" && !signal?.aborted) {
+          console.error("💥 Error in getChallengeDetails:", error);
+        }
         return { error: error.message || "Failed to fetch challenge details." };
       }
     },
-    [userId, transformChallengeData]
+    [transformChallengeData]
   );
 
   // Refresh both challenges and stats
   const refreshChallenges = useCallback(async () => {
-    console.log("🔄 DEBUG - Refresh challenges and stats called");
-    await Promise.all([fetchChallenges(), fetchStats()]);
-  }, [fetchChallenges, fetchStats]);
+    if (!isValidUserId(userId)) return;
 
-  // Filter challenges based on search and filters
+    console.log("🔄 Manual refresh triggered for user:", userId);
+
+    await Promise.all([fetchChallenges(userId), fetchStats(userId)]);
+  }, [fetchChallenges, fetchStats, userId]);
+
+  // Filter challenges - STABLE
   const getFilteredChallenges = useCallback(
     (searchTerm, selectedCategory, selectedDifficulty) => {
-      console.log("🔍 DEBUG - Filtering challenges:", {
-        searchTerm,
-        selectedCategory,
-        selectedDifficulty,
-        totalChallenges: challenges.length,
-      });
-
-      const filtered = challenges.filter((challenge) => {
+      return challenges.filter((challenge) => {
         const matchesSearch =
           challenge.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
           challenge.description
@@ -459,44 +480,53 @@ export const useUserChallenges = () => {
 
         return matchesSearch && matchesCategory && matchesDifficulty;
       });
-
-      console.log(
-        "🔍 DEBUG - Filtered results:",
-        filtered.length,
-        "challenges"
-      );
-      return filtered;
     },
     [challenges]
   );
 
-  // Get available categories from challenges
+  // Get available categories - STABLE
   const getAvailableCategories = useCallback(() => {
     const categories = ["All"];
     const uniqueCategories = [...new Set(challenges.map((c) => c.category))];
     return categories.concat(uniqueCategories.sort());
   }, [challenges]);
 
-  // Main useEffect - fetches data when userId changes
+  // Main useEffect with AbortController - ONLY userId dependency
   useEffect(() => {
-    console.log("🔄 DEBUG - Main useEffect triggered");
-    console.log("🔄 DEBUG - userId:", userId);
-    console.log("🔄 DEBUG - isLoggedIn:", isLoggedIn);
+    console.log("🔄 Main useEffect triggered for userId:", userId);
 
     if (isValidUserId(userId)) {
-      console.log("✅ DEBUG - Valid userId found, calling fetch functions");
-      fetchChallenges(userId);
-      fetchStats(userId);
+      // Add small delay to prevent rapid successive calls
+      const timeoutId = setTimeout(() => {
+        fetchChallenges(userId);
+        fetchStats(userId);
+      }, 100);
+
+      return () => clearTimeout(timeoutId);
     } else {
-      console.log("⏳ DEBUG - No valid userId yet, waiting...");
+      console.log("⏳ No valid userId yet, waiting...");
+      setLoading(false);
+      setStatsLoading(false);
     }
-  }, [userId, fetchChallenges, fetchStats]);
+  }, [userId]); // ONLY userId dependency!
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      if (statsAbortControllerRef.current) {
+        statsAbortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   // Timeout useEffect - prevents infinite loading
   useEffect(() => {
     const timeout = setTimeout(() => {
-      if (loading && !isValidUserId(userId)) {
-        console.log("⏰ DEBUG - TIMEOUT: No valid userId after 10 seconds");
+      if ((loading || statsLoading) && !isValidUserId(userId)) {
+        console.log("⏰ TIMEOUT: No valid userId after 10 seconds");
         setLoading(false);
         setStatsLoading(false);
         setChallenges([]);
@@ -505,19 +535,7 @@ export const useUserChallenges = () => {
     }, 10000);
 
     return () => clearTimeout(timeout);
-  }, [loading, userId, isLoggedIn]);
-
-  // Debug useEffects
-  useEffect(() => {
-    console.log("📁 DEBUG - Challenges state changed:", {
-      challengesCount: challenges.length,
-      challenges: challenges,
-    });
-  }, [challenges]);
-
-  useEffect(() => {
-    console.log("📊 DEBUG - Stats state changed:", stats);
-  }, [stats]);
+  }, [loading, statsLoading, userId]);
 
   return {
     // State

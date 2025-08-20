@@ -28,137 +28,158 @@ import {
   X,
   Zap,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { registerIsiPython } from "../../languages/isiPython";
 import { useUser } from "../../useUser";
 import { useUserChallenges } from "../../useUserChallenges";
 
-interface TestCase {
-  id: number;
-  input: string;
-  expectedOutput: string;
-  actualOutput?: string;
-  passed?: boolean;
-  hidden?: boolean;
-}
-
-interface Submission {
-  id: number;
-  timestamp: Date;
-  passed: boolean;
-  passedTests: number;
-  totalTests: number;
-  code: string;
-  executionTime?: number;
-}
-
-interface Challenge {
-  id: number;
-  title: string;
-  difficulty: "Low" | "Medium" | "High";
-  description: string;
-  problemStatement?: string;
-  examples?: Array<{
-    input: string;
-    output: string;
-    explanation: string;
-  }>;
-  constraints?: string[];
-  testCases?: TestCase[];
-  starterCode?: string;
-  category?: string;
-  tags?: string[];
-  points?: number;
-}
-
 // Default starter code if none provided
 const defaultStarterCode = `# Write your code here`;
 
 export function ChallengeSolverLight() {
   const { t } = useTranslation();
-  const { id: challengeId } = useParams<{ id: string }>();
+  const { id: challengeId } = useParams();
   const { userId } = useUser();
   const { getChallengeDetails } = useUserChallenges();
   const navigate = useNavigate();
 
   // Challenge data state
-  const [challenge, setChallenge] = useState<Challenge | null>(null);
+  const [challenge, setChallenge] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState(null);
 
   // Editor and execution state
   const [code, setCode] = useState(defaultStarterCode);
   const [isRunning, setIsRunning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [testResults, setTestResults] = useState<TestCase[]>([]);
-  const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [testResults, setTestResults] = useState([]);
+  const [submissions, setSubmissions] = useState([]);
   const [activeTab, setActiveTab] = useState(t("Explaination"));
   const [language, setLanguage] = useState("IsiPython");
   const [output, setOutput] = useState("");
   const [outputPanelHeight, setOutputPanelHeight] = useState(300);
   const [isResizingOutput, setIsResizingOutput] = useState(false);
 
-  // Fetch challenge details when component mounts
+  // Fetch challenge details when component mounts - FIXED VERSION
   useEffect(() => {
-    const fetchChallengeData = async () => {
-      if (!challengeId) {
-        setError("No challenge ID provided");
-        setLoading(false);
-        return;
-      }
+    // Create AbortController for this effect run
+    const abortController = new AbortController();
+    let isMounted = true;
+    let timeoutId;
 
-      if (!userId) {
-        setError("User not authenticated");
-        setLoading(false);
+    const fetchChallengeData = async () => {
+      if (!challengeId || !userId) {
+        if (isMounted) {
+          setError(
+            !challengeId ? "No challenge ID provided" : "User not authenticated"
+          );
+          setLoading(false);
+        }
         return;
       }
 
       try {
-        setLoading(true);
-        setError(null);
+        if (isMounted) {
+          setLoading(true);
+          setError(null);
+          setChallenge(null);
+          setTestResults([]);
+          setOutput("");
+        }
 
-        console.log("🚀 Fetching challenge details for ID:", challengeId);
-        const challengeDetails = await getChallengeDetails(challengeId, userId);
+        console.log("🚀 Fetching challenge with AbortController:", challengeId);
 
-        if (challengeDetails.error) {
-          setError(challengeDetails.error);
+        // Small delay to prevent rapid successive calls
+        await new Promise((resolve) => {
+          timeoutId = setTimeout(resolve, 200);
+        });
+
+        // Check if aborted during delay
+        if (abortController.signal.aborted || !isMounted) {
+          console.log("🚫 Request aborted during delay");
           return;
         }
 
-        console.log("✅ Challenge details loaded:", challengeDetails);
+        // FIXED: Pass signal as third parameter, not in options object
+        const challengeDetails = await getChallengeDetails(
+          challengeId,
+          userId,
+          abortController.signal // Signal as direct parameter
+        );
 
-        // Set challenge directly - Examples will be generated from testCases
-        setChallenge(challengeDetails);
+        // Check if aborted after API call
+        if (abortController.signal.aborted || !isMounted) {
+          console.log("🚫 Request aborted after API call");
+          return;
+        }
 
-        // Set initial code - always start with clean template
-        setCode(defaultStarterCode);
+        if (challengeDetails.error) {
+          if (isMounted) {
+            setError(challengeDetails.error);
+            setLoading(false);
+          }
+          return;
+        }
+
+        console.log("✅ Challenge loaded successfully!");
+
+        if (isMounted) {
+          setChallenge(challengeDetails);
+          setCode(defaultStarterCode);
+          setLoading(false);
+        }
       } catch (err) {
-        console.error("💥 Error fetching challenge:", err);
-        setError(err.message || "Failed to load challenge");
-      } finally {
-        setLoading(false);
+        // Don't show errors for aborted requests
+        if (!abortController.signal.aborted && isMounted) {
+          console.error("💥 Error fetching challenge:", err);
+          setError(
+            err instanceof Error ? err.message : "Failed to load challenge"
+          );
+          setLoading(false);
+        }
       }
     };
 
-    fetchChallengeData();
-  }, [challengeId, userId, getChallengeDetails]);
+    // Guard against React Strict Mode double runs
+    if (challengeId && userId) {
+      // Small random delay to spread out requests
+      const randomDelay = 50 + Math.random() * 100;
+      timeoutId = setTimeout(() => {
+        if (!abortController.signal.aborted && isMounted) {
+          fetchChallengeData();
+        }
+      }, randomDelay);
+    } else {
+      setLoading(false);
+    }
+
+    // Cleanup function - abort on unmount/route change
+    return () => {
+      console.log("🧹 Aborting challenge request cleanup");
+      isMounted = false;
+      abortController.abort();
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [challengeId, userId, getChallengeDetails]); // Include getChallengeDetails but it should be stable
 
   // Monaco Editor setup
-  const handleEditorWillMount = (monaco) => {
+  const handleEditorWillMount = useCallback((monaco) => {
     registerIsiPython(monaco);
-  };
+  }, []);
 
-  const goBack = () => {
+  const goBack = useCallback(() => {
     navigate("/dash", { state: { activeView: "challenges" } });
-  };
+  }, [navigate]);
 
   // Output panel resize functionality
-  const handleOutputResizeStart = (e) => {
+  const handleOutputResizeStart = useCallback((e) => {
     setIsResizingOutput(true);
     e.preventDefault();
-  };
+  }, []);
 
   useEffect(() => {
     const handleOutputMouseMove = (e) => {
@@ -196,11 +217,15 @@ export function ChallengeSolverLight() {
     };
   }, [isResizingOutput]);
 
-  const runCode = async () => {
+  const runCode = useCallback(async () => {
+    if (isRunning) return;
+
     setIsRunning(true);
     setOutput("🚀 Qalisa ukusebenza...\n⚡ Layisha i-Python interpreter...\n");
 
-    setTimeout(() => {
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
       // Mock test results - in real implementation, send code to execution API
       const mockResults =
         challenge?.testCases?.map((testCase) => ({
@@ -224,32 +249,42 @@ export function ChallengeSolverLight() {
           .join("\n")}
 \n${passedCount}/${mockResults.length} izivivinyo ziphumelele`
       );
+    } catch (error) {
+      setOutput(
+        "❌ Error running code: " +
+          (error instanceof Error ? error.message : "Unknown error")
+      );
+    } finally {
       setIsRunning(false);
-    }, 2000);
-  };
+    }
+  }, [isRunning, challenge?.testCases]);
 
-  const submitCode = async () => {
+  const submitCode = useCallback(async () => {
+    if (isSubmitting) return;
+
     setIsSubmitting(true);
 
-    // Run tests first if not already run
-    let currentResults = testResults;
-    if (testResults.length === 0) {
-      currentResults =
-        challenge?.testCases?.map((testCase) => ({
-          ...testCase,
-          actualOutput: testCase.expectedOutput,
-          passed: Math.random() > 0.3,
-        })) || [];
-      setTestResults(currentResults);
-    }
+    try {
+      // Run tests first if not already run
+      let currentResults = testResults;
+      if (testResults.length === 0) {
+        currentResults =
+          challenge?.testCases?.map((testCase) => ({
+            ...testCase,
+            actualOutput: testCase.expectedOutput,
+            passed: Math.random() > 0.3,
+          })) || [];
+        setTestResults(currentResults);
+      }
 
-    setTimeout(() => {
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
       const passedCount = currentResults.filter((r) => r.passed).length;
       const totalCount = currentResults.length;
       const allPassed = passedCount === totalCount;
       const executionTime = Math.floor(Math.random() * 1000) + 100;
 
-      const newSubmission: Submission = {
+      const newSubmission = {
         id: submissions.length + 1,
         timestamp: new Date(),
         passed: allPassed,
@@ -270,20 +305,31 @@ export function ChallengeSolverLight() {
           `🔍 Isisombululo singenisiwe!\n⚠️ ${passedCount}/${totalCount} izivivinyo ziphumelele\n💡 Zama kwakhona!`
         );
       }
-
+    } catch (error) {
+      setOutput(
+        "❌ Error submitting code: " +
+          (error instanceof Error ? error.message : "Unknown error")
+      );
+    } finally {
       setIsSubmitting(false);
-    }, 1500);
-  };
+    }
+  }, [
+    isSubmitting,
+    testResults,
+    challenge?.testCases,
+    submissions.length,
+    code,
+  ]);
 
-  const formatDate = (date: Date) => {
+  const formatDate = useCallback((date) => {
     return date.toLocaleDateString() + " " + date.toLocaleTimeString();
-  };
+  }, []);
 
-  const getSubmissionStatusColor = (passed: boolean) => {
+  const getSubmissionStatusColor = useCallback((passed) => {
     return passed
       ? "text-green-600 bg-green-50 border-green-200"
       : "text-red-600 bg-red-50 border-red-200";
-  };
+  }, []);
 
   // Loading state
   if (loading) {
