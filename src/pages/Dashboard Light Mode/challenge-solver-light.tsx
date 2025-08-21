@@ -25,6 +25,7 @@ import {
   Send,
   Target,
   Terminal,
+  Trash2,
   X,
   Zap,
 } from "lucide-react";
@@ -61,6 +62,13 @@ export function ChallengeSolverLight() {
   const [output, setOutput] = useState("");
   const [outputPanelHeight, setOutputPanelHeight] = useState(300);
   const [isResizingOutput, setIsResizingOutput] = useState(false);
+
+  // New state for hidden test statistics
+  const [hiddenTestStats, setHiddenTestStats] = useState({
+    passed: 0,
+    failed: 0,
+    total: 0,
+  });
 
   // Fetch challenge details when component mounts
   useEffect(() => {
@@ -166,6 +174,13 @@ export function ChallengeSolverLight() {
     navigate("/dash", { state: { activeView: "challenges" } });
   }, [navigate]);
 
+  // Clear test output function
+  const clearTestOutput = useCallback(() => {
+    setTestResults([]);
+    setOutput("");
+    setHiddenTestStats({ passed: 0, failed: 0, total: 0 });
+  }, []);
+
   // Output panel resize functionality
   const handleOutputResizeStart = useCallback((e) => {
     setIsResizingOutput(true);
@@ -220,6 +235,10 @@ export function ChallengeSolverLight() {
       passed: test.status === "passed",
       explanation: test.explanation || "",
       status: test.status,
+      errorMessage: test.error_message || "", // IsiXhosa error message
+      englishError: test.english_error || "", // English error for debugging
+      hasError:
+        test.status === "failed" && (test.error_message || test.english_error),
     }));
   }, []);
 
@@ -371,26 +390,37 @@ export function ChallengeSolverLight() {
         const passedCount = transformedResults.filter((r) => r.passed).length;
         const totalCount = transformedResults.length;
 
+        // Handle hidden test statistics
         const hiddenTests = result.test_results.hidden_tests;
-        const hiddenPassedCount = hiddenTests ? hiddenTests.passed : 0;
-        const hiddenTotalCount = hiddenTests ? hiddenTests.total : 0;
+        const hiddenStats = {
+          passed: hiddenTests ? hiddenTests.passed : 0,
+          failed: hiddenTests ? hiddenTests.failed : 0,
+          total: hiddenTests ? hiddenTests.total : 0,
+        };
+        setHiddenTestStats(hiddenStats);
 
         const totalPassedTests = result.tests_passed || passedCount;
         const totalTests = result.tests_total || totalCount;
 
         let outputSummary = `✨ Iziphumo zowavano:\n\n`;
 
+        // Display visible test results
         transformedResults.forEach((test, index) => {
           outputSummary += `Uvavanyo ${index + 1}: ${
             test.passed ? "✅ KUPHUMELELE" : "❌ KUHLULEKILE"
           }\n`;
-          if (test.input) {
-            outputSummary += `Input: ${test.input}\n`;
-          }
-          outputSummary += `Okulindelwe: ${test.expectedOutput}\n`;
-          outputSummary += `Okufunyenwe: ${test.actualOutput}\n`;
-          if (test.explanation) {
-            outputSummary += `Incazelo: ${test.explanation}\n`;
+
+          if (test.hasError && test.errorMessage) {
+            outputSummary += `❌ Impazamo: ${test.errorMessage}\n`;
+          } else {
+            if (test.input) {
+              outputSummary += `Input: ${test.input}\n`;
+            }
+            outputSummary += `Okulindelwe: ${test.expectedOutput}\n`;
+            outputSummary += `Okufunyenwe: ${test.actualOutput}\n`;
+            if (test.explanation) {
+              outputSummary += `Incazelo: ${test.explanation}\n`;
+            }
           }
           outputSummary += `\n`;
         });
@@ -398,16 +428,21 @@ export function ChallengeSolverLight() {
         outputSummary += `📊 Isishwankathelo:\n`;
         outputSummary += `${totalPassedTests}/${totalTests} izivivinyo ziphumelele\n`;
 
+        // Add hidden test statistics
+        if (hiddenStats.total > 0) {
+          outputSummary += `🔒 Izivivinyo ezifihlakeleyo: ${hiddenStats.passed}/${hiddenStats.total} ziphumelele`;
+          if (hiddenStats.failed > 0) {
+            outputSummary += ` (${hiddenStats.failed} zihlulekile)`;
+          }
+          outputSummary += `\n`;
+        }
+
         if (result.score !== undefined) {
           outputSummary += `🎯 Amaphuzu: ${result.score}\n`;
         }
 
         if (result.status) {
           outputSummary += `📋 Isimo: ${result.status}\n`;
-        }
-
-        if (hiddenTotalCount > 0) {
-          outputSummary += `🔒 Izivivinyo ezifihlakeleyo: ${hiddenPassedCount}/${hiddenTotalCount} ziphumelele\n`;
         }
 
         setOutput(outputSummary);
@@ -448,6 +483,7 @@ export function ChallengeSolverLight() {
 
       setOutput(errorMessage);
       setTestResults([]);
+      setHiddenTestStats({ passed: 0, failed: 0, total: 0 });
     } finally {
       setIsRunning(false);
     }
@@ -1022,9 +1058,37 @@ export function ChallengeSolverLight() {
                   <Terminal className="w-4 h-4 text-purple-600" />
                   Test Case Outputs
                 </h3>
-                {(isRunning || isSubmitting) && (
-                  <Activity className="w-4 h-4 text-green-500 animate-spin" />
-                )}
+                <div className="flex items-center gap-2">
+                  {/* Hidden test statistics */}
+                  {hiddenTestStats.total > 0 && (
+                    <div className="flex items-center gap-2 text-xs">
+                      <Badge
+                        variant="outline"
+                        className="bg-purple-50 text-purple-700 border-purple-200"
+                      >
+                        🔒 Hidden: {hiddenTestStats.passed}/
+                        {hiddenTestStats.total}
+                      </Badge>
+                    </div>
+                  )}
+
+                  {/* Clear button */}
+                  {(testResults.length > 0 || output) && (
+                    <Button
+                      onClick={clearTestOutput}
+                      variant="ghost"
+                      size="sm"
+                      className="text-gray-500 hover:text-red-600 hover:bg-red-50 p-1 h-auto"
+                      title="Clear test output"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
+
+                  {(isRunning || isSubmitting) && (
+                    <Activity className="w-4 h-4 text-green-500 animate-spin" />
+                  )}
+                </div>
               </div>
             </div>
 
@@ -1078,6 +1142,23 @@ export function ChallengeSolverLight() {
 
                       {/* Test Content */}
                       <div className="px-4 pb-4 space-y-3">
+                        {/* Error Message Section (if there's an error) */}
+                        {result.hasError && result.errorMessage && (
+                          <div className="bg-red-50/80 backdrop-blur-sm rounded-lg border border-red-200/50 p-3">
+                            <div className="flex items-start gap-2">
+                              <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+                              <div className="space-y-2">
+                                <div className="text-xs font-semibold text-red-600 uppercase tracking-wide">
+                                  Impazamo (Error)
+                                </div>
+                                <p className="text-sm text-red-700 leading-relaxed">
+                                  {result.errorMessage}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
                         {/* Input Section */}
                         {result.input && (
                           <div>
@@ -1092,44 +1173,46 @@ export function ChallengeSolverLight() {
                           </div>
                         )}
 
-                        {/* Output Comparison Grid - This is the key fix for alignment */}
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                          {/* Expected Output */}
-                          <div className="space-y-2">
-                            <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                              Expected Output
+                        {/* Output Comparison Grid - Only show if no error */}
+                        {!result.hasError && (
+                          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                            {/* Expected Output */}
+                            <div className="space-y-2">
+                              <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                                Expected Output
+                              </div>
+                              <div className="bg-white/80 backdrop-blur-sm rounded-lg border border-green-200/50 shadow-sm min-h-[60px] flex items-start">
+                                <code className="block text-green-700 font-mono text-xs p-3 whitespace-pre-line leading-relaxed w-full">
+                                  {result.expectedOutput}
+                                </code>
+                              </div>
                             </div>
-                            <div className="bg-white/80 backdrop-blur-sm rounded-lg border border-green-200/50 shadow-sm min-h-[60px] flex items-start">
-                              <code className="block text-green-700 font-mono text-xs p-3 whitespace-pre-line leading-relaxed w-full">
-                                {result.expectedOutput}
-                              </code>
-                            </div>
-                          </div>
 
-                          {/* Your Output */}
-                          <div className="space-y-2">
-                            <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                              Your Output
-                            </div>
-                            <div
-                              className={`bg-white/80 backdrop-blur-sm rounded-lg border shadow-sm min-h-[60px] flex items-start ${
-                                result.passed
-                                  ? "border-green-200/50"
-                                  : "border-red-200/50"
-                              }`}
-                            >
-                              <code
-                                className={`block font-mono text-xs p-3 whitespace-pre-line leading-relaxed w-full ${
+                            {/* Your Output */}
+                            <div className="space-y-2">
+                              <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                                Your Output
+                              </div>
+                              <div
+                                className={`bg-white/80 backdrop-blur-sm rounded-lg border shadow-sm min-h-[60px] flex items-start ${
                                   result.passed
-                                    ? "text-green-700"
-                                    : "text-red-700"
+                                    ? "border-green-200/50"
+                                    : "border-red-200/50"
                                 }`}
                               >
-                                {result.actualOutput || "No output"}
-                              </code>
+                                <code
+                                  className={`block font-mono text-xs p-3 whitespace-pre-line leading-relaxed w-full ${
+                                    result.passed
+                                      ? "text-green-700"
+                                      : "text-red-700"
+                                  }`}
+                                >
+                                  {result.actualOutput || "No output"}
+                                </code>
+                              </div>
                             </div>
                           </div>
-                        </div>
+                        )}
 
                         {/* Explanation Section */}
                         {result.explanation && (
@@ -1146,7 +1229,7 @@ export function ChallengeSolverLight() {
                         )}
 
                         {/* Status Message for Failed Tests */}
-                        {!result.passed && (
+                        {!result.passed && !result.hasError && (
                           <div className="mt-3 p-3 bg-red-50/80 backdrop-blur-sm rounded-lg border border-red-200/50">
                             <div className="flex items-start gap-2">
                               <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
