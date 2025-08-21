@@ -76,8 +76,6 @@ export function QuizzesLight() {
         return "bg-gradient-to-r from-green-400 to-emerald-500 text-white border-0 shadow-lg shadow-green-400/30";
       case "available":
         return "bg-gradient-to-r from-cyan-400 to-blue-500 text-white border-0 shadow-lg shadow-cyan-400/30";
-      case "upcoming":
-        return "bg-gradient-to-r from-purple-400 to-indigo-500 text-white border-0 shadow-lg shadow-purple-400/30";
       case "overdue":
         return "bg-gradient-to-r from-red-400 to-pink-500 text-white border-0 shadow-lg shadow-red-400/30";
       default:
@@ -91,8 +89,6 @@ export function QuizzesLight() {
         return <CheckCircle className="w-3 h-3" />;
       case "available":
         return <Timer className="w-3 h-3" />;
-      case "upcoming":
-        return <Clock className="w-3 h-3" />;
       case "overdue":
         return <AlertTriangle className="w-3 h-3" />;
       default:
@@ -125,9 +121,8 @@ export function QuizzesLight() {
   );
 
   const handleQuizNavigation = (quizId: string, status: string) => {
-    if (status !== "upcoming") {
-      navigate(`/quiz-light/${quizId}`);
-    }
+    // All published quizzes should be accessible
+    navigate(`/quiz-light/${quizId}`);
   };
 
   // Error state
@@ -316,7 +311,6 @@ export function QuizzesLight() {
               <SelectItem value="All">All</SelectItem>
               <SelectItem value="available">{t("Available")}</SelectItem>
               <SelectItem value="completed">{t("Completed")}</SelectItem>
-              <SelectItem value="upcoming">{t("Upcoming")}</SelectItem>
               <SelectItem value="overdue">{t("Overdue")}</SelectItem>
             </SelectContent>
           </Select>
@@ -540,17 +534,12 @@ export function QuizzesLight() {
                       className={`w-full shadow-lg transition-all duration-300 hover:scale-105 ${
                         quiz.status === "completed"
                           ? "bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 text-white shadow-green-400/30"
-                          : quiz.status === "upcoming"
-                          ? "bg-gradient-to-r from-gray-400 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white shadow-gray-400/30"
                           : "bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 text-white shadow-cyan-400/30"
                       }`}
-                      disabled={quiz.status === "upcoming"}
                       onClick={() => handleQuizNavigation(quiz.id, quiz.status)}
                     >
                       {quiz.status === "completed"
                         ? t("Review Quiz")
-                        : quiz.status === "upcoming"
-                        ? t("Coming Soon")
                         : t("Start Quiz")}
                       <ChevronRight className="w-4 h-4 ml-2" />
                     </Button>

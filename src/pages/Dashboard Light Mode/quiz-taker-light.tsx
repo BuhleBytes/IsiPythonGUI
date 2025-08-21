@@ -5,188 +5,78 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import {
+  AlertCircle,
+  AlertTriangle,
   ArrowLeft,
   Brain,
   CheckCircle,
   ChevronLeft,
   ChevronRight,
   Clock,
+  Eye,
   Flag,
+  Loader2,
+  RefreshCw,
   Send,
   Target,
   Timer,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-
-interface QuizQuestion {
-  id: number;
-  question: string;
-  options: string[];
-  correctAnswer: number;
-  explanation?: string;
-  difficulty: "Easy" | "Medium" | "Hard";
-  topic: string;
-}
-
-interface Quiz {
-  id: number;
-  title: string;
-  description: string;
-  totalMarks: number;
-  duration: number; // in minutes
-  questions: QuizQuestion[];
-}
-
-const sampleQuiz: Quiz = {
-  id: 1,
-  title: "Python Fundamentals Quiz",
-  description:
-    "Test your knowledge of Python basics including variables, data types, and operators.",
-  totalMarks: 10,
-  duration: 15,
-  questions: [
-    {
-      id: 1,
-      question:
-        "Which of the following is the correct way to declare a variable in Python?",
-      options: ["var x = 5", "int x = 5", "x = 5", "declare x = 5"],
-      correctAnswer: 2,
-      difficulty: "Easy",
-      topic: "Variables",
-      explanation:
-        "In Python, variables are declared by simply assigning a value to them without specifying a data type.",
-    },
-    {
-      id: 2,
-      question:
-        "What is the output of the following code?\n\nprint(type(3.14))",
-      options: [
-        "<class 'int'>",
-        "<class 'float'>",
-        "<class 'double'>",
-        "<class 'number'>",
-      ],
-      correctAnswer: 1,
-      difficulty: "Easy",
-      topic: "Data Types",
-      explanation:
-        "3.14 is a floating-point number, so its type is 'float' in Python.",
-    },
-    {
-      id: 3,
-      question: "Which operator is used for exponentiation in Python?",
-      options: ["^", "**", "exp()", "pow()"],
-      correctAnswer: 1,
-      difficulty: "Easy",
-      topic: "Operators",
-      explanation:
-        "The ** operator is used for exponentiation in Python. For example, 2**3 equals 8.",
-    },
-    {
-      id: 4,
-      question:
-        "What will be the output of the following code?\n\nx = [1, 2, 3]\ny = x\ny.append(4)\nprint(len(x))",
-      options: ["3", "4", "Error", "None"],
-      correctAnswer: 1,
-      difficulty: "Medium",
-      topic: "Lists",
-      explanation:
-        "Since y is assigned to x, both variables reference the same list object. When we append to y, x is also affected.",
-    },
-    {
-      id: 5,
-      question: "Which of the following is NOT a valid Python identifier?",
-      options: ["_variable", "variable1", "1variable", "__init__"],
-      correctAnswer: 2,
-      difficulty: "Easy",
-      topic: "Variables",
-      explanation:
-        "Python identifiers cannot start with a number. '1variable' is invalid because it starts with '1'.",
-    },
-    {
-      id: 6,
-      question: "What is the correct way to create a comment in Python?",
-      options: [
-        "// This is a comment",
-        "/* This is a comment */",
-        "# This is a comment",
-        "<!-- This is a comment -->",
-      ],
-      correctAnswer: 2,
-      difficulty: "Easy",
-      topic: "Syntax",
-      explanation: "In Python, single-line comments start with the # symbol.",
-    },
-    {
-      id: 7,
-      question:
-        "Which method is used to add an element to the end of a list in Python?",
-      options: ["add()", "append()", "insert()", "push()"],
-      correctAnswer: 1,
-      difficulty: "Easy",
-      topic: "Lists",
-      explanation:
-        "The append() method adds an element to the end of a list in Python.",
-    },
-    {
-      id: 8,
-      question: "What is the output of: print(10 // 3)",
-      options: ["3.33", "3", "4", "3.0"],
-      correctAnswer: 1,
-      difficulty: "Medium",
-      topic: "Operators",
-      explanation:
-        "The // operator performs floor division, which returns the largest integer less than or equal to the result.",
-    },
-    {
-      id: 9,
-      question:
-        "Which of the following is used to handle exceptions in Python?",
-      options: ["try-catch", "try-except", "catch-throw", "handle-error"],
-      correctAnswer: 1,
-      difficulty: "Medium",
-      topic: "Error Handling",
-      explanation:
-        "Python uses try-except blocks to handle exceptions, not try-catch like some other languages.",
-    },
-    {
-      id: 10,
-      question:
-        "What does the 'len()' function return when applied to a string?",
-      options: [
-        "The memory size of the string",
-        "The number of characters in the string",
-        "The number of words in the string",
-        "The ASCII value of the first character",
-      ],
-      correctAnswer: 1,
-      difficulty: "Easy",
-      topic: "Strings",
-      explanation:
-        "The len() function returns the number of characters (including spaces) in a string.",
-    },
-  ],
-};
+import { useQuizDetails } from "../../useQuizDetails";
+import { useUser } from "../../useUser";
 
 export function QuizTakerLight() {
-  const { id } = useParams<{ id: string }>(); //Extracting the ID;
-  console.log("Quiz ID from route params:", id);
+  const { id } = useParams<{ id: string }>();
+  console.log("🎯 COMPONENT DEBUG - Quiz ID from route params:", id);
   const navigate = useNavigate();
+
+  // Get user information
+  const { userId, isLoggedIn, loading: userLoading } = useUser();
+
+  // Use the custom hook for quiz management
+  const {
+    quiz,
+    loading,
+    submitting,
+    fetchingResults,
+    error,
+    submission,
+    quizResults,
+    submitQuiz,
+    fetchQuizResults,
+    calculateScoreFromSubmission,
+    retryFetch,
+    indexToLetter,
+  } = useQuizDetails(id);
+
+  // Quiz state
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<{
-    [key: number]: number;
+    [key: string]: number;
   }>({});
-  const [timeRemaining, setTimeRemaining] = useState(sampleQuiz.duration * 60); // Convert to seconds
+  const [timeRemaining, setTimeRemaining] = useState(0);
   const [isQuizStarted, setIsQuizStarted] = useState(false);
   const [isQuizCompleted, setIsQuizCompleted] = useState(false);
-  const [flaggedQuestions, setFlaggedQuestions] = useState<Set<number>>(
+  const [flaggedQuestions, setFlaggedQuestions] = useState<Set<string>>(
     new Set()
   );
   const [showResults, setShowResults] = useState(false);
-  const currentQuestion = sampleQuiz.questions[currentQuestionIndex];
-  const totalQuestions = sampleQuiz.questions.length;
-  const progress = ((currentQuestionIndex + 1) / totalQuestions) * 100;
+  const [showReview, setShowReview] = useState(false);
+  const [quizStartTime, setQuizStartTime] = useState<Date | null>(null);
+  const [localError, setLocalError] = useState<string | null>(null);
+  const [showSubmissionWarning, setShowSubmissionWarning] = useState(false);
+
+  // Use either hook error or local error for display
+  const displayError = error || localError;
+  const setError = (err: string | null) => setLocalError(err);
+
+  // Initialize timer when quiz is loaded
+  useEffect(() => {
+    if (quiz && !isQuizStarted) {
+      setTimeRemaining(quiz.duration * 60); // Convert minutes to seconds
+    }
+  }, [quiz, isQuizStarted]);
 
   // Timer effect
   useEffect(() => {
@@ -194,7 +84,8 @@ export function QuizTakerLight() {
       const timer = setInterval(() => {
         setTimeRemaining((prev) => {
           if (prev <= 1) {
-            setIsQuizCompleted(true);
+            // Auto-submit when time runs out
+            handleAutoSubmit();
             return 0;
           }
           return prev - 1;
@@ -205,6 +96,141 @@ export function QuizTakerLight() {
     }
   }, [isQuizStarted, isQuizCompleted, timeRemaining]);
 
+  // Auto-submit when time runs out
+  const handleAutoSubmit = async () => {
+    if (!quiz || isQuizCompleted) return;
+
+    console.log("⏰ DEBUG - Auto-submitting quiz due to timeout");
+    const timeTaken = quiz.duration * 60; // Full duration since time ran out
+    await handleQuizSubmission(timeTaken, true); // true indicates auto-submit
+  };
+
+  // Check if all questions are answered
+  const areAllQuestionsAnswered = () => {
+    if (!quiz) return false;
+    return quiz.questions.every((question) => question.id in selectedAnswers);
+  };
+
+  // Get unanswered questions
+  const getUnansweredQuestions = () => {
+    if (!quiz) return [];
+    return quiz.questions.filter(
+      (question) => !(question.id in selectedAnswers)
+    );
+  };
+
+  // Handle quiz submission with enhanced validation
+  const handleQuizSubmission = async (
+    timeTakenInSeconds: number,
+    isAutoSubmit = false
+  ) => {
+    if (!quiz) return;
+
+    console.log("📤 COMPONENT DEBUG - Starting quiz submission...");
+    console.log("📤 COMPONENT DEBUG - Is auto-submit:", isAutoSubmit);
+    console.log("📤 COMPONENT DEBUG - Quiz ID:", id);
+    console.log("📤 COMPONENT DEBUG - User ID:", userId);
+    console.log("📤 COMPONENT DEBUG - Selected answers:", selectedAnswers);
+    console.log("📤 COMPONENT DEBUG - Time taken:", timeTakenInSeconds);
+
+    // Check if all questions are answered
+    const allAnswered = areAllQuestionsAnswered();
+    const answeredCount = Object.keys(selectedAnswers).length;
+    const totalQuestions = quiz.questions.length;
+
+    console.log("📊 COMPONENT DEBUG - Answer status:");
+    console.log("📊 COMPONENT DEBUG - Total questions:", totalQuestions);
+    console.log("📊 COMPONENT DEBUG - Answered questions:", answeredCount);
+    console.log("📊 COMPONENT DEBUG - All answered:", allAnswered);
+
+    // If not auto-submit and not all questions answered, show warning
+    if (!isAutoSubmit && !allAnswered) {
+      const unanswered = getUnansweredQuestions();
+      console.log(
+        "⚠️ COMPONENT DEBUG - Unanswered questions:",
+        unanswered.map((q) => ({
+          id: q.id,
+          question: q.question.substring(0, 50),
+        }))
+      );
+
+      if (!showSubmissionWarning) {
+        setShowSubmissionWarning(true);
+        setError(
+          `You have ${unanswered.length} unanswered question(s). Click submit again to proceed with unanswered questions.`
+        );
+        return;
+      }
+    }
+
+    // Clear any warnings
+    setShowSubmissionWarning(false);
+    setError(null);
+
+    // Validate minimum requirements
+    if (answeredCount === 0) {
+      console.log("❌ COMPONENT DEBUG - No answers provided");
+      setError("Please answer at least one question before submitting");
+      return;
+    }
+
+    const result = await submitQuiz(selectedAnswers, timeTakenInSeconds);
+
+    if (result.success) {
+      setIsQuizCompleted(true);
+      setShowResults(true);
+      console.log("✅ COMPONENT DEBUG - Quiz submission successful");
+    } else {
+      console.error(
+        "❌ COMPONENT DEBUG - Quiz submission failed:",
+        result.error
+      );
+      setError(result.error || "Failed to submit quiz");
+    }
+  };
+
+  // Start quiz
+  const handleStartQuiz = () => {
+    if (!quiz) return;
+
+    // Clear any previous errors
+    setError(null);
+    setShowSubmissionWarning(false);
+
+    setIsQuizStarted(true);
+    setQuizStartTime(new Date());
+    console.log("🚀 COMPONENT DEBUG - Quiz started at:", new Date());
+  };
+
+  // Submit quiz manually
+  const handleSubmitQuiz = async () => {
+    if (!quiz || !quizStartTime) return;
+
+    const currentTime = new Date();
+    const timeTakenInSeconds = Math.floor(
+      (currentTime.getTime() - quizStartTime.getTime()) / 1000
+    );
+
+    console.log("📤 COMPONENT DEBUG - Manual quiz submission");
+    console.log("📤 COMPONENT DEBUG - Time taken:", timeTakenInSeconds);
+
+    await handleQuizSubmission(timeTakenInSeconds, false);
+  };
+
+  // Review answers
+  const handleReviewAnswers = async () => {
+    console.log("👁️ DEBUG - Fetching quiz results for review");
+    const result = await fetchQuizResults();
+
+    if (result.success) {
+      setShowReview(true);
+      console.log("✅ DEBUG - Quiz results loaded for review");
+    } else {
+      console.error("❌ DEBUG - Failed to load quiz results:", result.error);
+      setError(result.error || "Failed to load quiz results");
+    }
+  };
+
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
@@ -214,26 +240,46 @@ export function QuizTakerLight() {
   };
 
   const handleAnswerSelect = (optionIndex: number) => {
+    if (!quiz) return;
+    const currentQuestion = quiz.questions[currentQuestionIndex];
+
+    // Clear any previous errors when user interacts
+    if (displayError) {
+      setError(null);
+      setShowSubmissionWarning(false);
+    }
+
     setSelectedAnswers((prev) => ({
       ...prev,
       [currentQuestion.id]: optionIndex,
     }));
+
+    console.log("🔍 COMPONENT DEBUG - Answer selected:", {
+      questionId: currentQuestion.id,
+      answerIndex: optionIndex,
+      answerText: currentQuestion.options[optionIndex],
+      totalAnswersNow: Object.keys({
+        ...selectedAnswers,
+        [currentQuestion.id]: optionIndex,
+      }).length,
+    });
   };
 
   const handleNextQuestion = () => {
-    if (currentQuestionIndex < totalQuestions - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
-    }
+    if (!quiz || currentQuestionIndex >= quiz.questions.length - 1) return;
+    setCurrentQuestionIndex(currentQuestionIndex + 1);
   };
 
   const handlePreviousQuestion = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(currentQuestionIndex - 1);
-    }
+    if (currentQuestionIndex <= 0) return;
+    setCurrentQuestionIndex(currentQuestionIndex - 1);
   };
 
   const handleFlagQuestion = () => {
+    if (!quiz) return;
+    const currentQuestion = quiz.questions[currentQuestionIndex];
     const newFlagged = new Set(flaggedQuestions);
+
     if (newFlagged.has(currentQuestion.id)) {
       newFlagged.delete(currentQuestion.id);
     } else {
@@ -242,23 +288,9 @@ export function QuizTakerLight() {
     setFlaggedQuestions(newFlagged);
   };
 
-  const handleSubmitQuiz = () => {
-    setIsQuizCompleted(true);
-    setShowResults(true);
-  };
-
-  const calculateScore = () => {
-    let correct = 0;
-    sampleQuiz.questions.forEach((question) => {
-      if (selectedAnswers[question.id] === question.correctAnswer) {
-        correct++;
-      }
-    });
-    return correct;
-  };
-
   const getTimeWarningColor = () => {
-    const percentage = (timeRemaining / (sampleQuiz.duration * 60)) * 100;
+    if (!quiz) return "text-cyan-600";
+    const percentage = (timeRemaining / (quiz.duration * 60)) * 100;
     if (percentage <= 10) return "text-red-500";
     if (percentage <= 25) return "text-orange-500";
     return "text-cyan-600";
@@ -277,6 +309,105 @@ export function QuizTakerLight() {
     }
   };
 
+  // Loading state
+  if (loading || userLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 flex items-center justify-center">
+        <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-xl max-w-md">
+          <CardContent className="p-8 text-center">
+            <Loader2 className="w-12 h-12 animate-spin text-cyan-600 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              {userLoading ? "Loading User Data" : "Loading Quiz"}
+            </h3>
+            <p className="text-gray-600">
+              {userLoading
+                ? "Authenticating user..."
+                : "Fetching quiz details..."}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Error state
+  if ((displayError && !quiz && !loading) || (!userLoading && !isLoggedIn)) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 flex items-center justify-center">
+        <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-xl max-w-lg">
+          <CardContent className="p-8 text-center">
+            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertCircle className="w-8 h-8 text-red-600" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              {!isLoggedIn ? "Login Required" : "Failed to Load Quiz"}
+            </h3>
+            <p className="text-gray-600 mb-4">
+              {!isLoggedIn
+                ? "You must be logged in to take a quiz"
+                : displayError || "Quiz not found or failed to load"}
+            </p>
+
+            <div className="flex gap-2">
+              {!isLoggedIn ? (
+                <Button
+                  onClick={() => navigate("/login")}
+                  className="flex-1 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white"
+                >
+                  Go to Login
+                </Button>
+              ) : (
+                <Button
+                  onClick={retryFetch}
+                  disabled={loading}
+                  className="flex-1 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white"
+                >
+                  {loading ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                  )}
+                  {loading ? "Retrying..." : "Try Again"}
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                onClick={() =>
+                  navigate("/dash", { state: { activeView: "quizzes" } })
+                }
+                className="flex-1"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Quizzes
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!quiz) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 flex items-center justify-center">
+        <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-xl max-w-md">
+          <CardContent className="p-8 text-center">
+            <Loader2 className="w-12 h-12 animate-spin text-cyan-600 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Loading Quiz
+            </h3>
+            <p className="text-gray-600">Please wait...</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const currentQuestion = quiz.questions[currentQuestionIndex];
+  const totalQuestions = quiz.questions.length;
+  const progress = ((currentQuestionIndex + 1) / totalQuestions) * 100;
+
+  // Quiz start screen
   if (!isQuizStarted) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 text-gray-900 flex items-center justify-center relative overflow-hidden">
@@ -293,9 +424,9 @@ export function QuizTakerLight() {
               <Brain className="w-8 h-8 text-white" />
             </div>
             <CardTitle className="text-2xl font-bold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent">
-              {sampleQuiz.title}
+              {quiz.title}
             </CardTitle>
-            <p className="text-gray-600">{sampleQuiz.description}</p>
+            <p className="text-gray-600">{quiz.description}</p>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -303,7 +434,7 @@ export function QuizTakerLight() {
                 <Timer className="w-6 h-6 text-cyan-600 mx-auto mb-2" />
                 <p className="text-sm text-gray-600">Duration</p>
                 <p className="text-lg font-bold text-gray-900">
-                  {sampleQuiz.duration} minutes
+                  {quiz.duration} minutes
                 </p>
               </div>
               <div className="bg-gradient-to-br from-purple-50 to-pink-50 backdrop-blur-sm rounded-lg p-4 text-center border border-purple-200/50">
@@ -317,7 +448,7 @@ export function QuizTakerLight() {
                 <CheckCircle className="w-6 h-6 text-green-600 mx-auto mb-2" />
                 <p className="text-sm text-gray-600">Total Marks</p>
                 <p className="text-lg font-bold text-gray-900">
-                  {sampleQuiz.totalMarks}
+                  {quiz.totalMarks}
                 </p>
               </div>
             </div>
@@ -327,27 +458,17 @@ export function QuizTakerLight() {
                 Instructions
               </h3>
               <ul className="space-y-2 text-sm text-gray-700">
-                <li className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-cyan-500 rounded-full"></div>
-                  Each question has only one correct answer
-                </li>
-                <li className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-cyan-500 rounded-full"></div>
-                  You can flag questions for review and return to them later
-                </li>
-                <li className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-cyan-500 rounded-full"></div>
-                  The quiz will auto-submit when time runs out
-                </li>
-                <li className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-cyan-500 rounded-full"></div>
-                  Make sure to submit your quiz before the timer expires
-                </li>
+                {quiz.instructions.map((instruction, index) => (
+                  <li key={index} className="flex items-start gap-2">
+                    <div className="w-1.5 h-1.5 bg-cyan-500 rounded-full mt-2 flex-shrink-0"></div>
+                    <span>{instruction}</span>
+                  </li>
+                ))}
               </ul>
             </div>
 
             <Button
-              onClick={() => setIsQuizStarted(true)}
+              onClick={handleStartQuiz}
               className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white py-3 text-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
             >
               Start Quiz
@@ -359,9 +480,9 @@ export function QuizTakerLight() {
     );
   }
 
-  if (showResults) {
-    const score = calculateScore();
-    const percentage = Math.round((score / totalQuestions) * 100);
+  // Results screen
+  if (showResults && submission) {
+    const scoreData = calculateScoreFromSubmission(submission);
 
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 text-gray-900 flex items-center justify-center relative overflow-hidden">
@@ -376,9 +497,9 @@ export function QuizTakerLight() {
           <CardHeader className="text-center">
             <div
               className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg ${
-                percentage >= 70
+                scoreData.percentage >= 70
                   ? "bg-gradient-to-br from-green-400 to-emerald-500"
-                  : percentage >= 50
+                  : scoreData.percentage >= 50
                   ? "bg-gradient-to-br from-orange-400 to-yellow-500"
                   : "bg-gradient-to-br from-red-400 to-pink-500"
               }`}
@@ -393,23 +514,23 @@ export function QuizTakerLight() {
           <CardContent className="space-y-6">
             <div className="text-center">
               <div className="text-6xl font-bold text-gray-900 mb-2">
-                {score}/{totalQuestions}
+                {scoreData.score}/{scoreData.total}
               </div>
               <div className="text-2xl font-semibold text-cyan-600 mb-4">
-                {percentage}%
+                {scoreData.percentage}%
               </div>
               <Badge
                 className={
-                  percentage >= 70
+                  scoreData.percentage >= 70
                     ? "bg-green-100 text-green-700 border-green-200"
-                    : percentage >= 50
+                    : scoreData.percentage >= 50
                     ? "bg-orange-100 text-orange-700 border-orange-200"
                     : "bg-red-100 text-red-700 border-red-200"
                 }
               >
-                {percentage >= 70
+                {scoreData.percentage >= 70
                   ? "Excellent!"
-                  : percentage >= 50
+                  : scoreData.percentage >= 50
                   ? "Good Job!"
                   : "Keep Practicing!"}
               </Badge>
@@ -418,21 +539,41 @@ export function QuizTakerLight() {
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-gradient-to-br from-green-50 to-emerald-50 backdrop-blur-sm rounded-lg p-4 text-center border border-green-200/50">
                 <p className="text-sm text-gray-600">Correct Answers</p>
-                <p className="text-2xl font-bold text-green-600">{score}</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {scoreData.score}
+                </p>
               </div>
               <div className="bg-gradient-to-br from-red-50 to-pink-50 backdrop-blur-sm rounded-lg p-4 text-center border border-red-200/50">
                 <p className="text-sm text-gray-600">Incorrect Answers</p>
                 <p className="text-2xl font-bold text-red-600">
-                  {totalQuestions - score}
+                  {scoreData.total - scoreData.score}
                 </p>
               </div>
+            </div>
+
+            <div className="bg-gradient-to-br from-cyan-50 to-blue-50 backdrop-blur-sm rounded-lg p-4 text-center border border-cyan-200/50">
+              <p className="text-sm text-gray-600 mb-1">Points Earned</p>
+              <p className="text-2xl font-bold text-cyan-600">
+                {scoreData.pointsEarned}/{scoreData.totalPoints}
+              </p>
+              <p className="text-xs text-gray-500">
+                Time Taken: {Math.floor(submission.time_taken / 60)}m{" "}
+                {submission.time_taken % 60}s
+              </p>
             </div>
 
             <div className="flex gap-3">
               <Button
                 variant="outline"
+                onClick={handleReviewAnswers}
+                disabled={fetchingResults}
                 className="flex-1 bg-white/50 border-gray-300 text-gray-700 hover:bg-white/70 backdrop-blur-sm"
               >
+                {fetchingResults ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Eye className="w-4 h-4 mr-2" />
+                )}
                 Review Answers
               </Button>
               <Button
@@ -450,6 +591,158 @@ export function QuizTakerLight() {
     );
   }
 
+  // Review screen
+  if (showReview && quizResults) {
+    const { questions, submission: submissionResults } = quizResults;
+
+    return (
+      <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 text-gray-900 flex flex-col relative overflow-hidden">
+        {/* Header */}
+        <div className="border-b border-white/20 p-4 bg-white/30 backdrop-blur-xl z-20 shadow-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowReview(false)}
+                className="text-gray-600 hover:text-cyan-600 hover:bg-white/50 backdrop-blur-sm"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </Button>
+              <div>
+                <h1 className="text-xl font-bold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent">
+                  {quiz.title} - Review
+                </h1>
+                <p className="text-sm text-gray-600">
+                  Score: {submissionResults.questions_correct}/
+                  {submissionResults.questions_total} (
+                  {Math.round(submissionResults.percentage)}%)
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Review Content */}
+        <div className="flex-1 p-6 overflow-y-auto space-y-6">
+          {questions.map((question, index) => {
+            const userAnswer = submissionResults.answers[question.id];
+            const resultDetail = submissionResults.detailed_results.find(
+              (r) => r.question_id === question.id
+            );
+            const isCorrect = resultDetail?.is_correct || false;
+
+            return (
+              <Card
+                key={question.id}
+                className="bg-white/70 backdrop-blur-xl border-white/20 shadow-xl"
+              >
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`w-10 h-10 rounded-lg flex items-center justify-center shadow-lg ${
+                          isCorrect
+                            ? "bg-gradient-to-br from-green-500 to-emerald-600"
+                            : "bg-gradient-to-br from-red-500 to-pink-600"
+                        }`}
+                      >
+                        <span className="text-white font-bold">
+                          {index + 1}
+                        </span>
+                      </div>
+                      <Badge
+                        className={
+                          isCorrect
+                            ? "bg-green-100 text-green-700 border-green-200"
+                            : "bg-red-100 text-red-700 border-red-200"
+                        }
+                      >
+                        {isCorrect ? "Correct" : "Incorrect"}
+                      </Badge>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-gray-600">Points</p>
+                      <p className="font-bold text-gray-900">
+                        {isCorrect ? resultDetail.points_weight : 0}/
+                        {resultDetail.points_weight}
+                      </p>
+                    </div>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    {question.question_text}
+                  </h3>
+
+                  <div className="space-y-2">
+                    {[
+                      question.option_a,
+                      question.option_b,
+                      question.option_c,
+                      question.option_d,
+                    ].map((option, optionIndex) => {
+                      const optionLetter = ["A", "B", "C", "D"][optionIndex];
+                      const isUserAnswer = userAnswer === optionLetter;
+                      const isCorrectAnswer =
+                        question.correct_answer === optionLetter;
+
+                      let optionStyle =
+                        "border-gray-200 bg-white/50 text-gray-700";
+
+                      if (isCorrectAnswer) {
+                        optionStyle =
+                          "border-green-400 bg-gradient-to-r from-green-50 to-emerald-50 text-green-700";
+                      } else if (isUserAnswer && !isCorrect) {
+                        optionStyle =
+                          "border-red-400 bg-gradient-to-r from-red-50 to-pink-50 text-red-700";
+                      }
+
+                      return (
+                        <div
+                          key={optionIndex}
+                          className={`p-3 rounded-lg border-2 ${optionStyle}`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">
+                                {optionLetter}.
+                              </span>
+                              {isCorrectAnswer && (
+                                <CheckCircle className="w-4 h-4 text-green-600" />
+                              )}
+                              {isUserAnswer && !isCorrect && (
+                                <AlertCircle className="w-4 h-4 text-red-600" />
+                              )}
+                            </div>
+                            <span>{option}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {question.explanation && (
+                    <div className="bg-gradient-to-br from-blue-50 to-cyan-50 backdrop-blur-sm rounded-lg p-4 border border-blue-200/50">
+                      <h4 className="font-medium text-blue-900 mb-2">
+                        Explanation:
+                      </h4>
+                      <p className="text-blue-800 text-sm">
+                        {question.explanation}
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // Main quiz taking interface
   return (
     <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 text-gray-900 flex flex-col relative overflow-hidden">
       {/* Animated Background Orbs */}
@@ -466,13 +759,16 @@ export function QuizTakerLight() {
             <Button
               variant="ghost"
               size="icon"
+              onClick={() =>
+                navigate("/dash", { state: { activeView: "quizzes" } })
+              }
               className="text-gray-600 hover:text-cyan-600 hover:bg-white/50 backdrop-blur-sm"
             >
               <ArrowLeft className="w-4 h-4" />
             </Button>
             <div>
               <h1 className="text-xl font-bold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent">
-                {sampleQuiz.title}
+                {quiz.title}
               </h1>
               <p className="text-sm text-gray-600">
                 Question {currentQuestionIndex + 1} of {totalQuestions}
@@ -590,21 +886,20 @@ export function QuizTakerLight() {
                 Question Navigation
               </h3>
               <div className="grid grid-cols-5 gap-2">
-                {sampleQuiz.questions.map((_, index) => (
+                {quiz.questions.map((question, index) => (
                   <button
-                    key={index}
+                    key={question.id}
                     onClick={() => setCurrentQuestionIndex(index)}
                     className={`w-10 h-10 rounded-lg border text-sm font-medium transition-all hover:scale-110 relative ${
                       index === currentQuestionIndex
                         ? "border-cyan-400 bg-gradient-to-br from-cyan-100 to-blue-100 text-cyan-700 shadow-lg"
-                        : selectedAnswers[sampleQuiz.questions[index].id] !==
-                          undefined
+                        : selectedAnswers[question.id] !== undefined
                         ? "border-green-400 bg-gradient-to-br from-green-100 to-emerald-100 text-green-700 shadow-md"
                         : "border-gray-300 bg-white/50 text-gray-600 hover:border-gray-400 backdrop-blur-sm"
                     }`}
                   >
                     {index + 1}
-                    {flaggedQuestions.has(sampleQuiz.questions[index].id) && (
+                    {flaggedQuestions.has(question.id) && (
                       <Flag className="w-2 h-2 text-orange-500 absolute -top-1 -right-1" />
                     )}
                   </button>
@@ -627,6 +922,27 @@ export function QuizTakerLight() {
               </div>
             </div>
 
+            {/* Quiz Progress Summary */}
+            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-200 rounded-lg p-3 backdrop-blur-sm">
+              <div className="flex items-center gap-2 mb-2">
+                <CheckCircle className="w-4 h-4 text-blue-600" />
+                <span className="text-sm font-medium text-blue-700">
+                  Progress Summary
+                </span>
+              </div>
+              <div className="space-y-1 text-xs text-gray-600">
+                <p>
+                  Answered: {Object.keys(selectedAnswers).length}/
+                  {totalQuestions}
+                </p>
+                <p>Flagged: {flaggedQuestions.size}</p>
+                <p>
+                  Remaining:{" "}
+                  {totalQuestions - Object.keys(selectedAnswers).length}
+                </p>
+              </div>
+            </div>
+
             {flaggedQuestions.size > 0 && (
               <div className="bg-gradient-to-br from-orange-50 to-yellow-50 border border-orange-200 rounded-lg p-3 backdrop-blur-sm">
                 <div className="flex items-center gap-2 mb-2">
@@ -646,6 +962,54 @@ export function QuizTakerLight() {
 
       {/* Navigation Footer */}
       <div className="border-t border-white/20 p-4 bg-white/30 backdrop-blur-xl z-20 shadow-lg">
+        {/* Error/Warning message display */}
+        {displayError && (
+          <div
+            className={`mb-4 p-3 border rounded-lg ${
+              showSubmissionWarning
+                ? "bg-yellow-50 border-yellow-200"
+                : "bg-red-50 border-red-200"
+            }`}
+          >
+            <div className="flex items-start gap-2">
+              {showSubmissionWarning ? (
+                <AlertTriangle className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
+              ) : (
+                <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+              )}
+              <div className="flex-1">
+                <p
+                  className={`text-sm font-medium ${
+                    showSubmissionWarning ? "text-yellow-700" : "text-red-700"
+                  }`}
+                >
+                  {showSubmissionWarning ? "Submission Warning" : "Error"}
+                </p>
+                <p
+                  className={`text-xs mt-1 ${
+                    showSubmissionWarning ? "text-yellow-600" : "text-red-600"
+                  }`}
+                >
+                  {displayError}
+                </p>
+                <button
+                  onClick={() => {
+                    setError(null);
+                    setShowSubmissionWarning(false);
+                  }}
+                  className={`text-xs underline mt-1 ${
+                    showSubmissionWarning
+                      ? "text-yellow-500 hover:text-yellow-700"
+                      : "text-red-500 hover:text-red-700"
+                  }`}
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="flex items-center justify-between">
           <Button
             variant="outline"
@@ -661,11 +1025,15 @@ export function QuizTakerLight() {
             {currentQuestionIndex === totalQuestions - 1 ? (
               <Button
                 onClick={handleSubmitQuiz}
+                disabled={submitting}
                 className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-8 shadow-lg hover:shadow-xl transition-all duration-300"
-                disabled={Object.keys(selectedAnswers).length === 0}
               >
-                <Send className="w-4 h-4 mr-2" />
-                Submit Quiz
+                {submitting ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4 mr-2" />
+                )}
+                {submitting ? "Submitting..." : "Submit Quiz"}
               </Button>
             ) : (
               <Button
