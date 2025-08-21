@@ -29,7 +29,6 @@ import {
   Zap,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { registerIsiPython } from "../../languages/isiPython";
 import { useUser } from "../../useUser";
@@ -39,7 +38,6 @@ import { useUserChallenges } from "../../useUserChallenges";
 const defaultStarterCode = `# Write your code here`;
 
 export function ChallengeSolverLight() {
-  const { t } = useTranslation();
   const { id: challengeId } = useParams();
   const { userId } = useUser();
   const { getChallengeDetails } = useUserChallenges();
@@ -56,15 +54,16 @@ export function ChallengeSolverLight() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [testResults, setTestResults] = useState([]);
   const [submissions, setSubmissions] = useState([]);
-  const [activeTab, setActiveTab] = useState(t("Explaination"));
+  const [submissionsLoading, setSubmissionsLoading] = useState(false);
+  const [submissionsError, setSubmissionsError] = useState(null);
+  const [activeTab, setActiveTab] = useState("explanation");
   const [language, setLanguage] = useState("IsiPython");
   const [output, setOutput] = useState("");
   const [outputPanelHeight, setOutputPanelHeight] = useState(300);
   const [isResizingOutput, setIsResizingOutput] = useState(false);
 
-  // Fetch challenge details when component mounts - FIXED VERSION
+  // Fetch challenge details when component mounts
   useEffect(() => {
-    // Create AbortController for this effect run
     const abortController = new AbortController();
     let isMounted = true;
     let timeoutId;
@@ -91,25 +90,21 @@ export function ChallengeSolverLight() {
 
         console.log("🚀 Fetching challenge with AbortController:", challengeId);
 
-        // Small delay to prevent rapid successive calls
         await new Promise((resolve) => {
           timeoutId = setTimeout(resolve, 200);
         });
 
-        // Check if aborted during delay
         if (abortController.signal.aborted || !isMounted) {
           console.log("🚫 Request aborted during delay");
           return;
         }
 
-        // FIXED: Pass signal as third parameter, not in options object
         const challengeDetails = await getChallengeDetails(
           challengeId,
           userId,
-          abortController.signal // Signal as direct parameter
+          abortController.signal
         );
 
-        // Check if aborted after API call
         if (abortController.signal.aborted || !isMounted) {
           console.log("🚫 Request aborted after API call");
           return;
@@ -131,7 +126,6 @@ export function ChallengeSolverLight() {
           setLoading(false);
         }
       } catch (err) {
-        // Don't show errors for aborted requests
         if (!abortController.signal.aborted && isMounted) {
           console.error("💥 Error fetching challenge:", err);
           setError(
@@ -142,9 +136,7 @@ export function ChallengeSolverLight() {
       }
     };
 
-    // Guard against React Strict Mode double runs
     if (challengeId && userId) {
-      // Small random delay to spread out requests
       const randomDelay = 50 + Math.random() * 100;
       timeoutId = setTimeout(() => {
         if (!abortController.signal.aborted && isMounted) {
@@ -155,7 +147,6 @@ export function ChallengeSolverLight() {
       setLoading(false);
     }
 
-    // Cleanup function - abort on unmount/route change
     return () => {
       console.log("🧹 Aborting challenge request cleanup");
       isMounted = false;
@@ -164,7 +155,7 @@ export function ChallengeSolverLight() {
         clearTimeout(timeoutId);
       }
     };
-  }, [challengeId, userId, getChallengeDetails]); // Include getChallengeDetails but it should be stable
+  }, [challengeId, userId, getChallengeDetails]);
 
   // Monaco Editor setup
   const handleEditorWillMount = useCallback((monaco) => {
@@ -232,6 +223,99 @@ export function ChallengeSolverLight() {
     }));
   }, []);
 
+  // Transform API submissions to component format
+  const transformSubmissions = useCallback((apiSubmissions) => {
+    return apiSubmissions
+      .map((submission) => ({
+        id: submission.id,
+        timestamp: new Date(submission.submitted_at),
+        passed: submission.status === "passed",
+        passedTests: submission.tests_passed,
+        totalTests: submission.tests_total,
+        code: submission.code,
+        executionTime: Math.floor(Math.random() * 1000) + 100,
+        score: submission.score,
+        status: submission.status,
+        submissionId: submission.id,
+        challengeId: submission.challenge_id,
+      }))
+      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+  }, []);
+
+  // Fetch submissions from API
+  const fetchSubmissions = useCallback(async () => {
+    if (!challengeId || !userId) return;
+
+    setSubmissionsLoading(true);
+    setSubmissionsError(null);
+
+    try {
+      const apiUrl = `https://isipython-dev.onrender.com/api/challenges/${challengeId}/submissions/${userId}`;
+
+      console.log("🌐 Fetching submissions from:", apiUrl);
+
+      const response = await fetch(apiUrl, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const result = await response.json();
+          if (result.error) {
+            errorMessage = result.error;
+          } else if (result.message) {
+            errorMessage = result.message;
+          }
+        } catch (parseError) {
+          console.error(
+            "Error parsing submissions error response:",
+            parseError
+          );
+        }
+        throw new Error(errorMessage);
+      }
+
+      const result = await response.json();
+      console.log("📡 Submissions API Response:", result);
+
+      if (result.data && Array.isArray(result.data)) {
+        const transformedSubmissions = transformSubmissions(result.data);
+        setSubmissions(transformedSubmissions);
+        console.log(
+          "✅ Submissions loaded successfully:",
+          transformedSubmissions.length
+        );
+      } else {
+        console.log("📝 No submissions found for this challenge");
+        setSubmissions([]);
+      }
+    } catch (error) {
+      console.error("💥 Error fetching submissions:", error);
+      setSubmissionsError(
+        error instanceof Error ? error.message : "Failed to load submissions"
+      );
+      setSubmissions([]);
+    } finally {
+      setSubmissionsLoading(false);
+    }
+  }, [challengeId, userId, transformSubmissions]);
+
+  // Handle tab change - fetch submissions when submissions tab is activated
+  const handleTabChange = useCallback(
+    (newTab) => {
+      setActiveTab(newTab);
+
+      if (newTab === "submissions" && challengeId && userId) {
+        fetchSubmissions();
+      }
+    },
+    [fetchSubmissions, challengeId, userId]
+  );
+
   // Updated runCode function with real API integration
   const runCode = useCallback(async () => {
     if (isRunning || !challengeId || !userId) return;
@@ -259,24 +343,34 @@ export function ChallengeSolverLight() {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        try {
+          const result = await response.json();
+          if (result.validation_error) {
+            errorMessage = result.validation_error;
+          } else if (result.error) {
+            errorMessage = result.error;
+          } else if (result.message) {
+            errorMessage = result.message;
+          }
+        } catch (parseError) {
+          console.error("Error parsing error response:", parseError);
+        }
+        throw new Error(`❌ ${errorMessage}`);
       }
 
       const result = await response.json();
       console.log("📡 API Response:", result);
 
-      // Transform the test results from the API response
       if (result.test_results && result.test_results.visible_tests) {
         const transformedResults = transformTestResults(
           result.test_results.visible_tests
         );
         setTestResults(transformedResults);
 
-        // Generate output summary
         const passedCount = transformedResults.filter((r) => r.passed).length;
         const totalCount = transformedResults.length;
 
-        // Add hidden tests count if available
         const hiddenTests = result.test_results.hidden_tests;
         const hiddenPassedCount = hiddenTests ? hiddenTests.passed : 0;
         const hiddenTotalCount = hiddenTests ? hiddenTests.total : 0;
@@ -286,7 +380,6 @@ export function ChallengeSolverLight() {
 
         let outputSummary = `✨ Iziphumo zowavano:\n\n`;
 
-        // Show visible test results
         transformedResults.forEach((test, index) => {
           outputSummary += `Uvavanyo ${index + 1}: ${
             test.passed ? "✅ KUPHUMELELE" : "❌ KUHLULEKILE"
@@ -302,7 +395,6 @@ export function ChallengeSolverLight() {
           outputSummary += `\n`;
         });
 
-        // Show overall summary
         outputSummary += `📊 Isishwankathelo:\n`;
         outputSummary += `${totalPassedTests}/${totalTests} izivivinyo ziphumelele\n`;
 
@@ -320,18 +412,18 @@ export function ChallengeSolverLight() {
 
         setOutput(outputSummary);
 
-        // Create submission record
         const newSubmission = {
-          id: submissions.length + 1,
+          id: result.submission_id || `temp-${Date.now()}`,
           timestamp: new Date(),
           passed: result.status === "passed",
           passedTests: totalPassedTests,
           totalTests: totalTests,
           code: code,
-          executionTime: Math.floor(Math.random() * 1000) + 100, // API doesn't return execution time
+          executionTime: Math.floor(Math.random() * 1000) + 100,
           score: result.score,
           status: result.status,
           submissionId: result.submission_id,
+          challengeId: challengeId,
         };
 
         setSubmissions((prev) => [newSubmission, ...prev]);
@@ -340,28 +432,29 @@ export function ChallengeSolverLight() {
       }
     } catch (error) {
       console.error("💥 Error running code:", error);
-      setOutput(
-        "❌ Error running code: " +
-          (error instanceof Error ? error.message : "Unknown error") +
-          "\n\n🔧 Khangela ikhowudi yakho uzame kwakhona!"
-      );
+
+      let errorMessage = "❌ Error running code: ";
+      if (error instanceof Error) {
+        if (error.message.startsWith("❌")) {
+          errorMessage = error.message;
+        } else {
+          errorMessage += error.message;
+        }
+      } else {
+        errorMessage += "Unknown error occurred";
+      }
+
+      errorMessage += "\n\n🔧 Khangela ikhowudi yakho uzame kwakhona!";
+
+      setOutput(errorMessage);
       setTestResults([]);
     } finally {
       setIsRunning(false);
     }
-  }, [
-    isRunning,
-    challengeId,
-    userId,
-    code,
-    transformTestResults,
-    submissions.length,
-  ]);
+  }, [isRunning, challengeId, userId, code, transformTestResults]);
 
   // Submit code function (same as runCode since the API handles both)
   const submitCode = useCallback(async () => {
-    // For this implementation, submit and run do the same thing
-    // since the API endpoint handles both execution and submission
     await runCode();
   }, [runCode]);
 
@@ -465,7 +558,7 @@ export function ChallengeSolverLight() {
           <div className="flex items-center gap-2">
             <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-white border-0 shadow-md">
               <Zap className="w-3 h-3 mr-1" />
-              {t("SOLVING")}
+              SOLVING
             </Badge>
           </div>
         </div>
@@ -477,24 +570,24 @@ export function ChallengeSolverLight() {
         <div className="w-1/2 border-r border-gray-200/50 flex flex-col bg-white/80 backdrop-blur-sm min-h-0">
           <Tabs
             value={activeTab}
-            onValueChange={setActiveTab}
+            onValueChange={handleTabChange}
             className="flex-1 flex flex-col min-h-0"
           >
             {/* Tab Headers */}
             <TabsList className="bg-white/90 backdrop-blur-sm border-b border-gray-200/50 rounded-none justify-start p-0 h-12 flex-shrink-0">
               <TabsTrigger
-                value={t("Explaination")}
+                value="explanation"
                 className="data-[state=active]:bg-cyan-500/10 data-[state=active]:text-cyan-600 data-[state=active]:border-b-2 data-[state=active]:border-cyan-500 rounded-none h-full px-4 text-gray-700 hover:text-cyan-600 hover:bg-cyan-50/50"
               >
                 <FileText className="w-4 h-4 mr-2" />
-                {t("Explaination")}
+                Explanation
               </TabsTrigger>
               <TabsTrigger
                 value="submissions"
                 className="data-[state=active]:bg-cyan-500/10 data-[state=active]:text-cyan-600 data-[state=active]:border-b-2 data-[state=active]:border-cyan-500 rounded-none h-full px-4 text-gray-700 hover:text-cyan-600 hover:bg-cyan-50/50"
               >
                 <FileCheck className="w-4 h-4 mr-2" />
-                {t("Submissions")}
+                Submissions
                 {submissions.length > 0 && (
                   <Badge className="ml-2 bg-cyan-100 text-cyan-700 text-xs px-1.5 py-0.5">
                     {submissions.length}
@@ -505,11 +598,11 @@ export function ChallengeSolverLight() {
 
             {/* Tab Content */}
             <div className="flex-1 min-h-0 overflow-hidden">
-              <TabsContent value={t("Explaination")} className="h-full m-0 p-0">
+              <TabsContent value="explanation" className="h-full m-0 p-0">
                 <div className="h-full overflow-y-auto p-6 space-y-6">
                   <div>
                     <h2 className="text-lg font-semibold bg-gradient-to-r from-gray-900 to-blue-800 bg-clip-text text-transparent mb-3">
-                      {t("Problem Statement")}
+                      Problem Statement
                     </h2>
                     <p className="text-gray-700 leading-relaxed whitespace-pre-line">
                       {challenge.problemStatement || challenge.description}
@@ -519,18 +612,16 @@ export function ChallengeSolverLight() {
                   {challenge.testCases && challenge.testCases.length > 0 && (
                     <div>
                       <h3 className="text-md font-semibold bg-gradient-to-r from-gray-900 to-purple-800 bg-clip-text text-transparent mb-3">
-                        {t("Examples")}
+                        Examples
                       </h3>
                       <div className="space-y-4">
                         {challenge.testCases.map((testCase, index) => {
-                          // Display input_data with spaces instead of newlines for cleaner formatting
                           const inputDisplay = Array.isArray(
                             testCase.input_data
                           )
                             ? testCase.input_data.join(" ")
                             : testCase.input_data || "";
 
-                          // Check if there's actually input data to display
                           const hasInput = inputDisplay.trim().length > 0;
 
                           return (
@@ -540,11 +631,10 @@ export function ChallengeSolverLight() {
                             >
                               <CardContent className="p-4">
                                 <div className="space-y-3">
-                                  {/* Input Section - Only show if there's input data */}
                                   {hasInput && (
                                     <div>
                                       <div className="text-sm font-medium text-gray-600 mb-1">
-                                        {t("Input")}:
+                                        Input:
                                       </div>
                                       <code className="block text-cyan-600 font-mono bg-cyan-50/50 px-3 py-2 rounded border border-cyan-200/50 whitespace-pre-line">
                                         {inputDisplay}
@@ -552,11 +642,10 @@ export function ChallengeSolverLight() {
                                     </div>
                                   )}
 
-                                  {/* Output Section - Always show if there's expected output */}
                                   {testCase.expected_output && (
                                     <div>
                                       <div className="text-sm font-medium text-gray-600 mb-1">
-                                        {t("Output")}:
+                                        Output:
                                       </div>
                                       <code className="block text-green-600 font-mono bg-green-50/50 px-3 py-2 rounded border border-green-200/50 whitespace-pre-line">
                                         {testCase.expected_output}
@@ -564,11 +653,10 @@ export function ChallengeSolverLight() {
                                     </div>
                                   )}
 
-                                  {/* Explanation Section - Only show if there's an explanation */}
                                   {testCase.explanation && (
                                     <div>
                                       <div className="text-sm font-medium text-gray-600 mb-1">
-                                        {t("Explanation")}:
+                                        Explanation:
                                       </div>
                                       <div className="text-gray-700 whitespace-pre-line bg-gray-50/50 px-3 py-2 rounded border border-gray-200/50">
                                         {testCase.explanation}
@@ -635,109 +723,187 @@ export function ChallengeSolverLight() {
 
               <TabsContent value="submissions" className="h-full m-0 p-0">
                 <div className="h-full overflow-y-auto p-6">
-                  {submissions.length === 0 ? (
+                  {submissionsLoading && (
                     <div className="h-full flex items-center justify-center">
                       <div className="text-center">
-                        <div className="w-16 h-16 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-                          <FileCheck className="w-8 h-8 text-gray-500" />
-                        </div>
+                        <Loader2 className="w-12 h-12 animate-spin text-cyan-600 mx-auto mb-4" />
                         <h3 className="text-lg font-medium text-gray-900 mb-2">
-                          {t("No submissions yet")}
+                          Loading Submissions...
                         </h3>
                         <p className="text-gray-600">
-                          {t(
-                            "Write code & submit to see your submission history"
-                          )}
+                          Fetching your submission history for this challenge
                         </p>
                       </div>
                     </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-semibold bg-gradient-to-r from-gray-900 to-blue-800 bg-clip-text text-transparent">
-                          {t("Submission History")}
+                  )}
+
+                  {!submissionsLoading && submissionsError && (
+                    <div className="h-full flex items-center justify-center">
+                      <div className="text-center">
+                        <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">
+                          Failed to Load Submissions
                         </h3>
-                        <Badge className="bg-gray-100 text-gray-700">
-                          {submissions.length} submission
-                          {submissions.length !== 1 ? "s" : ""}
-                        </Badge>
-                      </div>
-
-                      {submissions.map((submission) => (
-                        <Card
-                          key={submission.id}
-                          className={`bg-white/90 backdrop-blur-sm border shadow-md hover:shadow-lg transition-all duration-300 ${getSubmissionStatusColor(
-                            submission.passed
-                          )}`}
+                        <p className="text-gray-600 mb-4">{submissionsError}</p>
+                        <Button
+                          onClick={fetchSubmissions}
+                          variant="outline"
+                          className="bg-white/80 border-gray-300/50 text-gray-900 hover:bg-cyan-50 hover:border-cyan-400 hover:text-cyan-700"
                         >
-                          <CardContent className="p-4">
-                            <div className="flex items-start justify-between mb-3">
-                              <div className="flex items-center gap-3">
-                                <div
-                                  className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                                    submission.passed
-                                      ? "bg-green-500 text-white"
-                                      : "bg-red-500 text-white"
-                                  }`}
-                                >
-                                  {submission.passed ? (
-                                    <CheckCircle className="w-4 h-4" />
-                                  ) : (
-                                    <X className="w-4 h-4" />
-                                  )}
-                                </div>
-                                <div>
-                                  <p className="font-medium text-gray-900">
-                                    Submission #{submission.id}
-                                  </p>
-                                  <p className="text-sm text-gray-600 flex items-center gap-1">
-                                    <Clock className="w-3 h-3" />
-                                    {formatDate(submission.timestamp)}
-                                  </p>
-                                </div>
-                              </div>
-                              <Badge
-                                className={`${
-                                  submission.passed
-                                    ? "bg-green-100 text-green-700 border-green-300"
-                                    : "bg-red-100 text-red-700 border-red-300"
-                                }`}
-                              >
-                                {submission.passed ? "Accepted" : "Failed"}
-                              </Badge>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4 text-sm">
-                              <div>
-                                <span className="text-gray-600">
-                                  Test Results:
-                                </span>
-                                <p className="font-medium">
-                                  {submission.passedTests}/
-                                  {submission.totalTests} passed
-                                </p>
-                              </div>
-                              <div>
-                                <span className="text-gray-600">Score:</span>
-                                <p className="font-medium">
-                                  {submission.score || 0} points
-                                </p>
-                              </div>
-                            </div>
-
-                            {!submission.passed && (
-                              <div className="mt-3 p-2 bg-red-50/50 rounded border border-red-200/50">
-                                <p className="text-sm text-red-700">
-                                  💡 Some test cases failed. Review your
-                                  solution and try again.
-                                </p>
-                              </div>
-                            )}
-                          </CardContent>
-                        </Card>
-                      ))}
+                          Try Again
+                        </Button>
+                      </div>
                     </div>
                   )}
+
+                  {!submissionsLoading &&
+                    !submissionsError &&
+                    submissions.length === 0 && (
+                      <div className="h-full flex items-center justify-center">
+                        <div className="text-center">
+                          <div className="w-16 h-16 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                            <FileCheck className="w-8 h-8 text-gray-500" />
+                          </div>
+                          <h3 className="text-lg font-medium text-gray-900 mb-2">
+                            No submissions yet
+                          </h3>
+                          <p className="text-gray-600">
+                            Write code & submit to see your submission history
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                  {!submissionsLoading &&
+                    !submissionsError &&
+                    submissions.length > 0 && (
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-lg font-semibold bg-gradient-to-r from-gray-900 to-blue-800 bg-clip-text text-transparent">
+                            Submission History
+                          </h3>
+                          <div className="flex items-center gap-3">
+                            <Badge className="bg-gray-100 text-gray-700">
+                              {submissions.length} submission
+                              {submissions.length !== 1 ? "s" : ""}
+                            </Badge>
+                            <Button
+                              onClick={fetchSubmissions}
+                              variant="outline"
+                              size="sm"
+                              disabled={submissionsLoading}
+                              className="bg-white/80 border-gray-300/50 text-gray-900 hover:bg-cyan-50 hover:border-cyan-400 hover:text-cyan-700"
+                            >
+                              {submissionsLoading && (
+                                <Loader2 className="w-3 h-3 animate-spin mr-1" />
+                              )}
+                              Refresh
+                            </Button>
+                          </div>
+                        </div>
+
+                        {submissions.map((submission) => (
+                          <Card
+                            key={submission.id}
+                            className={`bg-white/90 backdrop-blur-sm border shadow-md hover:shadow-lg transition-all duration-300 ${getSubmissionStatusColor(
+                              submission.passed
+                            )}`}
+                          >
+                            <CardContent className="p-4">
+                              <div className="flex items-start justify-between mb-3">
+                                <div className="flex items-center gap-3">
+                                  <div
+                                    className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                                      submission.passed
+                                        ? "bg-green-500 text-white"
+                                        : "bg-red-500 text-white"
+                                    }`}
+                                  >
+                                    {submission.passed ? (
+                                      <CheckCircle className="w-4 h-4" />
+                                    ) : (
+                                      <X className="w-4 h-4" />
+                                    )}
+                                  </div>
+                                  <div>
+                                    <p className="font-medium text-gray-900">
+                                      Submission
+                                    </p>
+                                    <p className="text-sm text-gray-600 flex items-center gap-1">
+                                      <Clock className="w-3 h-3" />
+                                      {formatDate(submission.timestamp)}
+                                    </p>
+                                    {submission.submissionId && (
+                                      <p className="text-xs text-gray-500 font-mono">
+                                        ID:{" "}
+                                        {submission.submissionId.slice(0, 8)}...
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                                <Badge
+                                  className={`${
+                                    submission.passed
+                                      ? "bg-green-100 text-green-700 border-green-300"
+                                      : "bg-red-100 text-red-700 border-red-300"
+                                  }`}
+                                >
+                                  {submission.passed ? "Accepted" : "Failed"}
+                                </Badge>
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div>
+                                  <span className="text-gray-600">
+                                    Test Results:
+                                  </span>
+                                  <p className="font-medium">
+                                    {submission.passedTests}/
+                                    {submission.totalTests} passed
+                                  </p>
+                                </div>
+                                <div>
+                                  <span className="text-gray-600">Score:</span>
+                                  <p className="font-medium">
+                                    {submission.score || 0} points
+                                  </p>
+                                </div>
+                              </div>
+
+                              {submission.code && (
+                                <div className="mt-3 p-3 bg-gray-50/50 rounded border border-gray-200/50">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <span className="text-xs font-medium text-gray-600 uppercase tracking-wide">
+                                      Code
+                                    </span>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => setCode(submission.code)}
+                                      className="text-xs text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50 p-1 h-auto"
+                                    >
+                                      Load Code
+                                    </Button>
+                                  </div>
+                                  <pre className="text-xs text-gray-700 font-mono bg-white/80 p-2 rounded border overflow-x-auto max-h-32 whitespace-pre-wrap">
+                                    {submission.code}
+                                  </pre>
+                                </div>
+                              )}
+
+                              {!submission.passed && (
+                                <div className="mt-3 p-2 bg-red-50/50 rounded border border-red-200/50">
+                                  <p className="text-sm text-red-700">
+                                    💡 Some test cases failed. Review your
+                                    solution and try again.
+                                  </p>
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
                 </div>
               </TabsContent>
             </div>
@@ -776,12 +942,12 @@ export function ChallengeSolverLight() {
                   {isRunning ? (
                     <>
                       <Activity className="w-4 h-4 mr-2 animate-spin" />
-                      {t("Running")}
+                      Running
                     </>
                   ) : (
                     <>
                       <Play className="w-4 h-4 mr-2" />
-                      {t("Run")}
+                      Run
                     </>
                   )}
                 </Button>
@@ -793,12 +959,12 @@ export function ChallengeSolverLight() {
                   {isSubmitting ? (
                     <>
                       <Activity className="w-4 h-4 mr-2 animate-spin" />
-                      {t("Submitting")}
+                      Submitting
                     </>
                   ) : (
                     <>
                       <Send className="w-4 h-4 mr-2" />
-                      {t("Submit")}
+                      Submit
                     </>
                   )}
                 </Button>
@@ -854,7 +1020,7 @@ export function ChallengeSolverLight() {
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-medium bg-gradient-to-r from-purple-600 to-pink-700 bg-clip-text text-transparent flex items-center gap-2">
                   <Terminal className="w-4 h-4 text-purple-600" />
-                  {t("Test Case Outputs")}
+                  Test Case Outputs
                 </h3>
                 {(isRunning || isSubmitting) && (
                   <Activity className="w-4 h-4 text-green-500 animate-spin" />
@@ -888,7 +1054,7 @@ export function ChallengeSolverLight() {
                             {index + 1}
                           </div>
                           <span className="text-sm font-semibold text-gray-900">
-                            {t("Test")} {index + 1}
+                            Test {index + 1}
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -916,7 +1082,7 @@ export function ChallengeSolverLight() {
                         {result.input && (
                           <div>
                             <div className="text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wide">
-                              {t("Input")}
+                              Input
                             </div>
                             <div className="bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200/50 shadow-sm">
                               <code className="block text-cyan-700 font-mono text-xs p-3 whitespace-pre-line leading-relaxed">
@@ -931,7 +1097,7 @@ export function ChallengeSolverLight() {
                           {/* Expected Output */}
                           <div className="space-y-2">
                             <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                              {t("Expected Output")}
+                              Expected Output
                             </div>
                             <div className="bg-white/80 backdrop-blur-sm rounded-lg border border-green-200/50 shadow-sm min-h-[60px] flex items-start">
                               <code className="block text-green-700 font-mono text-xs p-3 whitespace-pre-line leading-relaxed w-full">
@@ -943,7 +1109,7 @@ export function ChallengeSolverLight() {
                           {/* Your Output */}
                           <div className="space-y-2">
                             <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                              {t("Your Output")}
+                              Your Output
                             </div>
                             <div
                               className={`bg-white/80 backdrop-blur-sm rounded-lg border shadow-sm min-h-[60px] flex items-start ${
@@ -969,7 +1135,7 @@ export function ChallengeSolverLight() {
                         {result.explanation && (
                           <div className="mt-4 pt-3 border-t border-gray-200/50">
                             <div className="text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wide">
-                              {t("Explanation")}
+                              Explanation
                             </div>
                             <div className="bg-gray-50/80 backdrop-blur-sm rounded-lg border border-gray-200/50 shadow-sm">
                               <p className="text-gray-700 text-xs p-3 leading-relaxed">
@@ -1000,17 +1166,25 @@ export function ChallengeSolverLight() {
                 </div>
               ) : (
                 <div className="flex items-center justify-center h-full">
-                  <div className="text-center">
-                    <div className="w-16 h-16 bg-white/90 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg border border-gray-200/50">
-                      <Terminal className="w-8 h-8 text-gray-500" />
+                  <div className="text-center max-w-sm mx-auto">
+                    <div className="w-20 h-20 bg-gradient-to-br from-purple-100 to-blue-100 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg border border-purple-200/50">
+                      <Terminal className="w-10 h-10 text-purple-600" />
                     </div>
-                    <h3 className="text-sm font-semibold text-gray-900 mb-2">
-                      Ready to Test
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      Ready to Test Your Code
                     </h3>
-                    <p className="text-gray-600 text-xs leading-relaxed max-w-48">
-                      {output ||
-                        t("Run your code to see the test results here...")}
+                    <p className="text-gray-600 text-sm leading-relaxed mb-4">
+                      {!output
+                        ? 'Click "Run" to execute your code and see detailed test results with comparisons.'
+                        : "Review the test results above or run your code again."}
                     </p>
+                    {output && (
+                      <div className="bg-gray-50/80 backdrop-blur-sm rounded-lg border border-gray-200/50 p-3 mt-4">
+                        <pre className="text-xs text-gray-700 whitespace-pre-line leading-relaxed">
+                          {output}
+                        </pre>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
