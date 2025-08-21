@@ -217,109 +217,152 @@ export function ChallengeSolverLight() {
     };
   }, [isResizingOutput]);
 
+  // Transform API test results to component format
+  const transformTestResults = useCallback((visibleTests) => {
+    return visibleTests.map((test, index) => ({
+      id: index + 1,
+      input: Array.isArray(test.input_data)
+        ? test.input_data.join("\n")
+        : test.input_data || "",
+      expectedOutput: test.expected_output || "",
+      actualOutput: test.actual_output || "",
+      passed: test.status === "passed",
+      explanation: test.explanation || "",
+      status: test.status,
+    }));
+  }, []);
+
+  // Updated runCode function with real API integration
   const runCode = useCallback(async () => {
-    if (isRunning) return;
+    if (isRunning || !challengeId || !userId) return;
 
     setIsRunning(true);
-    setOutput("🚀 Qalisa ukusebenza...\n⚡ Layisha i-Python interpreter...\n");
-
+    setOutput(
+      "🚀 Qalisa ukusebenza...\n⚡ Layisha i-Python interpreter...\n🔥 Thumela ikhowudi yakho...\n"
+    );
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const apiUrl = `https://isipython-dev.onrender.com/api/challenges/${challengeId}/submit`;
 
-      // Mock test results - in real implementation, send code to execution API
-      const mockResults =
-        challenge?.testCases?.map((testCase) => ({
-          ...testCase,
-          actualOutput: testCase.expectedOutput,
-          passed: Math.random() > 0.3,
-        })) || [];
+      console.log("🌐 Submitting code to:", apiUrl);
+      console.log("📝 Code being submitted:", code);
 
-      setTestResults(mockResults);
-      const passedCount = mockResults.filter((r) => r.passed).length;
-      setOutput(
-        `✨ Iziphumo zowavano:\n${mockResults
-          .map(
-            (r, i) =>
-              `Uvavanyo ${i + 1}: ${
-                r.passed ? "✅ KUPHUMELELE" : "❌ KUHLULEKILE"
-              }\nInput: ${r.input}\nOkulindelwe: ${
-                r.expectedOutput
-              }\nOkufunyenwe: ${r.actualOutput}\n`
-          )
-          .join("\n")}
-\n${passedCount}/${mockResults.length} izivivinyo ziphumelele`
-      );
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          code: code,
+        }),
+      });
+
+      if (!response.ok) {
+        const result = await response.json();
+        if (result.validation_error) {
+          throw new Error("❌" + result.validation_error);
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      console.log("📡 API Response:", result);
+
+      // Transform the test results from the API response
+      if (result.test_results && result.test_results.visible_tests) {
+        const transformedResults = transformTestResults(
+          result.test_results.visible_tests
+        );
+        setTestResults(transformedResults);
+
+        // Generate output summary
+        const passedCount = transformedResults.filter((r) => r.passed).length;
+        const totalCount = transformedResults.length;
+
+        // Add hidden tests count if available
+        const hiddenTests = result.test_results.hidden_tests;
+        const hiddenPassedCount = hiddenTests ? hiddenTests.passed : 0;
+        const hiddenTotalCount = hiddenTests ? hiddenTests.total : 0;
+
+        const totalPassedTests = result.tests_passed || passedCount;
+        const totalTests = result.tests_total || totalCount;
+
+        let outputSummary = `✨ Iziphumo zowavano:\n\n`;
+
+        // Show visible test results
+        transformedResults.forEach((test, index) => {
+          outputSummary += `Uvavanyo ${index + 1}: ${
+            test.passed ? "✅ KUPHUMELELE" : "❌ KUHLULEKILE"
+          }\n`;
+          if (test.input) {
+            outputSummary += `Input: ${test.input}\n`;
+          }
+          outputSummary += `Okulindelwe: ${test.expectedOutput}\n`;
+          outputSummary += `Okufunyenwe: ${test.actualOutput}\n`;
+          if (test.explanation) {
+            outputSummary += `Incazelo: ${test.explanation}\n`;
+          }
+          outputSummary += `\n`;
+        });
+
+        // Show overall summary
+        outputSummary += `📊 Isishwankathelo:\n`;
+        outputSummary += `${totalPassedTests}/${totalTests} izivivinyo ziphumelele\n`;
+
+        if (result.score !== undefined) {
+          outputSummary += `🎯 Amaphuzu: ${result.score}\n`;
+        }
+
+        if (result.status) {
+          outputSummary += `📋 Isimo: ${result.status}\n`;
+        }
+
+        if (hiddenTotalCount > 0) {
+          outputSummary += `🔒 Izivivinyo ezifihlakeleyo: ${hiddenPassedCount}/${hiddenTotalCount} ziphumelele\n`;
+        }
+
+        setOutput(outputSummary);
+
+        // Create submission record
+        const newSubmission = {
+          id: submissions.length + 1,
+          timestamp: new Date(),
+          passed: result.status === "passed",
+          passedTests: totalPassedTests,
+          totalTests: totalTests,
+          code: code,
+          executionTime: Math.floor(Math.random() * 1000) + 100, // API doesn't return execution time
+          score: result.score,
+          status: result.status,
+          submissionId: result.submission_id,
+        };
+
+        setSubmissions((prev) => [newSubmission, ...prev]);
+      } else {
+        throw new Error("Invalid response format from API");
+      }
     } catch (error) {
-      setOutput(
-        "❌ Error running code: " +
-          (error instanceof Error ? error.message : "Unknown error")
-      );
+      console.error("💥 Error running code:", error);
+      setOutput(error instanceof Error ? error.message : "Unknown error");
+      setTestResults([]);
     } finally {
       setIsRunning(false);
     }
-  }, [isRunning, challenge?.testCases]);
-
-  const submitCode = useCallback(async () => {
-    if (isSubmitting) return;
-
-    setIsSubmitting(true);
-
-    try {
-      // Run tests first if not already run
-      let currentResults = testResults;
-      if (testResults.length === 0) {
-        currentResults =
-          challenge?.testCases?.map((testCase) => ({
-            ...testCase,
-            actualOutput: testCase.expectedOutput,
-            passed: Math.random() > 0.3,
-          })) || [];
-        setTestResults(currentResults);
-      }
-
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      const passedCount = currentResults.filter((r) => r.passed).length;
-      const totalCount = currentResults.length;
-      const allPassed = passedCount === totalCount;
-      const executionTime = Math.floor(Math.random() * 1000) + 100;
-
-      const newSubmission = {
-        id: submissions.length + 1,
-        timestamp: new Date(),
-        passed: allPassed,
-        passedTests: passedCount,
-        totalTests: totalCount,
-        code: code,
-        executionTime: executionTime,
-      };
-
-      setSubmissions((prev) => [newSubmission, ...prev]);
-
-      if (allPassed) {
-        setOutput(
-          "🎉 Isisombululo singenisiwe ngempumelelo!\n✅ Zonke izivivinyo ziphumelele!"
-        );
-      } else {
-        setOutput(
-          `🔍 Isisombululo singenisiwe!\n⚠️ ${passedCount}/${totalCount} izivivinyo ziphumelele\n💡 Zama kwakhona!`
-        );
-      }
-    } catch (error) {
-      setOutput(
-        "❌ Error submitting code: " +
-          (error instanceof Error ? error.message : "Unknown error")
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
   }, [
-    isSubmitting,
-    testResults,
-    challenge?.testCases,
-    submissions.length,
+    isRunning,
+    challengeId,
+    userId,
     code,
+    transformTestResults,
+    submissions.length,
   ]);
+
+  // Submit code function (same as runCode since the API handles both)
+  const submitCode = useCallback(async () => {
+    // For this implementation, submit and run do the same thing
+    // since the API endpoint handles both execution and submission
+    await runCode();
+  }, [runCode]);
 
   const formatDate = useCallback((date) => {
     return date.toLocaleDateString() + " " + date.toLocaleTimeString();
@@ -674,11 +717,9 @@ export function ChallengeSolverLight() {
                                 </p>
                               </div>
                               <div>
-                                <span className="text-gray-600">
-                                  Execution Time:
-                                </span>
+                                <span className="text-gray-600">Score:</span>
                                 <p className="font-medium">
-                                  {submission.executionTime}ms
+                                  {submission.score || 0} points
                                 </p>
                               </div>
                             </div>
@@ -727,7 +768,7 @@ export function ChallengeSolverLight() {
               <div className="flex items-center gap-2">
                 <Button
                   onClick={runCode}
-                  disabled={isRunning}
+                  disabled={isRunning || isSubmitting}
                   variant="outline"
                   className="bg-white/80 border-gray-300/50 text-gray-900 hover:bg-cyan-50 hover:border-cyan-400 hover:text-cyan-700 shadow-sm"
                 >
@@ -745,7 +786,7 @@ export function ChallengeSolverLight() {
                 </Button>
                 <Button
                   onClick={submitCode}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isRunning}
                   className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300"
                 >
                   {isSubmitting ? (
@@ -814,7 +855,7 @@ export function ChallengeSolverLight() {
                   <Terminal className="w-4 h-4 text-purple-600" />
                   {t("Test Case Outputs")}
                 </h3>
-                {isRunning && (
+                {(isRunning || isSubmitting) && (
                   <Activity className="w-4 h-4 text-green-500 animate-spin" />
                 )}
               </div>
@@ -844,29 +885,31 @@ export function ChallengeSolverLight() {
                         )}
                       </div>
                       <div className="text-xs space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-600 min-w-16">
-                            {t("Input")}:
-                          </span>
-                          <code className="text-cyan-600 font-mono bg-white/60 px-2 py-1 rounded border border-gray-200/50 whitespace-pre-line">
-                            {result.input}
-                          </code>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-gray-600 min-w-16">
+                        {result.input && (
+                          <div className="flex items-start gap-2">
+                            <span className="text-gray-600 min-w-16 flex-shrink-0">
+                              {t("Input")}:
+                            </span>
+                            <code className="text-cyan-600 font-mono bg-white/60 px-2 py-1 rounded border border-gray-200/50 whitespace-pre-line flex-1">
+                              {result.input}
+                            </code>
+                          </div>
+                        )}
+                        <div className="flex items-start gap-2">
+                          <span className="text-gray-600 min-w-16 flex-shrink-0">
                             {t("Expected Output")}:
                           </span>
-                          <code className="text-green-600 font-mono bg-white/60 px-2 py-1 rounded border border-gray-200/50 whitespace-pre-line">
+                          <code className="text-green-600 font-mono bg-white/60 px-2 py-1 rounded border border-gray-200/50 whitespace-pre-line flex-1">
                             {result.expectedOutput}
                           </code>
                         </div>
                         {result.actualOutput && (
-                          <div className="flex items-center gap-2">
-                            <span className="text-gray-600 min-w-16">
-                              {t("Your program produced")}:
+                          <div className="flex items-start gap-2">
+                            <span className="text-gray-600 min-w-16 flex-shrink-0">
+                              {t("Your Output")}:
                             </span>
                             <code
-                              className={`font-mono bg-white/60 px-2 py-1 rounded border border-gray-200/50 whitespace-pre-line ${
+                              className={`font-mono bg-white/60 px-2 py-1 rounded border border-gray-200/50 whitespace-pre-line flex-1 ${
                                 result.passed
                                   ? "text-green-600"
                                   : "text-red-600"
@@ -874,6 +917,16 @@ export function ChallengeSolverLight() {
                             >
                               {result.actualOutput}
                             </code>
+                          </div>
+                        )}
+                        {result.explanation && (
+                          <div className="flex items-start gap-2 mt-2">
+                            <span className="text-gray-600 min-w-16 flex-shrink-0">
+                              {t("Explanation")}:
+                            </span>
+                            <div className="text-gray-700 bg-gray-50/60 px-2 py-1 rounded border border-gray-200/50 flex-1 text-xs">
+                              {result.explanation}
+                            </div>
                           </div>
                         )}
                       </div>
