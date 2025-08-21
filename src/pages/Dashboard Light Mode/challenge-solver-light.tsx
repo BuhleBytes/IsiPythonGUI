@@ -240,6 +240,7 @@ export function ChallengeSolverLight() {
     setOutput(
       "🚀 Qalisa ukusebenza...\n⚡ Layisha i-Python interpreter...\n🔥 Thumela ikhowudi yakho...\n"
     );
+
     try {
       const apiUrl = `https://isipython-dev.onrender.com/api/challenges/${challengeId}/submit`;
 
@@ -258,10 +259,6 @@ export function ChallengeSolverLight() {
       });
 
       if (!response.ok) {
-        const result = await response.json();
-        if (result.validation_error) {
-          throw new Error("❌" + result.validation_error);
-        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
@@ -343,7 +340,11 @@ export function ChallengeSolverLight() {
       }
     } catch (error) {
       console.error("💥 Error running code:", error);
-      setOutput(error instanceof Error ? error.message : "Unknown error");
+      setOutput(
+        "❌ Error running code: " +
+          (error instanceof Error ? error.message : "Unknown error") +
+          "\n\n🔧 Khangela ikhowudi yakho uzame kwakhona!"
+      );
       setTestResults([]);
     } finally {
       setIsRunning(false);
@@ -864,68 +865,132 @@ export function ChallengeSolverLight() {
             {/* Output Content */}
             <div className="flex-1 overflow-y-auto p-4 min-h-0">
               {testResults.length > 0 ? (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {testResults.map((result, index) => (
                     <div
                       key={result.id}
-                      className={`p-3 rounded-lg border transition-colors ${
+                      className={`rounded-xl border-2 transition-all duration-300 hover:shadow-lg ${
                         result.passed
-                          ? "bg-green-50/80 border-green-200/50 hover:bg-green-50"
-                          : "bg-red-50/80 border-red-200/50 hover:bg-red-50"
+                          ? "bg-gradient-to-r from-green-50/90 to-emerald-50/90 border-green-200/60 hover:border-green-300/80"
+                          : "bg-gradient-to-r from-red-50/90 to-rose-50/90 border-red-200/60 hover:border-red-300/80"
                       }`}
                     >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium text-gray-900">
-                          {t("Test")} {index + 1}
-                        </span>
-                        {result.passed ? (
-                          <CheckCircle className="w-4 h-4 text-green-600" />
-                        ) : (
-                          <AlertCircle className="w-4 h-4 text-red-600" />
-                        )}
+                      {/* Test Header */}
+                      <div className="flex items-center justify-between p-4 pb-3">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm ${
+                              result.passed
+                                ? "bg-green-500 text-white shadow-lg"
+                                : "bg-red-500 text-white shadow-lg"
+                            }`}
+                          >
+                            {index + 1}
+                          </div>
+                          <span className="text-sm font-semibold text-gray-900">
+                            {t("Test")} {index + 1}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {result.passed ? (
+                            <>
+                              <CheckCircle className="w-5 h-5 text-green-600" />
+                              <span className="text-xs font-medium text-green-700 bg-green-100/70 px-2 py-1 rounded-full">
+                                PASSED
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <AlertCircle className="w-5 h-5 text-red-600" />
+                              <span className="text-xs font-medium text-red-700 bg-red-100/70 px-2 py-1 rounded-full">
+                                FAILED
+                              </span>
+                            </>
+                          )}
+                        </div>
                       </div>
-                      <div className="text-xs space-y-1">
+
+                      {/* Test Content */}
+                      <div className="px-4 pb-4 space-y-3">
+                        {/* Input Section */}
                         {result.input && (
-                          <div className="flex items-start gap-2">
-                            <span className="text-gray-600 min-w-16 flex-shrink-0">
-                              {t("Input")}:
-                            </span>
-                            <code className="text-cyan-600 font-mono bg-white/60 px-2 py-1 rounded border border-gray-200/50 whitespace-pre-line flex-1">
-                              {result.input}
-                            </code>
+                          <div>
+                            <div className="text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wide">
+                              {t("Input")}
+                            </div>
+                            <div className="bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200/50 shadow-sm">
+                              <code className="block text-cyan-700 font-mono text-xs p-3 whitespace-pre-line leading-relaxed">
+                                {result.input}
+                              </code>
+                            </div>
                           </div>
                         )}
-                        <div className="flex items-start gap-2">
-                          <span className="text-gray-600 min-w-16 flex-shrink-0">
-                            {t("Expected Output")}:
-                          </span>
-                          <code className="text-green-600 font-mono bg-white/60 px-2 py-1 rounded border border-gray-200/50 whitespace-pre-line flex-1">
-                            {result.expectedOutput}
-                          </code>
-                        </div>
-                        {result.actualOutput && (
-                          <div className="flex items-start gap-2">
-                            <span className="text-gray-600 min-w-16 flex-shrink-0">
-                              {t("Your Output")}:
-                            </span>
-                            <code
-                              className={`font-mono bg-white/60 px-2 py-1 rounded border border-gray-200/50 whitespace-pre-line flex-1 ${
+
+                        {/* Output Comparison Grid - This is the key fix for alignment */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                          {/* Expected Output */}
+                          <div className="space-y-2">
+                            <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                              {t("Expected Output")}
+                            </div>
+                            <div className="bg-white/80 backdrop-blur-sm rounded-lg border border-green-200/50 shadow-sm min-h-[60px] flex items-start">
+                              <code className="block text-green-700 font-mono text-xs p-3 whitespace-pre-line leading-relaxed w-full">
+                                {result.expectedOutput}
+                              </code>
+                            </div>
+                          </div>
+
+                          {/* Your Output */}
+                          <div className="space-y-2">
+                            <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                              {t("Your Output")}
+                            </div>
+                            <div
+                              className={`bg-white/80 backdrop-blur-sm rounded-lg border shadow-sm min-h-[60px] flex items-start ${
                                 result.passed
-                                  ? "text-green-600"
-                                  : "text-red-600"
+                                  ? "border-green-200/50"
+                                  : "border-red-200/50"
                               }`}
                             >
-                              {result.actualOutput}
-                            </code>
+                              <code
+                                className={`block font-mono text-xs p-3 whitespace-pre-line leading-relaxed w-full ${
+                                  result.passed
+                                    ? "text-green-700"
+                                    : "text-red-700"
+                                }`}
+                              >
+                                {result.actualOutput || "No output"}
+                              </code>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Explanation Section */}
+                        {result.explanation && (
+                          <div className="mt-4 pt-3 border-t border-gray-200/50">
+                            <div className="text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wide">
+                              {t("Explanation")}
+                            </div>
+                            <div className="bg-gray-50/80 backdrop-blur-sm rounded-lg border border-gray-200/50 shadow-sm">
+                              <p className="text-gray-700 text-xs p-3 leading-relaxed">
+                                {result.explanation}
+                              </p>
+                            </div>
                           </div>
                         )}
-                        {result.explanation && (
-                          <div className="flex items-start gap-2 mt-2">
-                            <span className="text-gray-600 min-w-16 flex-shrink-0">
-                              {t("Explanation")}:
-                            </span>
-                            <div className="text-gray-700 bg-gray-50/60 px-2 py-1 rounded border border-gray-200/50 flex-1 text-xs">
-                              {result.explanation}
+
+                        {/* Status Message for Failed Tests */}
+                        {!result.passed && (
+                          <div className="mt-3 p-3 bg-red-50/80 backdrop-blur-sm rounded-lg border border-red-200/50">
+                            <div className="flex items-start gap-2">
+                              <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+                              <p className="text-xs text-red-700 leading-relaxed">
+                                <span className="font-semibold">
+                                  Test Failed:
+                                </span>{" "}
+                                Your output doesn't match the expected result.
+                                Check your logic and try again.
+                              </p>
                             </div>
                           </div>
                         )}
@@ -936,10 +1001,13 @@ export function ChallengeSolverLight() {
               ) : (
                 <div className="flex items-center justify-center h-full">
                   <div className="text-center">
-                    <div className="w-12 h-12 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-3 shadow-md">
-                      <Terminal className="w-6 h-6 text-gray-500" />
+                    <div className="w-16 h-16 bg-white/90 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg border border-gray-200/50">
+                      <Terminal className="w-8 h-8 text-gray-500" />
                     </div>
-                    <p className="text-gray-600 text-sm">
+                    <h3 className="text-sm font-semibold text-gray-900 mb-2">
+                      Ready to Test
+                    </h3>
+                    <p className="text-gray-600 text-xs leading-relaxed max-w-48">
                       {output ||
                         t("Run your code to see the test results here...")}
                     </p>
