@@ -120,9 +120,19 @@ export function QuizzesLight() {
     sortBy
   );
 
+  // const handleQuizNavigation = (quizId: string, status: string) => {
+  //   // All published quizzes should be accessible
+  //   navigate(`/quiz-light/${quizId}`);
+  // };
+
   const handleQuizNavigation = (quizId: string, status: string) => {
-    // All published quizzes should be accessible
-    navigate(`/quiz-light/${quizId}`);
+    if (status === "completed") {
+      // Navigate to review page for completed quizzes
+      navigate(`/quiz-review/${quizId}`);
+    } else {
+      // Navigate to quiz taking page for available quizzes
+      navigate(`/quiz-light/${quizId}`);
+    }
   };
 
   // Error state

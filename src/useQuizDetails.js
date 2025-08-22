@@ -222,13 +222,13 @@ export const useQuizDetails = (quizId) => {
           );
         }
 
-        console.log("📄 DEBUG - Parsing JSON response...");
+        console.log("🔄 DEBUG - Parsing JSON response...");
         const result = await response.json();
-        console.log("📄 DEBUG - Full API Response:", result);
+        console.log("🔄 DEBUG - Full API Response:", result);
 
         if (result && result.data) {
           console.log("✅ DEBUG - Valid response structure found");
-          console.log("📄 DEBUG - Quiz data:", result.data);
+          console.log("🔄 DEBUG - Quiz data:", result.data);
 
           // Validate quiz data structure
           if (!result.data.id) {
@@ -326,6 +326,17 @@ export const useQuizDetails = (quizId) => {
         return { success: false, error: "Invalid time taken" };
       }
 
+      // IMPORTANT: Validate time taken against quiz duration
+      const maxTimeInSeconds = quiz.duration * 60;
+      if (timeTaken > maxTimeInSeconds) {
+        console.log(
+          "⚠️ DEBUG - Time taken exceeds quiz duration, capping at max time"
+        );
+        console.log("⚠️ DEBUG - Original time taken:", timeTaken);
+        console.log("⚠️ DEBUG - Max allowed time:", maxTimeInSeconds);
+        timeTaken = maxTimeInSeconds; // Cap the time at the quiz duration
+      }
+
       // Check if all questions are answered (might be required by API)
       const totalQuestions = quiz.questions.length;
       const answeredQuestions = Object.keys(selectedAnswers).length;
@@ -372,7 +383,9 @@ export const useQuizDetails = (quizId) => {
         const submitUrl = `https://isipython-dev.onrender.com/api/quizzes/${quizId}/submit`;
         const submitData = {
           user_id: userId,
-          time_taken: Math.round(timeTaken), // Ensure it's an integer
+          time_taken: Math.round(
+            Math.max(1, Math.min(timeTaken, maxTimeInSeconds))
+          ), // Ensure it's a positive integer within limits
           answers: apiAnswers,
         };
 
@@ -391,6 +404,11 @@ export const useQuizDetails = (quizId) => {
           typeof submitData.time_taken
         );
         console.log("🔍 DEBUG - time_taken value:", submitData.time_taken);
+        console.log("🔍 DEBUG - quiz duration (seconds):", maxTimeInSeconds);
+        console.log(
+          "🔍 DEBUG - time within limits:",
+          submitData.time_taken <= maxTimeInSeconds
+        );
         console.log("🔍 DEBUG - answers type:", typeof submitData.answers);
         console.log(
           "🔍 DEBUG - answers keys:",
@@ -418,16 +436,16 @@ export const useQuizDetails = (quizId) => {
 
         try {
           responseText = await response.text();
-          console.log("📄 DEBUG - Raw response text:", responseText);
+          console.log("🔄 DEBUG - Raw response text:", responseText);
 
           if (responseText) {
             result = JSON.parse(responseText);
-            console.log("📄 DEBUG - Parsed response:", result);
+            console.log("🔄 DEBUG - Parsed response:", result);
           }
         } catch (parseError) {
           console.error("💥 DEBUG - Error parsing response:", parseError);
           console.log(
-            "📄 DEBUG - Response text that failed to parse:",
+            "🔄 DEBUG - Response text that failed to parse:",
             responseText
           );
           throw new Error(
@@ -491,6 +509,11 @@ export const useQuizDetails = (quizId) => {
         } else if (error.message.includes("Network")) {
           errorMessage =
             "Network error. Please check your connection and try again.";
+        } else if (
+          error.message.includes("Time taken cannot exceed time limit")
+        ) {
+          errorMessage =
+            "Submission time exceeded. The quiz has been auto-submitted.";
         }
 
         setError(errorMessage);
@@ -536,7 +559,7 @@ export const useQuizDetails = (quizId) => {
       }
 
       const result = await response.json();
-      console.log("📄 DEBUG - Results API Response:", result);
+      console.log("🔄 DEBUG - Results API Response:", result);
 
       if (result.data) {
         // Transform and store the results

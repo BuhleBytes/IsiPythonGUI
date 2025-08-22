@@ -60,6 +60,7 @@ const ISIPYTHON_TO_PYTHON_MAP: Record<string, string> = {
 
   // Other keywords
   cima: "del", // Delete
+  ngelixa: "while",
 };
 
 /**

@@ -13,7 +13,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock,
-  Eye,
   Flag,
   Loader2,
   RefreshCw,
@@ -21,7 +20,7 @@ import {
   Target,
   Timer,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuizDetails } from "../../useQuizDetails";
 import { useUser } from "../../useUser";
@@ -67,6 +66,10 @@ export function QuizTakerLight() {
   const [localError, setLocalError] = useState<string | null>(null);
   const [showSubmissionWarning, setShowSubmissionWarning] = useState(false);
 
+  // Refs for timer management
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const startTimeRef = useRef<Date | null>(null);
+
   // Use either hook error or local error for display
   const displayError = error || localError;
   const setError = (err: string | null) => setLocalError(err);
@@ -78,32 +81,77 @@ export function QuizTakerLight() {
     }
   }, [quiz, isQuizStarted]);
 
-  // Timer effect
-  useEffect(() => {
-    if (isQuizStarted && !isQuizCompleted && timeRemaining > 0) {
-      const timer = setInterval(() => {
-        setTimeRemaining((prev) => {
-          if (prev <= 1) {
-            // Auto-submit when time runs out
-            handleAutoSubmit();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+  // Calculate elapsed time safely
+  const getElapsedTime = useCallback(() => {
+    if (!startTimeRef.current) return 0;
+    const currentTime = new Date();
+    const elapsedMs = currentTime.getTime() - startTimeRef.current.getTime();
+    return Math.floor(elapsedMs / 1000);
+  }, []);
 
-      return () => clearInterval(timer);
-    }
-  }, [isQuizStarted, isQuizCompleted, timeRemaining]);
+  // Calculate remaining time safely
+  const calculateTimeRemaining = useCallback(() => {
+    if (!quiz || !startTimeRef.current) return timeRemaining;
+
+    const elapsed = getElapsedTime();
+    const totalTimeInSeconds = quiz.duration * 60;
+    const remaining = Math.max(0, totalTimeInSeconds - elapsed);
+
+    return remaining;
+  }, [quiz, getElapsedTime, timeRemaining]);
 
   // Auto-submit when time runs out
-  const handleAutoSubmit = async () => {
+  const handleAutoSubmit = useCallback(async () => {
     if (!quiz || isQuizCompleted) return;
 
     console.log("⏰ DEBUG - Auto-submitting quiz due to timeout");
-    const timeTaken = quiz.duration * 60; // Full duration since time ran out
-    await handleQuizSubmission(timeTaken, true); // true indicates auto-submit
-  };
+
+    // Use the full quiz duration in seconds when auto-submitting
+    const timeTakenInSeconds = quiz.duration * 60; // Convert minutes to seconds for internal consistency
+    await handleQuizSubmission(timeTakenInSeconds, true); // true indicates auto-submit
+  }, [quiz, isQuizCompleted]);
+
+  // Timer effect - simplified and more reliable
+  useEffect(() => {
+    if (!isQuizStarted || isQuizCompleted || !quiz) {
+      return;
+    }
+
+    // Clear any existing timer
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+
+    // Start new timer
+    timerRef.current = setInterval(() => {
+      const remaining = calculateTimeRemaining();
+
+      setTimeRemaining(remaining);
+
+      // Auto-submit when time runs out
+      if (remaining <= 0) {
+        if (timerRef.current) {
+          clearInterval(timerRef.current);
+          timerRef.current = null;
+        }
+        handleAutoSubmit();
+      }
+    }, 1000);
+
+    // Cleanup function
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [
+    isQuizStarted,
+    isQuizCompleted,
+    quiz,
+    calculateTimeRemaining,
+    handleAutoSubmit,
+  ]);
 
   // Check if all questions are answered
   const areAllQuestionsAnswered = () => {
@@ -132,6 +180,27 @@ export function QuizTakerLight() {
     console.log("📤 COMPONENT DEBUG - User ID:", userId);
     console.log("📤 COMPONENT DEBUG - Selected answers:", selectedAnswers);
     console.log("📤 COMPONENT DEBUG - Time taken:", timeTakenInSeconds);
+
+    // Validate time taken - ensure it doesn't exceed quiz duration (internal validation in seconds)
+    const maxTimeInSeconds = quiz.duration * 60;
+    const validatedTimeTaken = Math.min(timeTakenInSeconds, maxTimeInSeconds);
+
+    if (timeTakenInSeconds > maxTimeInSeconds) {
+      console.log(
+        "⚠️ DEBUG - Time taken exceeds limit, using max time (seconds):",
+        maxTimeInSeconds
+      );
+    }
+
+    console.log(
+      "📤 COMPONENT DEBUG - Final time taken (seconds):",
+      validatedTimeTaken
+    );
+    console.log("📤 COMPONENT DEBUG - Quiz duration (minutes):", quiz.duration);
+    console.log(
+      "📤 COMPONENT DEBUG - Quiz duration (seconds):",
+      maxTimeInSeconds
+    );
 
     // Check if all questions are answered
     const allAnswered = areAllQuestionsAnswered();
@@ -174,7 +243,14 @@ export function QuizTakerLight() {
       return;
     }
 
-    const result = await submitQuiz(selectedAnswers, timeTakenInSeconds);
+    // Stop the timer immediately when submitting
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+
+    // Submit with time in seconds (will be converted to minutes in the hook)
+    const result = await submitQuiz(selectedAnswers, validatedTimeTaken / 60);
 
     if (result.success) {
       setIsQuizCompleted(true);
@@ -197,24 +273,29 @@ export function QuizTakerLight() {
     setError(null);
     setShowSubmissionWarning(false);
 
+    // Set start time
+    const startTime = new Date();
+    setQuizStartTime(startTime);
+    startTimeRef.current = startTime;
+
     setIsQuizStarted(true);
-    setQuizStartTime(new Date());
-    console.log("🚀 COMPONENT DEBUG - Quiz started at:", new Date());
+    console.log("🚀 COMPONENT DEBUG - Quiz started at:", startTime);
   };
 
   // Submit quiz manually
   const handleSubmitQuiz = async () => {
-    if (!quiz || !quizStartTime) return;
+    if (!quiz || !startTimeRef.current) return;
 
-    const currentTime = new Date();
-    const timeTakenInSeconds = Math.floor(
-      (currentTime.getTime() - quizStartTime.getTime()) / 1000
-    );
+    const elapsedTime = getElapsedTime();
 
     console.log("📤 COMPONENT DEBUG - Manual quiz submission");
-    console.log("📤 COMPONENT DEBUG - Time taken:", timeTakenInSeconds);
+    console.log("📤 COMPONENT DEBUG - Elapsed time:", elapsedTime);
+    console.log(
+      "📤 COMPONENT DEBUG - Quiz duration (seconds):",
+      quiz.duration * 60
+    );
 
-    await handleQuizSubmission(timeTakenInSeconds, false);
+    await handleQuizSubmission(elapsedTime, false);
   };
 
   // Review answers
@@ -254,7 +335,7 @@ export function QuizTakerLight() {
       [currentQuestion.id]: optionIndex,
     }));
 
-    console.log("🔍 COMPONENT DEBUG - Answer selected:", {
+    console.log("📝 COMPONENT DEBUG - Answer selected:", {
       questionId: currentQuestion.id,
       answerIndex: optionIndex,
       answerText: currentQuestion.options[optionIndex],
@@ -308,6 +389,15 @@ export function QuizTakerLight() {
         return "bg-gray-100 text-gray-700 border-gray-200";
     }
   };
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, []);
 
   // Loading state
   if (loading || userLoading) {
@@ -563,7 +653,7 @@ export function QuizTakerLight() {
             </div>
 
             <div className="flex gap-3">
-              <Button
+              {/* <Button
                 variant="outline"
                 onClick={handleReviewAnswers}
                 disabled={fetchingResults}
@@ -575,7 +665,7 @@ export function QuizTakerLight() {
                   <Eye className="w-4 h-4 mr-2" />
                 )}
                 Review Answers
-              </Button>
+              </Button> */}
               <Button
                 className="flex-1 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-300"
                 onClick={() => {
