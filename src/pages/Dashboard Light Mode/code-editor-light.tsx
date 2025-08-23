@@ -42,7 +42,7 @@ import { registerIsiPython } from "../../languages/isiPython";
 import { useUserFiles } from "../../useUserFiles";
 import { DebugPanel } from "./DebugPanel.tsx";
 
-import { translateIsiPythonToPython } from "../../languages/isiPythonTranslator";
+import { translateIsiPythonToPython } from "../../languages/IsiPythonTranslator";
 // #endregion
 
 // #region Debug Interfaces
