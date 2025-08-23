@@ -40,7 +40,7 @@ import { useTranslation } from "react-i18next";
 import { debugHelper, isDebugError } from "../../debugHelper";
 import { registerIsiPython } from "../../languages/isiPython";
 import { useUserFiles } from "../../useUserFiles";
-import { DebugPanel } from "./DebugPanel";
+import { DebugPanel } from "./DebugPanel.tsx";
 
 import { translateIsiPythonToPython } from "../../languages/isiPythonTranslator";
 // #endregion
