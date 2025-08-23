@@ -13,7 +13,6 @@ import {
 } from "@/components/ui/select";
 import {
   AlertCircle,
-  AlertTriangle,
   Brain,
   Calendar,
   CheckCircle,
@@ -21,11 +20,11 @@ import {
   Clock,
   FileText,
   Loader2,
+  Lock,
   RefreshCw,
   Search,
   Star,
   Timer,
-  TrendingUp,
   Users,
   Zap,
 } from "lucide-react";
@@ -57,19 +56,6 @@ export function QuizzesLight() {
   // Get available categories dynamically
   const categories = getAvailableCategories();
 
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case "Low":
-        return "bg-gradient-to-r from-green-400 to-emerald-500 text-white border-0 shadow-lg shadow-green-400/30";
-      case "Medium":
-        return "bg-gradient-to-r from-yellow-400 to-orange-500 text-white border-0 shadow-lg shadow-yellow-400/30";
-      case "High":
-        return "bg-gradient-to-r from-red-400 to-pink-500 text-white border-0 shadow-lg shadow-red-400/30";
-      default:
-        return "bg-gradient-to-r from-gray-400 to-gray-500 text-white border-0 shadow-lg shadow-gray-400/30";
-    }
-  };
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case "completed":
@@ -90,17 +76,20 @@ export function QuizzesLight() {
       case "available":
         return <Timer className="w-3 h-3" />;
       case "overdue":
-        return <AlertTriangle className="w-3 h-3" />;
+        return <Lock className="w-3 h-3" />;
       default:
         return <FileText className="w-3 h-3" />;
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
+  const formatDateTime = (dateString: string) => {
+    return new Date(dateString).toLocaleString("en-US", {
       month: "short",
       day: "numeric",
       year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
     });
   };
 
@@ -112,6 +101,13 @@ export function QuizzesLight() {
     return diffDays;
   };
 
+  const getScoreColor = (score: number, totalMarks: number) => {
+    const percentage = totalMarks > 0 ? (score / totalMarks) * 100 : 0;
+    return percentage >= 50
+      ? "bg-gradient-to-r from-green-400/20 to-emerald-500/20 border-green-400/30 text-green-700"
+      : "bg-gradient-to-r from-red-400/20 to-pink-500/20 border-red-400/30 text-red-700";
+  };
+
   // Get filtered quizzes using the hook
   const filteredQuizzes = getFilteredQuizzes(
     searchTerm,
@@ -120,12 +116,12 @@ export function QuizzesLight() {
     sortBy
   );
 
-  // const handleQuizNavigation = (quizId: string, status: string) => {
-  //   // All published quizzes should be accessible
-  //   navigate(`/quiz-light/${quizId}`);
-  // };
-
   const handleQuizNavigation = (quizId: string, status: string) => {
+    // Don't allow navigation for overdue quizzes
+    if (status === "overdue") {
+      return;
+    }
+
     if (status === "completed") {
       // Navigate to review page for completed quizzes
       navigate(`/quiz-review/${quizId}`);
@@ -205,12 +201,32 @@ export function QuizzesLight() {
           </div>
         </div>
 
-        {/* Stats Cards */}
+        {/* Stats Cards - Updated to match your requirements */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <Card className="bg-white/20 backdrop-blur-xl border-white/30 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-lg flex items-center justify-center shadow-lg">
+                  <FileText className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-gray-900">
+                    {statsLoading ? (
+                      <Loader2 className="w-6 h-6 animate-spin" />
+                    ) : (
+                      stats.totalQuizzes
+                    )}
+                  </p>
+                  <p className="text-xs text-gray-600">{t("Total Quizzes")}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/20 backdrop-blur-xl border-white/30 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-emerald-500 rounded-lg flex items-center justify-center shadow-lg">
                   <CheckCircle className="w-5 h-5 text-white" />
                 </div>
                 <div>
@@ -221,7 +237,9 @@ export function QuizzesLight() {
                       stats.completedQuizzes
                     )}
                   </p>
-                  <p className="text-xs text-gray-600">{t("Completed")}</p>
+                  <p className="text-xs text-gray-600">
+                    {t("Completed Quizzes")}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -230,7 +248,7 @@ export function QuizzesLight() {
           <Card className="bg-white/20 backdrop-blur-xl border-white/30 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-emerald-500 rounded-lg flex items-center justify-center shadow-lg">
+                <div className="w-10 h-10 bg-gradient-to-r from-purple-400 to-indigo-500 rounded-lg flex items-center justify-center shadow-lg">
                   <Star className="w-5 h-5 text-white" />
                 </div>
                 <div>
@@ -250,35 +268,17 @@ export function QuizzesLight() {
           <Card className="bg-white/20 backdrop-blur-xl border-white/30 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-r from-purple-400 to-indigo-500 rounded-lg flex items-center justify-center shadow-lg">
-                  <TrendingUp className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-gray-900">
-                    {statsLoading ? (
-                      <Loader2 className="w-6 h-6 animate-spin" />
-                    ) : (
-                      `${stats.totalPointsEarned}/${stats.totalPointsPossible}`
-                    )}
-                  </p>
-                  <p className="text-xs text-gray-600">{t("Total Points")}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white/20 backdrop-blur-xl border-white/30 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-r from-orange-400 to-red-500 rounded-lg flex items-center justify-center shadow-lg">
+                <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-600 rounded-lg flex items-center justify-center shadow-md">
                   <Users className="w-5 h-5 text-white" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-gray-900">
                     {statsLoading ? (
                       <Loader2 className="w-6 h-6 animate-spin" />
+                    ) : stats.userGlobalRank !== null ? (
+                      `#${stats.userGlobalRank}` // Shows: #1, #73, etc.
                     ) : (
-                      `#${stats.userGlobalRank}`
+                      "∞" // Shows: ∞ for null/unranked users
                     )}
                   </p>
                   <p className="text-xs text-gray-600">{t("Class Rank")}</p>
@@ -356,18 +356,22 @@ export function QuizzesLight() {
             {filteredQuizzes.map((quiz) => {
               const IconComponent = quiz.icon;
               const daysUntilDue = getDaysUntilDue(quiz.dueDate);
-              const isOverdue = daysUntilDue < 0;
+              const isOverdue = quiz.status === "overdue";
               const isDueSoon = daysUntilDue <= 3 && daysUntilDue >= 0;
 
               return (
                 <Card
                   key={quiz.id}
-                  className={`bg-white/20 backdrop-blur-xl border-white/30 shadow-xl hover:shadow-2xl transition-all duration-300 cursor-pointer group hover:scale-[1.02] ${
+                  className={`bg-white/20 backdrop-blur-xl border-white/30 shadow-xl hover:shadow-2xl transition-all duration-300 group ${
+                    !isOverdue
+                      ? "cursor-pointer hover:scale-[1.02]"
+                      : "cursor-not-allowed opacity-75"
+                  } ${
                     quiz.status === "completed"
                       ? "ring-2 ring-green-400/50"
                       : ""
-                  } ${isOverdue ? "ring-2 ring-red-400/50" : ""} ${
-                    isDueSoon ? "ring-2 ring-yellow-400/50" : ""
+                  } ${isOverdue ? "ring-2 ring-red-400/50 bg-red-50/30" : ""} ${
+                    isDueSoon && !isOverdue ? "ring-2 ring-yellow-400/50" : ""
                   }`}
                 >
                   <CardHeader className="pb-3">
@@ -377,6 +381,8 @@ export function QuizzesLight() {
                           className={`w-12 h-12 rounded-lg flex items-center justify-center shadow-lg ${
                             quiz.status === "completed"
                               ? "bg-gradient-to-r from-green-400 to-emerald-500"
+                              : isOverdue
+                              ? "bg-gradient-to-r from-red-400 to-pink-500"
                               : "bg-gradient-to-r from-cyan-400 to-blue-500"
                           }`}
                         >
@@ -396,9 +402,6 @@ export function QuizzesLight() {
                           {getStatusIcon(quiz.status)}
                           <span className="ml-1 capitalize">{quiz.status}</span>
                         </Badge>
-                        <Badge className={getDifficultyColor(quiz.difficulty)}>
-                          {quiz.difficulty}
-                        </Badge>
                       </div>
                     </div>
                   </CardHeader>
@@ -416,7 +419,7 @@ export function QuizzesLight() {
                           </span>
                         </div>
                         <p className="text-lg font-bold text-gray-900">
-                          /{quiz.totalMarks}
+                          {quiz.totalMarks}
                         </p>
                       </div>
 
@@ -428,7 +431,14 @@ export function QuizzesLight() {
                           </span>
                         </div>
                         <p className="text-sm font-medium text-gray-900">
-                          {formatDate(quiz.datePosted)}
+                          {new Date(quiz.datePosted).toLocaleDateString(
+                            "en-US",
+                            {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            }
+                          )}
                         </p>
                       </div>
 
@@ -456,13 +466,15 @@ export function QuizzesLight() {
                               : "text-gray-900"
                           }`}
                         >
-                          {formatDate(quiz.dueDate)}
+                          {formatDateTime(quiz.dueDate)}
                         </p>
                         {isOverdue && (
-                          <p className="text-xs text-red-600">{t("Overdue")}</p>
+                          <p className="text-xs text-red-600 font-semibold">
+                            {t("Overdue")}
+                          </p>
                         )}
                         {isDueSoon && !isOverdue && (
-                          <p className="text-xs text-yellow-600">
+                          <p className="text-xs text-yellow-600 font-semibold">
                             {t("Due soon")}
                           </p>
                         )}
@@ -492,7 +504,7 @@ export function QuizzesLight() {
                           {t("Class Progress")}
                         </span>
                         <span className="text-gray-900 font-medium">
-                          {quiz.completedStudents}/{quiz.totalStudents} (
+                          {quiz.usersPassed}/{quiz.usersAttempted} (
                           {quiz.classProgress}%)
                         </span>
                       </div>
@@ -505,17 +517,21 @@ export function QuizzesLight() {
                     </div>
 
                     {/* User Score (if completed) */}
-                    {quiz.status === "completed" && quiz.userScore !== null && (
-                      <div className="bg-gradient-to-r from-green-400/20 to-emerald-500/20 backdrop-blur-xl border border-green-400/30 rounded-lg p-3 shadow-lg">
+                    {quiz.status === "completed" && (
+                      <div
+                        className={`backdrop-blur-xl border rounded-lg p-3 shadow-lg ${getScoreColor(
+                          quiz.userScore,
+                          quiz.totalMarks
+                        )}`}
+                      >
                         <div className="flex items-center justify-between">
-                          <span className="text-green-700 font-medium">
-                            {t("Your Score")}
-                          </span>
+                          <span className="font-medium">{t("Your Score")}</span>
                           <div className="text-right">
-                            <span className="text-2xl font-bold text-green-700">
-                              {quiz.userScore}/{quiz.totalMarks}
+                            <span className="text-2xl font-bold">
+                              {quiz.userScore === null ? `0` : quiz.userScore}/
+                              {quiz.totalMarks}
                             </span>
-                            <p className="text-xs text-green-600">
+                            <p className="text-xs">
                               {Math.round(
                                 (quiz.userScore / quiz.totalMarks) * 100
                               )}
@@ -528,9 +544,9 @@ export function QuizzesLight() {
 
                     {/* Tags */}
                     <div className="flex flex-wrap gap-1">
-                      {quiz.tags.map((tag) => (
+                      {quiz.tags.map((tag, index) => (
                         <Badge
-                          key={tag}
+                          key={`${tag}-${index}`}
                           variant="outline"
                           className="text-xs bg-white/20 backdrop-blur-xl text-gray-700 border-white/30 shadow-lg"
                         >
@@ -541,17 +557,32 @@ export function QuizzesLight() {
 
                     {/* Action Button */}
                     <Button
-                      className={`w-full shadow-lg transition-all duration-300 hover:scale-105 ${
-                        quiz.status === "completed"
-                          ? "bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 text-white shadow-green-400/30"
-                          : "bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 text-white shadow-cyan-400/30"
+                      className={`w-full shadow-lg transition-all duration-300 ${
+                        isOverdue
+                          ? "bg-gradient-to-r from-gray-400 to-gray-500 text-white cursor-not-allowed"
+                          : quiz.status === "completed"
+                          ? "bg-gradient-to-r from-green-400 to-emerald-500 hover:from-green-500 hover:to-emerald-600 text-white shadow-green-400/30 hover:scale-105"
+                          : "bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-500 hover:to-blue-600 text-white shadow-cyan-400/30 hover:scale-105"
                       }`}
                       onClick={() => handleQuizNavigation(quiz.id, quiz.status)}
+                      disabled={isOverdue}
                     >
-                      {quiz.status === "completed"
-                        ? t("Review Quiz")
-                        : t("Start Quiz")}
-                      <ChevronRight className="w-4 h-4 ml-2" />
+                      {isOverdue ? (
+                        <>
+                          <Lock className="w-4 h-4 mr-2" />
+                          {t("Quiz Locked")}
+                        </>
+                      ) : quiz.status === "completed" ? (
+                        <>
+                          {t("Review Quiz")}
+                          <ChevronRight className="w-4 h-4 ml-2" />
+                        </>
+                      ) : (
+                        <>
+                          {t("Start Quiz")}
+                          <ChevronRight className="w-4 h-4 ml-2" />
+                        </>
+                      )}
                     </Button>
                   </CardContent>
                 </Card>

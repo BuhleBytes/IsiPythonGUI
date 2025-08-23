@@ -85,13 +85,6 @@ export const useQuizzes = () => {
     return "Programming";
   };
 
-  // Helper function to determine difficulty based on points and time
-  const determineDifficulty = (totalPoints, timeLimit) => {
-    if (totalPoints <= 30 && timeLimit <= 30) return "Low";
-    if (totalPoints <= 50 && timeLimit <= 60) return "Medium";
-    return "High";
-  };
-
   // Helper function to determine status
   const determineStatus = (apiStatus, dueDate) => {
     const now = new Date();
@@ -99,14 +92,6 @@ export const useQuizzes = () => {
 
     if (apiStatus === "overdue" || (due < now && apiStatus !== "completed")) {
       return "overdue";
-    }
-
-    // Check if quiz is coming soon (published but due date is in future and more than 7 days away)
-    const daysUntilDue = Math.ceil(
-      (due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-    );
-    if (apiStatus === "available" && daysUntilDue > 7) {
-      return "upcoming";
     }
 
     return apiStatus; // available, completed, etc.
@@ -117,10 +102,6 @@ export const useQuizzes = () => {
     console.log("🔄 DEBUG - Transforming quiz:", apiQuiz);
 
     const category = determineCategory(apiQuiz.title, apiQuiz.description);
-    const difficulty = determineDifficulty(
-      apiQuiz.total_points,
-      apiQuiz.time_limit_minutes
-    );
     const status = determineStatus(apiQuiz.status, apiQuiz.due_date);
 
     // Format dates
@@ -130,29 +111,46 @@ export const useQuizzes = () => {
     // Calculate class progress percentage
     const classProgress =
       apiQuiz.class_statistics?.total_submissions > 0
-        ? Math.round(
-            (apiQuiz.class_statistics.users_attempted /
-              apiQuiz.class_statistics.total_submissions) *
-              100
-          )
+        ? apiQuiz.class_statistics.pass_rate
         : 0;
 
     // Get user score if they've completed it
     const userScore = apiQuiz.user_performance?.best_score || null;
     const attempts = apiQuiz.user_performance?.attempts_count || 0;
 
-    // Generate some reasonable tags based on category and title
-    const generateTags = (category, title) => {
-      const tags = [category];
-      const titleLower = title.toLowerCase();
+    // Generate tags based on category, status, and completion
+    const generateTags = (
+      category,
+      title,
+      status,
+      attempts,
+      userScore,
+      totalPoints
+    ) => {
+      const tags = [];
 
-      if (titleLower.includes("basic") || titleLower.includes("fundamental"))
-        tags.push("Fundamentals");
-      if (titleLower.includes("python")) tags.push("Python");
-      if (titleLower.includes("isixhosa") || titleLower.includes("xhosa"))
+      // Add category tag
+      tags.push(category);
+
+      // Add status-based tags
+      if (status === "completed") {
+        // Show score percentage for completed quizzes
+        const percentage =
+          totalPoints > 0 ? Math.round((userScore / totalPoints) * 100) : 0;
+        tags.push(`${percentage}%`);
+      } else if (status === "overdue") {
+        tags.push("Overdue");
+      } else if (status === "available" && attempts === 0) {
+        tags.push("Not Started");
+      }
+
+      // Add programming language tags
+      if (
+        title.toLowerCase().includes("isixhosa") ||
+        title.toLowerCase().includes("xhosa")
+      )
         tags.push("IsiXhosa");
-      if (titleLower.includes("programming")) tags.push("Programming");
-      if (titleLower.includes("quiz")) tags.push("Assessment");
+      if (title.toLowerCase().includes("python")) tags.push("Python");
 
       return tags.slice(0, 3); // Limit to 3 tags
     };
@@ -167,18 +165,26 @@ export const useQuizzes = () => {
       duration: `${apiQuiz.time_limit_minutes} min`,
       questions: apiQuiz.total_questions,
       datePosted: publishedDate.toISOString().split("T")[0],
-      dueDate: dueDate.toISOString().split("T")[0],
+      dueDate: dueDate.toISOString(), // Keep full ISO string for time display
       classProgress: classProgress,
+      usersPassed: apiQuiz.class_statistics.users_passed,
+      usersAttempted: apiQuiz.class_statistics.users_attempted,
       totalStudents: Math.max(
         apiQuiz.class_statistics?.users_attempted || 0,
         50
       ), // Minimum reasonable number
       completedStudents: apiQuiz.class_statistics?.users_attempted || 0,
-      difficulty: difficulty,
       status: status,
       userScore: userScore,
       attempts: attempts,
-      tags: generateTags(category, apiQuiz.title),
+      tags: generateTags(
+        category,
+        apiQuiz.title,
+        status,
+        attempts,
+        userScore,
+        apiQuiz.total_points
+      ),
       allowMultipleAttempts: apiQuiz.allow_multiple_attempts,
       // Additional API-specific data
       apiData: {
@@ -379,15 +385,14 @@ export const useQuizzes = () => {
     return () => clearTimeout(timeout);
   }, [loading, userId]);
 
-  // Calculate derived stats
+  // Calculate derived stats using the API data
   const derivedStats = {
     completedQuizzes: stats.completed_quizzes || 0,
-    averageScore: Math.round(stats.average_score || 0),
     totalQuizzes: stats.total_quizzes || quizzes.length,
-    userGlobalRank:
-      stats.user_global_rank || Math.floor(Math.random() * 50) + 1,
+    averageScore: Math.round(stats.average_score || 0),
+    userGlobalRank: stats.user_global_rank, // Keep null if null, will be handled in UI
 
-    // Calculate total points from completed quizzes
+    // Calculate total points from completed quizzes (local calculation as fallback)
     totalPointsEarned: quizzes
       .filter((q) => q.userScore !== null)
       .reduce((sum, q) => sum + (q.userScore || 0), 0),

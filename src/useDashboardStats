@@ -1,0 +1,191 @@
+import { useCallback, useEffect, useState } from "react";
+import { useUser } from "./useUser";
+
+/**
+ * Custom hook for managing dashboard stats
+ * @returns {Object} - Object containing stats state and operations
+ */
+export const useDashboardStats = () => {
+  const { userId, isLoggedIn } = useUser();
+  const [stats, setStats] = useState({
+    challenges: {
+      completed: 0,
+      progress: 0,
+      this_week: 0,
+      total: 0,
+    },
+    quizzes: {
+      attempted: 0,
+      progress: 0,
+      this_week: 0,
+      total: 0,
+    },
+    overall: {
+      completed_items: 0,
+      message: "Just getting started!",
+      progress: 0,
+      total_items: 0,
+    },
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Helper function to check if userId is valid
+  const isValidUserId = (id) => {
+    const isValid = id && typeof id === "string" && id.trim().length > 0;
+    console.log("🔍 DEBUG - isValidUserId check:", { id, isValid });
+    return isValid;
+  };
+
+  // Fetch dashboard stats from API
+  const fetchStats = useCallback(
+    async (userIdToUse) => {
+      console.log("📊 =================================");
+      console.log("📊 FETCH DASHBOARD STATS CALLED");
+      console.log("📊 =================================");
+
+      const targetUserId = userIdToUse || userId;
+
+      console.log("🔍 DEBUG - Target User ID:", targetUserId);
+      console.log("🔍 DEBUG - User ID type:", typeof targetUserId);
+      console.log("🔍 DEBUG - User ID valid:", isValidUserId(targetUserId));
+
+      // Proper validation
+      if (!isValidUserId(targetUserId)) {
+        console.log("❌ DEBUG - Invalid or missing userId, cannot fetch stats");
+        console.log("❌ DEBUG - targetUserId:", targetUserId);
+        setLoading(false);
+        setError("Invalid user ID");
+        return;
+      }
+
+      console.log("✅ DEBUG - Valid userId found, proceeding with API call");
+
+      try {
+        setLoading(true);
+        setError(null);
+
+        const apiUrl = `https://isipython-dev.onrender.com/api/dashboard/stats?user_id=${targetUserId}`;
+        console.log("🌐 DEBUG - Calling API:", apiUrl);
+
+        const response = await fetch(apiUrl);
+
+        console.log("📡 DEBUG - Response Status:", response.status);
+        console.log("📡 DEBUG - Response OK:", response.ok);
+
+        if (!response.ok) {
+          console.log("❌ DEBUG - Response not OK, throwing error");
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+
+        console.log("📄 DEBUG - Full API Response:", result);
+
+        // Check if the response has the expected structure
+        if (result && result.data) {
+          console.log("📄 DEBUG - Result Success");
+          console.log("📄 DEBUG - Result Message:", result.message);
+          console.log("📄 DEBUG - Result Data:", result.data);
+
+          // Update state with new stats
+          setStats({
+            challenges: {
+              completed: result.data.challenges?.completed || 0,
+              progress: result.data.challenges?.progress || 0,
+              this_week: result.data.challenges?.this_week || 0,
+              total: result.data.challenges?.total || 0,
+            },
+            quizzes: {
+              attempted: result.data.quizzes?.attempted || 0,
+              progress: result.data.quizzes?.progress || 0,
+              this_week: result.data.quizzes?.this_week || 0,
+              total: result.data.quizzes?.total || 0,
+            },
+            overall: {
+              completed_items: result.data.overall?.completed_items || 0,
+              message: result.data.overall?.message || "Just getting started!",
+              progress: result.data.overall?.progress || 0,
+              total_items: result.data.overall?.total_items || 0,
+            },
+          });
+
+          console.log("✅ DEBUG - Stats updated successfully");
+        } else {
+          console.log("❌ DEBUG - Invalid response format");
+          setError("Invalid response format");
+        }
+      } catch (error) {
+        console.error("💥 DEBUG - ERROR in fetchStats:", error);
+        console.error("💥 DEBUG - Error message:", error.message);
+        setError(error.message);
+      } finally {
+        setLoading(false);
+        console.log("🏁 DEBUG - fetchStats completed, loading set to false");
+      }
+    },
+    [userId]
+  );
+
+  // Refresh stats
+  const refreshStats = useCallback(async () => {
+    console.log("🔄 DEBUG - Refresh stats called");
+    await fetchStats();
+  }, [fetchStats]);
+
+  // Main useEffect - ONLY triggers when userId changes
+  useEffect(() => {
+    console.log("🔄 DEBUG - Main useEffect triggered");
+    console.log("🔄 DEBUG - userId:", userId);
+    console.log("🔄 DEBUG - userId valid:", isValidUserId(userId));
+    console.log("🔄 DEBUG - isLoggedIn:", isLoggedIn);
+
+    if (isValidUserId(userId)) {
+      console.log("✅ DEBUG - Valid userId found, calling fetchStats");
+      fetchStats(userId);
+    } else {
+      console.log("⏳ DEBUG - No valid userId yet, waiting...");
+      // Keep loading true until we get a valid userId
+    }
+  }, [userId, fetchStats]);
+
+  // Timeout useEffect - prevents infinite loading
+  useEffect(() => {
+    console.log("⏰ DEBUG - Setting up timeout for loading state");
+
+    const timeout = setTimeout(() => {
+      if (loading && !isValidUserId(userId)) {
+        console.log("⏰ DEBUG - TIMEOUT: No valid userId after 10 seconds");
+        console.log("⏰ DEBUG - Current state:", {
+          loading,
+          userId,
+          isLoggedIn,
+        });
+        console.log("⏰ DEBUG - Stopping loading and setting default stats");
+        setLoading(false);
+        setError("Timeout: Unable to load user data");
+      }
+    }, 10000); // 10 second timeout
+
+    return () => {
+      console.log("⏰ DEBUG - Cleaning up timeout");
+      clearTimeout(timeout);
+    };
+  }, [loading, userId, isLoggedIn]);
+
+  // Debug useEffect for stats state changes
+  useEffect(() => {
+    console.log("📊 DEBUG - Stats state changed:", stats);
+  }, [stats]);
+
+  return {
+    // State
+    stats,
+    loading,
+    error,
+
+    // Actions
+    fetchStats,
+    refreshStats,
+  };
+};

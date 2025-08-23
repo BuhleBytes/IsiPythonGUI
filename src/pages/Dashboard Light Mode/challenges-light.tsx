@@ -344,7 +344,11 @@ export function ChallengesLight() {
                         <div
                           className={`w-10 h-10 rounded-lg bg-gradient-to-r ${challenge.gradient} flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300`}
                         >
-                          <IconComponent className="w-5 h-5 text-white" />
+                          <IconComponent
+                            className={`w-5 h-5 ${
+                              challenge.iconColor || "text-white drop-shadow-sm"
+                            }`}
+                          />
                         </div>
                         <div>
                           <CardTitle className="text-lg font-semibold text-gray-900 group-hover:bg-gradient-to-r group-hover:from-cyan-600 group-hover:to-blue-600 group-hover:bg-clip-text group-hover:text-transparent transition-all duration-300">
@@ -355,12 +359,20 @@ export function ChallengesLight() {
                           </p>
                         </div>
                       </div>
-                      {challenge.isCompleted && (
-                        <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-white border-0 shadow-md">
-                          <Sparkles className="w-3 h-3 mr-1" />
-                          {t("Complete")}
-                        </Badge>
-                      )}
+                      <div className="flex flex-col items-end gap-2">
+                        {challenge.isCompleted && (
+                          <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-white border-0 shadow-md">
+                            <Sparkles className="w-3 h-3 mr-1" />
+                            {t("Complete")}
+                          </Badge>
+                        )}
+                        {challenge.isInProgress && !challenge.isCompleted && (
+                          <Badge className="bg-gradient-to-r from-orange-500 to-yellow-600 text-white border-0 shadow-md">
+                            <Activity className="w-3 h-3 mr-1" />
+                            {t("In Progress")}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                     <p className="text-sm text-gray-700 line-clamp-2 mb-4">
                       {challenge.description}
@@ -378,6 +390,15 @@ export function ChallengesLight() {
                       <Badge className="bg-gradient-to-r from-indigo-500 to-purple-600 text-white border-0 shadow-md">
                         {challenge.points} pts
                       </Badge>
+                      {/* Show best score badge for in-progress challenges */}
+                      {challenge.isInProgress &&
+                        !challenge.isCompleted &&
+                        challenge.userBestScore > 0 && (
+                          <Badge className="bg-gradient-to-r from-orange-500 to-yellow-600 text-white border-0 shadow-md">
+                            <Star className="w-3 h-3 mr-1" />
+                            {challenge.userBestScore}/{challenge.points} pts
+                          </Badge>
+                        )}
                     </div>
                   </CardHeader>
 
@@ -437,6 +458,11 @@ export function ChallengesLight() {
                           <>
                             <Activity className="w-4 h-4" />
                             {t("Review Solution")}
+                          </>
+                        ) : challenge.isInProgress ? (
+                          <>
+                            <Zap className="w-4 h-4" />
+                            {t("Continue Challenge")}
                           </>
                         ) : (
                           <>

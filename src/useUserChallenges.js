@@ -1,11 +1,13 @@
 import {
   Activity,
   Brain,
+  Calculator,
   Clock,
   Code,
-  Database,
+  Hash,
   Shield,
   Target,
+  Thermometer,
   Zap,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -26,50 +28,6 @@ export const useUserChallenges = () => {
   // Add refs for AbortControllers
   const abortControllerRef = useRef(null);
   const statsAbortControllerRef = useRef(null);
-
-  // Predefined icons and gradients for different categories/difficulties
-  const challengeStyles = [
-    {
-      icon: Code,
-      gradient: "from-cyan-400 to-blue-500",
-      bgGradient: "from-cyan-50 to-blue-50",
-    },
-    {
-      icon: Target,
-      gradient: "from-green-400 to-emerald-500",
-      bgGradient: "from-green-50 to-emerald-50",
-    },
-    {
-      icon: Zap,
-      gradient: "from-yellow-400 to-orange-500",
-      bgGradient: "from-yellow-50 to-orange-50",
-    },
-    {
-      icon: Database,
-      gradient: "from-purple-400 to-pink-500",
-      bgGradient: "from-purple-50 to-pink-50",
-    },
-    {
-      icon: Shield,
-      gradient: "from-indigo-400 to-purple-500",
-      bgGradient: "from-indigo-50 to-purple-50",
-    },
-    {
-      icon: Brain,
-      gradient: "from-red-400 to-pink-500",
-      bgGradient: "from-red-50 to-pink-50",
-    },
-    {
-      icon: Activity,
-      gradient: "from-teal-400 to-cyan-500",
-      bgGradient: "from-teal-50 to-cyan-50",
-    },
-    {
-      icon: Clock,
-      gradient: "from-rose-400 to-pink-500",
-      bgGradient: "from-rose-50 to-pink-50",
-    },
-  ];
 
   // Helper function to check if userId is valid
   const isValidUserId = (id) => {
@@ -106,6 +64,20 @@ export const useUserChallenges = () => {
       arrays: "Data Structures",
       "hash-table": "Data Structures",
       arithmetic: "Functions",
+      math: "Math",
+      calculations: "Math",
+      geometry: "Math",
+      formulas: "Math",
+      mathematical: "Math",
+      temperature: "Science",
+      conversion: "Tools",
+      security: "Security",
+      validation: "Security",
+      loops: "Programming",
+      conditionals: "Programming",
+      game: "Games",
+      logic: "Logic",
+      grading: "Education",
     };
 
     for (const tag of tags) {
@@ -117,66 +89,322 @@ export const useUserChallenges = () => {
     return "General";
   };
 
-  // Transform API challenge data to component format - STABLE
+  // Helper function to get appropriate icon and gradient based on challenge content
+  const getChallengeStyle = (challenge) => {
+    try {
+      const title = challenge.title?.toLowerCase() || "";
+      const description = challenge.short_description?.toLowerCase() || "";
+      const tags = challenge.tags || [];
+
+      // Temperature-related challenges
+      if (
+        title.includes("temperature") ||
+        title.includes("celsius") ||
+        title.includes("fahrenheit")
+      ) {
+        return {
+          icon: Thermometer,
+          gradient: "from-orange-400 to-red-500",
+          bgGradient: "from-orange-50 to-red-50",
+        };
+      }
+
+      // Calculator and calculation challenges
+      if (
+        title.includes("calculator") ||
+        title.includes("calculate") ||
+        description.includes("calculate")
+      ) {
+        return {
+          icon: Calculator,
+          gradient: "from-blue-400 to-indigo-500",
+          bgGradient: "from-blue-50 to-indigo-50",
+        };
+      }
+
+      // Geometry and area challenges
+      if (
+        title.includes("circle") ||
+        title.includes("area") ||
+        tags.includes("geometry")
+      ) {
+        return {
+          icon: Target,
+          gradient: "from-purple-400 to-pink-500",
+          bgGradient: "from-purple-50 to-pink-50",
+        };
+      }
+
+      // Time and age-related challenges
+      if (
+        title.includes("age") ||
+        title.includes("year") ||
+        title.includes("time")
+      ) {
+        return {
+          icon: Clock,
+          gradient: "from-emerald-400 to-teal-500",
+          bgGradient: "from-emerald-50 to-teal-50",
+        };
+      }
+
+      // Security challenges
+      if (
+        title.includes("password") ||
+        title.includes("strength") ||
+        title.includes("validation") ||
+        tags.includes("security")
+      ) {
+        return {
+          icon: Shield,
+          gradient: "from-red-400 to-pink-500",
+          bgGradient: "from-red-50 to-pink-50",
+        };
+      }
+
+      // Mathematical challenges (prime numbers, etc.)
+      if (
+        title.includes("prime") ||
+        title.includes("number") ||
+        tags.includes("mathematical")
+      ) {
+        return {
+          icon: Hash,
+          gradient: "from-indigo-400 to-purple-500",
+          bgGradient: "from-indigo-50 to-purple-50",
+        };
+      }
+
+      // Game challenges
+      if (
+        title.includes("game") ||
+        title.includes("guess") ||
+        title.includes("guessing")
+      ) {
+        return {
+          icon: Zap,
+          gradient: "from-yellow-400 to-orange-500",
+          bgGradient: "from-yellow-50 to-orange-50",
+        };
+      }
+
+      // Grade and educational challenges
+      if (
+        title.includes("grade") ||
+        title.includes("average") ||
+        title.includes("student")
+      ) {
+        return {
+          icon: Brain,
+          gradient: "from-teal-400 to-cyan-500",
+          bgGradient: "from-teal-50 to-cyan-50",
+        };
+      }
+
+      // Array and data structure challenges
+      if (tags.includes("hash-table") || tags.includes("arrays")) {
+        return {
+          icon: Hash,
+          gradient: "from-green-400 to-emerald-500",
+          bgGradient: "from-green-50 to-emerald-50",
+        };
+      }
+
+      // Algorithm challenges
+      if (
+        tags.includes("algorithms") ||
+        tags.includes("binary-search") ||
+        tags.includes("divide-and-conquer")
+      ) {
+        return {
+          icon: Code,
+          gradient: "from-cyan-400 to-blue-500",
+          bgGradient: "from-cyan-50 to-blue-50",
+        };
+      }
+
+      // Basic programming challenges
+      if (
+        tags.includes("input") ||
+        tags.includes("output") ||
+        tags.includes("basic") ||
+        tags.includes("arithmetic")
+      ) {
+        return {
+          icon: Activity,
+          gradient: "from-slate-400 to-gray-500",
+          bgGradient: "from-slate-50 to-gray-50",
+        };
+      }
+
+      // RANDOM ASSIGNMENT FOR EVERYTHING ELSE
+      // Create a consistent pseudo-random selection based on challenge title
+      const iconOptions = [
+        {
+          icon: Code,
+          gradient: "from-cyan-400 to-blue-500",
+          bgGradient: "from-cyan-50 to-blue-50",
+        },
+        {
+          icon: Target,
+          gradient: "from-purple-400 to-pink-500",
+          bgGradient: "from-purple-50 to-pink-50",
+        },
+        {
+          icon: Zap,
+          gradient: "from-yellow-400 to-orange-500",
+          bgGradient: "from-yellow-50 to-orange-50",
+        },
+        {
+          icon: Calculator,
+          gradient: "from-blue-400 to-indigo-500",
+          bgGradient: "from-blue-50 to-indigo-50",
+        },
+        {
+          icon: Shield,
+          gradient: "from-red-400 to-pink-500",
+          bgGradient: "from-red-50 to-pink-50",
+        },
+        {
+          icon: Brain,
+          gradient: "from-teal-400 to-cyan-500",
+          bgGradient: "from-teal-50 to-cyan-50",
+        },
+        {
+          icon: Activity,
+          gradient: "from-slate-400 to-gray-500",
+          bgGradient: "from-slate-50 to-gray-50",
+        },
+        {
+          icon: Clock,
+          gradient: "from-emerald-400 to-teal-500",
+          bgGradient: "from-emerald-50 to-teal-50",
+        },
+        {
+          icon: Hash,
+          gradient: "from-green-400 to-emerald-500",
+          bgGradient: "from-green-50 to-emerald-50",
+        },
+        {
+          icon: Thermometer,
+          gradient: "from-orange-400 to-red-500",
+          bgGradient: "from-orange-50 to-red-50",
+        },
+      ];
+
+      // Use challenge title to create a consistent "random" selection
+      const titleHash = challenge.title
+        ? challenge.title.length + challenge.title.charCodeAt(0)
+        : 0;
+      const selectedIndex = titleHash % iconOptions.length;
+
+      return iconOptions[selectedIndex];
+    } catch (error) {
+      console.error("Error in getChallengeStyle:", error);
+      // Ultimate fallback - guaranteed to work
+      return {
+        icon: Code,
+        gradient: "from-gray-400 to-slate-500",
+        bgGradient: "from-gray-50 to-slate-50",
+      };
+    }
+  };
+
+  // Transform API challenge data to component format
   const transformChallengeData = useCallback((apiChallenge, index) => {
-    const style = challengeStyles[index % challengeStyles.length];
-    const difficulty = mapDifficulty(apiChallenge.difficulty_level);
-    const category = getCategoryFromTags(apiChallenge.tags);
+    try {
+      const difficulty = mapDifficulty(apiChallenge.difficulty_level);
+      const category = getCategoryFromTags(apiChallenge.tags);
 
-    // Extract real user progress data
-    const userProgress = apiChallenge.user_progress || {};
-    const isCompleted = userProgress.status === "completed";
-    const isInProgress = userProgress.status === "in_progress";
-    const userAttempts = userProgress.attempts_count || 0;
-    const userBestScore = userProgress.best_score || 0;
-    const completedAt = userProgress.completed_at;
+      // Get appropriate style based on challenge content
+      const style = getChallengeStyle(apiChallenge);
 
-    // Extract real challenge statistics
-    const challengeStats = apiChallenge.statistics || {};
-    const usersCompleted = challengeStats.users_completed || 0;
-    const usersAttempted = challengeStats.users_attempted || 0;
-    const realPassRate = challengeStats.pass_rate || 0;
-    const totalSubmissions = challengeStats.total_submissions || 0;
+      // Extract real user progress data
+      const userProgress = apiChallenge.user_progress || {};
+      const isCompleted = userProgress.status === "completed";
+      const isInProgress = userProgress.status === "in_progress";
+      const userAttempts = userProgress.attempts_count || 0;
+      const userBestScore = userProgress.best_score || 0;
+      const completedAt = userProgress.completed_at;
 
-    // Use real statistics with intelligent fallbacks
-    const passedStudents = usersCompleted;
-    const totalAttempts = Math.max(usersAttempted, usersCompleted, 1);
+      // Extract real challenge statistics
+      const challengeStats = apiChallenge.statistics || {};
+      const usersCompleted = challengeStats.users_completed || 0;
+      const usersAttempted = challengeStats.users_attempted || 0;
+      const realPassRate = challengeStats.pass_rate || 0;
+      const totalSubmissions = challengeStats.total_submissions || 0;
 
-    const displayPassedStudents =
-      passedStudents === 0 ? 0 : Math.max(passedStudents, 1);
-    const displayTotalAttempts = totalAttempts === 0 ? 1 : totalAttempts;
+      // Use real statistics with intelligent fallbacks
+      const passedStudents = usersCompleted;
+      const totalAttempts = Math.max(usersAttempted, usersCompleted, 1);
 
-    return {
-      id: apiChallenge.id,
-      title: apiChallenge.title,
-      description:
-        apiChallenge.short_description ||
-        apiChallenge.problem_statement?.slice(0, 100) + "...",
-      difficulty: difficulty,
-      category: category,
-      icon: style.icon,
-      passedStudents: displayPassedStudents,
-      totalAttempts: displayTotalAttempts,
-      estimatedTime: `${apiChallenge.estimated_time} min`,
-      points: apiChallenge.reward_points,
-      tags: apiChallenge.tags || [],
-      isCompleted: isCompleted,
-      isInProgress: isInProgress,
-      gradient: style.gradient,
-      bgGradient: style.bgGradient,
-      realPassRate: realPassRate,
-      totalSubmissions: totalSubmissions,
-      userAttempts: userAttempts,
-      userBestScore: userBestScore,
-      completedAt: completedAt,
-      problemStatement: apiChallenge.problem_statement,
-      slug: apiChallenge.slug,
-      userProgress: userProgress,
-      statistics: challengeStats,
-      createdAt: apiChallenge.created_at,
-      publishedAt: apiChallenge.published_at,
-    };
-  }, []); // NO DEPENDENCIES - stable function
+      const displayPassedStudents =
+        passedStudents === 0 ? 0 : Math.max(passedStudents, 1);
+      const displayTotalAttempts = totalAttempts === 0 ? 1 : totalAttempts;
+
+      return {
+        id: apiChallenge.id,
+        title: apiChallenge.title,
+        description:
+          apiChallenge.short_description ||
+          apiChallenge.problem_statement?.slice(0, 100) + "...",
+        difficulty: difficulty,
+        category: category,
+        icon: style.icon,
+        passedStudents: displayPassedStudents,
+        totalAttempts: displayTotalAttempts,
+        estimatedTime: `${apiChallenge.estimated_time} min`,
+        points: apiChallenge.reward_points,
+        tags: apiChallenge.tags || [],
+        isCompleted: isCompleted,
+        isInProgress: isInProgress,
+        gradient: style.gradient,
+        bgGradient: style.bgGradient,
+        realPassRate: realPassRate,
+        totalSubmissions: totalSubmissions,
+        userAttempts: userAttempts,
+        userBestScore: userBestScore,
+        completedAt: completedAt,
+        problemStatement: apiChallenge.problem_statement,
+        slug: apiChallenge.slug,
+        userProgress: userProgress,
+        statistics: challengeStats,
+        createdAt: apiChallenge.created_at,
+        publishedAt: apiChallenge.published_at,
+      };
+    } catch (error) {
+      console.error("Error in transformChallengeData:", error);
+      // Return a safe fallback object
+      return {
+        id: apiChallenge.id || "unknown",
+        title: apiChallenge.title || "Unknown Challenge",
+        description: "Challenge description not available",
+        difficulty: "Low",
+        category: "General",
+        icon: Code,
+        passedStudents: 0,
+        totalAttempts: 1,
+        estimatedTime: "10 min",
+        points: 0,
+        tags: [],
+        isCompleted: false,
+        isInProgress: false,
+        gradient: "from-gray-400 to-slate-500",
+        bgGradient: "from-gray-50 to-slate-50",
+        realPassRate: 0,
+        totalSubmissions: 0,
+        userAttempts: 0,
+        userBestScore: 0,
+        completedAt: null,
+        problemStatement: "",
+        slug: "",
+        userProgress: {},
+        statistics: {},
+        createdAt: new Date().toISOString(),
+        publishedAt: new Date().toISOString(),
+      };
+    }
+  }, []);
 
   // Fetch user challenges from API with AbortController
   const fetchChallenges = useCallback(

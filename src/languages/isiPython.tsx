@@ -8,7 +8,8 @@ export const registerIsiPython = (monaco) => {
       root: [
         // Keywords - these will be highlighted
         [
-          /\b(Ubuxoki|Inyaniso|Akukho|kwaye|njenga|qinisekisa|ngemva|linda|yekisa|iklasi|qhubeka|chaza|cima|okanye|enye|ngaphandle|ekugqibeleni|jikelele|ukuba|ngenisa|ku|phakathi|umsebenzi|ingaphandle|hayi|dlula|phakamisa|buyisela|zama|ngelixa|nge|velisa|ngokulandelelana|ukusuka|ngu|okanye_ukuba|printa|print|shicilela)\b/,
+          /\b(Ubuxoki|Inyaniso|Akukho|kwaye|njenge|qinisekisa|ngemva|linda|yekisa|iklasi|qhubeka|chaza|cima|okanye|enye|ngaphandle|ekugqibeleni|jikelele|ukuba|ngenisa|ngaphakathi|umsebenzi|ingaphandle|hayi|dlula|phakamisa|buyisela|zama|ngelixa|nge|velisa|ngokulandelelana|ukusuka|ngu|okanye_ukuba|print|eval|input|len)\b/,
+
           "keyword",
         ],
 
@@ -203,7 +204,8 @@ export const registerIsiPython = (monaco) => {
         {
           label: "ngokulandelelana",
           kind: monaco.languages.CompletionItemKind.Keyword,
-          insertText: "ngokulandelelana ${1:item} ku ${2:iterable}:\n\t$0",
+          insertText:
+            "ngokulandelelana ${1:item} ngaphakathi ${2:iterable}:\n\t$0",
           insertTextRules:
             monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
           detail: "for - for loop",
@@ -343,16 +345,10 @@ export const registerIsiPython = (monaco) => {
 
         // Other keywords
         {
-          label: "ku",
+          label: "ngaphakathi",
           kind: monaco.languages.CompletionItemKind.Keyword,
-          insertText: "ku",
+          insertText: "ngaphakathi",
           detail: "in - membership test",
-        },
-        {
-          label: "phakathi",
-          kind: monaco.languages.CompletionItemKind.Keyword,
-          insertText: "phakathi",
-          detail: 'in - alternative for "inside"',
         },
         {
           label: "ngu",
@@ -361,9 +357,9 @@ export const registerIsiPython = (monaco) => {
           detail: "is - identity comparison",
         },
         {
-          label: "njenga",
+          label: "njenge",
           kind: monaco.languages.CompletionItemKind.Keyword,
-          insertText: "njenga ${1:alias}",
+          insertText: "njenge ${1:alias}",
           insertTextRules:
             monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
           detail: "as - used in aliasing",
@@ -419,20 +415,20 @@ export const registerIsiPython = (monaco) => {
           detail: "print - print message to screen",
         },
         {
-          label: "printa",
+          label: "eval",
           kind: monaco.languages.CompletionItemKind.Function,
-          insertText: "printa(${1:umlayezo})",
+          insertText: "eval(${1:expression})",
           insertTextRules:
             monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-          detail: "print - print message to screen",
+          detail: "eval - evaluate expression",
         },
         {
-          label: "shicilela",
+          label: "input",
           kind: monaco.languages.CompletionItemKind.Function,
-          insertText: "shicilela(${1:umlayezo})",
+          insertText: "input(${1:prompt})",
           insertTextRules:
             monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-          detail: "print - print message to screen",
+          detail: "input - input prompt",
         },
       ];
 

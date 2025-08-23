@@ -16,7 +16,6 @@ import {
   AlertCircle,
   BarChart3,
   Bell,
-  CheckCircle,
   Clock,
   FileText,
   Flame,
@@ -27,7 +26,6 @@ import {
   Search,
   Settings,
   Sparkles,
-  Star,
   Trash2,
   TrendingUp,
   Trophy,
@@ -36,8 +34,11 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useDashboardStats } from "../../useDashboardStats"; // Import the new hook
+import { useLearningPath } from "../../useLearningPath";
 import { useUser } from "../../useUser";
-import { useUserFiles } from "../../useUserFiles"; // Import the new hook
+import { useUserFiles } from "../../useUserFiles";
+
 interface DashboardLightProps {
   sidebarOpen?: boolean;
   fileId?: string | null;
@@ -55,12 +56,11 @@ export function DashboardLight({
   const [fileSearchQuery, setFileSearchQuery] = useState("");
   const [selectedFileType, setSelectedFileType] = useState("All");
   const [selectedTimePeriod, setSelectedTimePeriod] = useState("All");
-  const [fileID, setFileID] = useState<string | null>();
 
   const { firstName } = useUser();
   const { t } = useTranslation();
 
-  // Use the custom hook for file operations
+  // Use the custom hooks
   const {
     files,
     loading: filesLoading,
@@ -70,6 +70,22 @@ export function DashboardLight({
     refreshFiles,
     getFilteredFiles,
   } = useUserFiles();
+
+  // Use the dashboard stats hook
+  const {
+    stats,
+    loading: statsLoading,
+    error: statsError,
+    refreshStats,
+  } = useDashboardStats();
+
+  // Use the learning path hook
+  const {
+    learningPath,
+    loading: learningPathLoading,
+    error: learningPathError,
+    refreshLearningPath,
+  } = useLearningPath();
 
   const fileTypes = [t("All"), "IsiPython"];
   const timePeriods = [
@@ -93,7 +109,7 @@ export function DashboardLight({
 
   const quickActions = [
     {
-      title: t("Creat New File"),
+      title: t("Create New File"),
       description: t("Start your coding journey"),
       icon: FileText,
       gradient: "from-cyan-500 via-blue-500 to-indigo-600",
@@ -118,42 +134,10 @@ export function DashboardLight({
     },
   ];
 
-  //Change this to recent actions
-  const learningPath = [
-    {
-      title: "IsiPython Basics",
-      status: "Gqityiwe",
-      progress: 100,
-      icon: CheckCircle,
-      color: "text-green-600",
-      bgColor: "bg-gradient-to-r from-green-100 to-emerald-100",
-      borderColor: "border-green-300",
-    },
-    {
-      title: "Data Structures",
-      status: "Iyaqhubeka",
-      progress: 65,
-      icon: Clock,
-      color: "text-cyan-600",
-      bgColor: "bg-gradient-to-r from-cyan-100 to-blue-100",
-      borderColor: "border-cyan-300",
-    },
-    {
-      title: "Algorithms",
-      status: "Itshixiwe",
-      progress: 0,
-      icon: AlertCircle,
-      color: "text-gray-500",
-      bgColor: "bg-gradient-to-r from-gray-100 to-slate-100",
-      borderColor: "border-gray-300",
-    },
-  ];
-
   // File card component with delete functionality
   const FileCard = ({ file, index }: { file: SavedFile; index: number }) => {
     const isDeleting = deletingFiles.has(file.id);
-    console.log("fucked 123", file.id);
-    setFileID(file.id);
+
     return (
       <Card
         key={index}
@@ -192,8 +176,6 @@ export function DashboardLight({
               <file.icon className="w-6 h-6 text-white" />
             </div>
             <div className="flex-1 min-w-0 pr-8">
-              {" "}
-              {/* Added right padding for delete button */}
               <h3 className="font-semibold text-gray-900 truncate">
                 {file.name}
               </h3>
@@ -212,7 +194,6 @@ export function DashboardLight({
             onClick={(e) => {
               e.stopPropagation();
               if (!isDeleting && onViewChange) {
-                console.log("omni-man100", file.id); //This works perfectly
                 onViewChange("editor", {
                   content: file.code,
                   filename: file.name,
@@ -299,7 +280,7 @@ export function DashboardLight({
         {/* Welcome Section */}
         <div className="space-y-3">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-purple-800 bg-clip-text text-transparent flex items-center gap-3">
-            {t("Welcome back")} , {firstName}
+            {t("Welcome back")}, {firstName}
             <Sparkles className="w-8 h-8 text-cyan-500 animate-pulse" />
           </h1>
           <p className="text-lg text-gray-600">
@@ -307,40 +288,40 @@ export function DashboardLight({
           </p>
         </div>
 
-        {/* Stats Cards */}
+        {/* Stats Cards - Maintaining original design with API integration */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 hover:-translate-y-1 relative overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-blue-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
               <CardTitle className="text-sm font-medium text-gray-700">
-                {t("Created files")}
+                Challenges Completed
               </CardTitle>
               <div className="p-2 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-lg shadow-md">
-                <FileText className="w-5 h-5 text-white" />
+                <Trophy className="w-5 h-5 text-white" />
               </div>
             </CardHeader>
             <CardContent className="relative z-10">
               <div className="text-3xl font-bold bg-gradient-to-r from-cyan-600 to-blue-700 bg-clip-text text-transparent">
-                {filesLoading ? (
+                {statsLoading ? (
                   <Loader2 className="w-8 h-8 animate-spin" />
                 ) : (
-                  files.length
+                  stats.challenges.completed
                 )}
               </div>
               <div className="space-y-3 mt-3">
                 <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
                   <div
-                    className="bg-gradient-to-r from-cyan-500 to-blue-600 h-3 rounded-full shadow-sm animate-pulse"
-                    style={{ width: "78%" }}
+                    className="bg-gradient-to-r from-cyan-500 to-blue-600 h-3 rounded-full shadow-sm transition-all duration-700"
+                    style={{ width: `${stats.challenges.progress}%` }}
                   ></div>
                 </div>
                 <div className="flex justify-between items-center">
                   <p className="text-sm text-gray-600 flex items-center gap-1">
-                    <Star className="w-3 h-3 text-yellow-500" />
-                    {t("IsiPython files")}
+                    <TrendingUp className="w-3 h-3 text-cyan-500" />+
+                    {stats.challenges.this_week} this week
                   </p>
                   <Badge className="bg-cyan-100 text-cyan-700 border-cyan-300">
-                    {t("Active")}
+                    {Math.round(stats.challenges.progress)}%
                   </Badge>
                 </div>
               </div>
@@ -351,7 +332,7 @@ export function DashboardLight({
             <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-pink-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
               <CardTitle className="text-sm font-medium text-gray-700">
-                {t("Attempted Quizzes")}
+                Quizzes Attempted
               </CardTitle>
               <div className="p-2 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg shadow-md">
                 <GraduationCap className="w-5 h-5 text-white" />
@@ -359,22 +340,33 @@ export function DashboardLight({
             </CardHeader>
             <CardContent className="relative z-10">
               <div className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-700 bg-clip-text text-transparent">
-                23
+                {statsLoading ? (
+                  <Loader2 className="w-8 h-8 animate-spin" />
+                ) : (
+                  stats.quizzes.attempted
+                )}
               </div>
               <div className="space-y-3 mt-3">
                 <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
                   <div
-                    className="bg-gradient-to-r from-purple-500 to-pink-600 h-3 rounded-full shadow-sm animate-pulse"
-                    style={{ width: "65%" }}
+                    className="bg-gradient-to-r from-purple-500 to-pink-600 h-3 rounded-full shadow-sm transition-all duration-700"
+                    style={{
+                      width: `${
+                        (stats.quizzes.attempted / stats.quizzes.total) * 100
+                      }%`,
+                    }}
                   ></div>
                 </div>
                 <div className="flex justify-between items-center">
                   <p className="text-sm text-gray-600 flex items-center gap-1">
                     <Flame className="w-3 h-3 text-orange-500" />
-                    {t("Average")}: 87%
+                    Average: {Math.round(stats.quizzes.progress)}%
                   </p>
                   <Badge className="bg-purple-100 text-purple-700 border-purple-300">
-                    65%
+                    {Math.round(
+                      (stats.quizzes.attempted / stats.quizzes.total) * 100
+                    )}
+                    %
                   </Badge>
                 </div>
               </div>
@@ -385,7 +377,7 @@ export function DashboardLight({
             <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-emerald-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
               <CardTitle className="text-sm font-medium text-gray-700">
-                {t("Overall progress")}
+                Overall Progress
               </CardTitle>
               <div className="p-2 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg shadow-md">
                 <TrendingUp className="w-5 h-5 text-white" />
@@ -393,22 +385,26 @@ export function DashboardLight({
             </CardHeader>
             <CardContent className="relative z-10">
               <div className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-700 bg-clip-text text-transparent">
-                92%
+                {statsLoading ? (
+                  <Loader2 className="w-8 h-8 animate-spin" />
+                ) : (
+                  `${Math.round(stats.overall.progress)}%`
+                )}
               </div>
               <div className="space-y-3 mt-3">
                 <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
                   <div
-                    className="bg-gradient-to-r from-green-500 to-emerald-600 h-3 rounded-full shadow-sm animate-pulse"
-                    style={{ width: "92%" }}
+                    className="bg-gradient-to-r from-green-500 to-emerald-600 h-3 rounded-full shadow-sm transition-all duration-700"
+                    style={{ width: `${stats.overall.progress}%` }}
                   ></div>
                 </div>
                 <div className="flex justify-between items-center">
                   <p className="text-sm text-gray-600 flex items-center gap-1">
                     <Sparkles className="w-3 h-3 text-green-500" />
-                    {t("Excellent!")}
+                    {stats.overall.message}
                   </p>
                   <Badge className="bg-green-100 text-green-700 border-green-300">
-                    92%
+                    {Math.round(stats.overall.progress)}%
                   </Badge>
                 </div>
               </div>
@@ -416,7 +412,8 @@ export function DashboardLight({
           </Card>
         </div>
 
-        {/* Recent Files - Conditional Rendering */}
+        {/* Rest of the component remains the same... */}
+        {/* Recent Files Section */}
         {!viewAllFiles ? (
           <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-xl">
             <CardHeader className="flex flex-row items-center justify-between">
@@ -470,7 +467,7 @@ export function DashboardLight({
                     className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white"
                   >
                     <FileText className="w-4 h-4 mr-2" />
-                    {t("Creat New File")}
+                    {t("Create New File")}
                   </Button>
                 </div>
               ) : (
@@ -740,61 +737,151 @@ export function DashboardLight({
               </CardContent>
             </Card>
 
-            {/* Learning Path */}
+            {/* Progress Overview */}
             <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-xl">
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
-                  {t("Recent Activities")}
+                  {t("Progress Overview")}
                 </CardTitle>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={refreshLearningPath}
+                  disabled={learningPathLoading}
+                  className="text-gray-500 hover:text-cyan-600 transition-colors duration-200"
+                >
+                  {learningPathLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <TrendingUp className="w-4 h-4" />
+                  )}
+                </Button>
               </CardHeader>
               <CardContent className="space-y-4">
-                {learningPath.map((item, index) => (
-                  <div
-                    key={index}
-                    className={`flex items-center justify-between p-4 rounded-xl ${item.bgColor} border ${item.borderColor} shadow-sm hover:shadow-md transition-all duration-300 hover:scale-102`}
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className={`p-2 bg-white/80 rounded-lg shadow-sm`}>
-                        <item.icon className={`w-5 h-5 ${item.color}`} />
-                      </div>
-                      <div>
-                        <div className="font-semibold text-gray-900">
-                          {item.title}
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          {item.status}
-                        </div>
-                      </div>
+                {learningPathLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="w-6 h-6 animate-spin text-cyan-600" />
+                    <span className="ml-3 text-gray-600">
+                      Loading progress...
+                    </span>
+                  </div>
+                ) : learningPathError ? (
+                  <div className="text-center py-8">
+                    <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600 mb-4">
+                      Unable to load progress data
+                    </p>
+                    <Button
+                      onClick={refreshLearningPath}
+                      variant="outline"
+                      size="sm"
+                      className="text-cyan-600 border-cyan-200 hover:bg-cyan-50"
+                    >
+                      Try Again
+                    </Button>
+                  </div>
+                ) : learningPath.length === 0 ? (
+                  <div className="text-center py-8">
+                    <div className="w-16 h-16 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                      <Trophy className="w-8 h-8 text-gray-500" />
                     </div>
-                    <div className="flex items-center gap-3">
-                      {item.progress > 0 && (
-                        <div className="w-24">
-                          <div className="w-full bg-white/60 rounded-full h-2 overflow-hidden">
-                            <div
-                              className={`h-2 rounded-full ${
-                                item.status === "Gqityiwe"
-                                  ? "bg-gradient-to-r from-green-500 to-emerald-600"
-                                  : "bg-gradient-to-r from-cyan-500 to-blue-600"
-                              }`}
-                              style={{ width: `${item.progress}%` }}
-                            ></div>
-                          </div>
-                        </div>
-                      )}
-                      <Badge
-                        className={
-                          item.status === "Gqityiwe"
-                            ? "bg-green-500 text-white border-0 shadow-sm"
-                            : item.status === "Iyaqhubeka"
-                            ? "bg-cyan-500 text-white border-0 shadow-sm"
-                            : "bg-gray-400 text-white border-0 shadow-sm"
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      No learning activities yet
+                    </h3>
+                    <p className="text-gray-600 mb-4">
+                      Start with a challenge or quiz to begin your journey
+                    </p>
+                    <div className="flex gap-2 justify-center">
+                      <Button
+                        onClick={() =>
+                          onViewChange && onViewChange("challenges")
                         }
+                        size="sm"
+                        className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white"
                       >
-                        {item.status}
-                      </Badge>
+                        <Trophy className="w-4 h-4 mr-2" />
+                        Start Challenge
+                      </Button>
+                      <Button
+                        onClick={() => onViewChange && onViewChange("quizzes")}
+                        size="sm"
+                        variant="outline"
+                        className="border-cyan-200 text-cyan-600 hover:bg-cyan-50"
+                      >
+                        <GraduationCap className="w-4 h-4 mr-2" />
+                        Take Quiz
+                      </Button>
                     </div>
                   </div>
-                ))}
+                ) : (
+                  learningPath.map((item, index) => (
+                    <div
+                      key={item.id || index}
+                      className={`flex items-center justify-between p-4 rounded-xl ${item.bgColor} border ${item.borderColor} shadow-sm hover:shadow-md transition-all duration-300 hover:scale-102 cursor-pointer group`}
+                      onClick={() => {
+                        // Navigate to appropriate section based on type
+                        if (item.type === "challenge") {
+                          onViewChange && onViewChange("challenges");
+                        } else if (item.type === "quiz") {
+                          onViewChange && onViewChange("quizzes");
+                        }
+                      }}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className={`p-2 bg-white/80 rounded-lg shadow-sm`}>
+                          <item.icon className={`w-5 h-5 ${item.color}`} />
+                        </div>
+                        <div className="flex-1">
+                          <div className="font-semibold text-gray-900 group-hover:text-cyan-700 transition-colors duration-200">
+                            {item.title}
+                          </div>
+                          <div className="text-sm text-gray-600 flex items-center gap-2">
+                            {item.status}
+                            {item.type && (
+                              <Badge
+                                variant="outline"
+                                className="text-xs px-2 py-0.5 bg-white/60"
+                              >
+                                {item.type === "challenge"
+                                  ? "Challenge"
+                                  : "Quiz"}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        {item.progress > 0 && (
+                          <div className="w-24">
+                            <div className="w-full bg-white/60 rounded-full h-2 overflow-hidden">
+                              <div
+                                className={`h-2 rounded-full transition-all duration-500 ${
+                                  item.status === "Gqityiwe"
+                                    ? "bg-gradient-to-r from-green-500 to-emerald-600"
+                                    : "bg-gradient-to-r from-cyan-500 to-blue-600"
+                                }`}
+                                style={{ width: `${item.progress}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                        )}
+                        <Badge
+                          className={
+                            item.status === "Gqityiwe"
+                              ? "bg-green-500 text-white border-0 shadow-sm"
+                              : item.status === "Iyaqhubeka"
+                              ? "bg-cyan-500 text-white border-0 shadow-sm"
+                              : "bg-gray-400 text-white border-0 shadow-sm"
+                          }
+                        >
+                          {item.originalStatus === "not_started"
+                            ? "Start"
+                            : item.status}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))
+                )}
               </CardContent>
             </Card>
           </div>

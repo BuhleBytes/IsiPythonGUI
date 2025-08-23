@@ -15,6 +15,9 @@ const ISIPYTHON_TO_PYTHON_MAP: Record<string, string> = {
   okanye: "or", // Logical OR
   hayi: "not", // Logical NOT
 
+  ngaphakathi: "in",
+  njenge: "as",
+
   // Control flow keywords (order matters - longer phrases first)
   okanye_ukuba: "elif", // Elif (must come before "okanye")
   ekugqibeleni: "finally", // Finally
@@ -34,7 +37,6 @@ const ISIPYTHON_TO_PYTHON_MAP: Record<string, string> = {
   // Import and module keywords
   ukusuka: "from", // from x import y
   ngenisa: "import", // Import
-  njenga: "as", // Used in aliasing
 
   // Exception handling
   zama: "try", // Attempt
@@ -54,8 +56,6 @@ const ISIPYTHON_TO_PYTHON_MAP: Record<string, string> = {
   nge: "with", // With (context manager)
 
   // Operators and comparisons
-  ku: "in", // In / of
-  phakathi: "in", // Alternate for "inside"
   ngu: "is", // Is operator
 
   // Other keywords

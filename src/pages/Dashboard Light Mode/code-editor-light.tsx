@@ -294,6 +294,8 @@ export function CodeEditorLight({
       console.log("🚀 Starting debug session...");
       setIsDebugging(true);
       setShowDebugPanel(true);
+
+      setOutput("");
       debugAllOutputRef.current = [];
 
       const response = await debugHelper.startDebugSession(code);
@@ -301,7 +303,13 @@ export function CodeEditorLight({
 
       if (isDebugError(response)) {
         console.error("❌ Debug failed:", response);
-        setOutput(`❌ Debug error: ${response.error}`);
+        const msg = (response.error && String(response.error).trim()) || "";
+        if (msg) {
+          setOutput(`❌ Debug error: ${msg}`);
+        } else {
+          // no message → don't print a “null” error line
+          setOutput("");
+        }
         setIsDebugging(false);
         return;
       }
@@ -321,6 +329,11 @@ export function CodeEditorLight({
 
       if (isWaitingForInput(response)) {
         setDebugWaitingForInput(true);
+        // print prompt only if it's NOT already included in output
+        const promptMessage = response.prompt || "Enter input";
+        if (!response.output || !response.output.includes(promptMessage)) {
+          debugMessage += `${promptMessage}\n`;
+        }
       }
 
       const apiVariables =
@@ -340,13 +353,12 @@ export function CodeEditorLight({
       }
 
       console.log("✅ Debug session started successfully");
-    } catch (error) {
+    } catch (error: any) {
       console.error("❌ Failed to start debugging:", error);
       setOutput(`❌ Failed to start debug session: ${error.message}`);
       setIsDebugging(false);
     }
   };
-
   const stepDebug = async () => {
     if (!debugSessionId || isStepInProgress) return;
 
@@ -359,7 +371,10 @@ export function CodeEditorLight({
 
       if (isDebugError(response)) {
         console.error("❌ Debug step error:", response.error);
-        setOutput((prev) => prev + `\n❌ Debug error: ${response.error}\n`);
+        const msg = (response.error && String(response.error).trim()) || "";
+        if (msg) {
+          setOutput((prev) => prev + `\n❌ Debug error: ${msg}\n`);
+        }
         stopDebugging();
         return;
       }
@@ -382,16 +397,13 @@ export function CodeEditorLight({
               const newPart = currentOutput
                 .slice(lastOutput.length)
                 .replace(/^\n+/, "");
-              if (newPart) {
-                debugMessage += `${newPart}\n`;
-              }
+              if (newPart) debugMessage += `${newPart}\n`;
             } else {
               debugMessage += `${currentOutput}\n`;
             }
           } else {
             debugMessage += `${currentOutput}\n`;
           }
-
           debugAllOutputRef.current.push(currentOutput);
         }
       }
@@ -409,7 +421,11 @@ export function CodeEditorLight({
 
       if (isWaitingForInput(response)) {
         setDebugWaitingForInput(true);
-        debugMessage += `${response.prompt || "Enter input"}\n`;
+        const promptMessage = response.prompt || "Enter input";
+        // avoid duplicate prompt when backend also echoes it in output
+        if (!response.output || !response.output.includes(promptMessage)) {
+          debugMessage += `${promptMessage}\n`;
+        }
       } else {
         setDebugWaitingForInput(false);
       }
@@ -424,20 +440,20 @@ export function CodeEditorLight({
       }
 
       console.log("✅ Step completed successfully");
-    } catch (error) {
+    } catch (error: any) {
       console.error("❌ Step failed:", error);
       setOutput((prev) => prev + `\n❌ Failed to step: ${error.message}\n`);
     } finally {
       setIsStepInProgress(false);
     }
   };
-
   const provideDebugInput = async (inputValue: string) => {
     if (!debugSessionId) return;
 
     try {
       console.log("🔄 Providing debug input:", inputValue);
       setIsStepInProgress(true);
+      setOutput((prev) => prev + `${inputValue}\n`);
 
       const response = await debugHelper.provideInput(
         debugSessionId,
@@ -447,7 +463,10 @@ export function CodeEditorLight({
 
       if (isDebugError(response)) {
         console.error("❌ Debug input error:", response.error);
-        setOutput((prev) => prev + `\n❌ Debug error: ${response.error}\n`);
+        const msg = (response.error && String(response.error).trim()) || "";
+        if (msg) {
+          setOutput((prev) => prev + `\n❌ Debug error: ${msg}\n`);
+        }
         stopDebugging();
         return;
       }
@@ -458,6 +477,7 @@ export function CodeEditorLight({
 
       let debugMessage = "";
 
+      // Append any new output (with de-dup against previous frames)
       if (response.output) {
         const currentOutput = response.output;
         const currentDebugOutput = debugAllOutputRef.current;
@@ -470,20 +490,18 @@ export function CodeEditorLight({
               const newPart = currentOutput
                 .slice(lastOutput.length)
                 .replace(/^\n+/, "");
-              if (newPart) {
-                debugMessage += `${newPart}\n`;
-              }
+              if (newPart) debugMessage += `${newPart}\n`;
             } else {
               debugMessage += `${currentOutput}\n`;
             }
           } else {
             debugMessage += `${currentOutput}\n`;
           }
-
           debugAllOutputRef.current.push(currentOutput);
         }
       }
 
+      // Variables
       if (response.variables && typeof response.variables === "object") {
         const apiVariables = Object.entries(response.variables).map(
           ([name, value]) => ({
@@ -495,9 +513,13 @@ export function CodeEditorLight({
         setDebugVariables(apiVariables);
       }
 
+      // If still waiting for input, show prompt once (avoid duplicates)
       if (isWaitingForInput(response)) {
         setDebugWaitingForInput(true);
-        debugMessage += `${response.prompt || "Enter input"}\n`;
+        const promptMessage = response.prompt || "Enter input";
+        if (!response.output || !response.output.includes(promptMessage)) {
+          debugMessage += `${promptMessage}\n`;
+        }
       } else {
         setDebugWaitingForInput(false);
       }
@@ -512,7 +534,7 @@ export function CodeEditorLight({
       }
 
       console.log("✅ Debug input provided successfully");
-    } catch (error) {
+    } catch (error: any) {
       console.error("❌ Failed to provide debug input:", error);
       setOutput(
         (prev) => prev + `\n❌ Failed to provide input: ${error.message}\n`
@@ -798,6 +820,7 @@ export function CodeEditorLight({
 
     let allOutput = [];
     let allErrors = [];
+    setOutput("");
     let sessionId = null;
 
     try {
@@ -902,6 +925,9 @@ export function CodeEditorLight({
           allErrors.push(result.error);
         }
       }
+      if (result.error) {
+        allErrors.push(result.error);
+      }
 
       if (result.output) {
         const currentOutput = result.output;
@@ -934,10 +960,7 @@ export function CodeEditorLight({
             )}\n\n🔧 Check your code and try again!`
         );
       } else if (result.completed) {
-        setOutput(
-          (prev) =>
-            prev + `\n${"=".repeat(50)}\n✅ Inkqubo igqibile ngempumelelo`
-        );
+        setOutput((prev) => prev + `\n`);
       }
     } catch (error) {
       setOutput(

@@ -119,6 +119,7 @@ export default function Component() {
                     {t("Python Version")}
                   </h3>
                   <div className="space-y-3">
+                    {/* original items */}
                     <div className="text-gray-700">if</div>
                     <div className="text-gray-700">elif</div>
                     <div className="text-gray-700">else</div>
@@ -129,6 +130,33 @@ export default function Component() {
                     <div className="text-gray-700">break</div>
                     <div className="text-gray-700 mt-4">while</div>
                     <div className="text-gray-700">for</div>
+
+                    {/* added remaining keywords */}
+                    <div className="text-gray-700 mt-4">None</div>
+                    <div className="text-gray-700">as</div>
+                    <div className="text-gray-700">assert</div>
+                    <div className="text-gray-700">async</div>
+                    <div className="text-gray-700">await</div>
+                    <div className="text-gray-700">class</div>
+                    <div className="text-gray-700">continue</div>
+                    <div className="text-gray-700">def</div>
+                    <div className="text-gray-700">del</div>
+                    <div className="text-gray-700">except</div>
+                    <div className="text-gray-700">finally</div>
+                    <div className="text-gray-700">global</div>
+                    <div className="text-gray-700">import</div>
+                    <div className="text-gray-700">in</div>
+                    <div className="text-gray-700">lambda</div>
+                    <div className="text-gray-700">nonlocal</div>
+                    <div className="text-gray-700">or</div>
+                    <div className="text-gray-700">pass</div>
+                    <div className="text-gray-700">raise</div>
+                    <div className="text-gray-700">return</div>
+                    <div className="text-gray-700">try</div>
+                    <div className="text-gray-700">with</div>
+                    <div className="text-gray-700">yield</div>
+                    <div className="text-gray-700">from</div>
+                    <div className="text-gray-700">is</div>
                   </div>
                 </div>
 
@@ -143,16 +171,44 @@ export default function Component() {
                     {t("IsiPython Version")}
                   </h3>
                   <div className="space-y-3">
+                    {/* corrected originals (only where needed) */}
                     <div className="text-gray-700">ukuba</div>
-                    <div className="text-gray-700">okanye</div>
+                    <div className="text-gray-700">okanye_ukuba</div>
                     <div className="text-gray-700">enye</div>
                     <div className="text-gray-700 mt-4">Inyaniso</div>
                     <div className="text-gray-700">Ubuxoki</div>
                     <div className="text-gray-700">kwaye</div>
                     <div className="text-gray-700">hayi</div>
                     <div className="text-gray-700">yekisa</div>
-                    <div className="text-gray-700 mt-4">ngexesha</div>
+                    <div className="text-gray-700 mt-4">ngelixa</div>
                     <div className="text-gray-700">ngokulandelelana</div>
+
+                    {/* added remaining keywords */}
+                    <div className="text-gray-700 mt-4">Akukho</div>
+                    <div className="text-gray-700">njenge</div>
+                    <div className="text-gray-700">qinisekisa</div>
+                    <div className="text-gray-700">ngemva</div>
+                    <div className="text-gray-700">linda</div>
+                    <div className="text-gray-700">iklasi</div>
+                    <div className="text-gray-700">qhubeka</div>
+                    <div className="text-gray-700">chaza</div>
+                    <div className="text-gray-700">cima</div>
+                    <div className="text-gray-700">ngaphandle</div>
+                    <div className="text-gray-700">ekugqibeleni</div>
+                    <div className="text-gray-700">jikelele</div>
+                    <div className="text-gray-700">ngenisa</div>
+                    <div className="text-gray-700">ngaphakathi</div>
+                    <div className="text-gray-700">umsebenzi</div>
+                    <div className="text-gray-700">ingaphandle</div>
+                    <div className="text-gray-700">okanye</div>
+                    <div className="text-gray-700">dlula</div>
+                    <div className="text-gray-700">phakamisa</div>
+                    <div className="text-gray-700">buyisela</div>
+                    <div className="text-gray-700">zama</div>
+                    <div className="text-gray-700">nge</div>
+                    <div className="text-gray-700">velisa</div>
+                    <div className="text-gray-700">ukusuka</div>
+                    <div className="text-gray-700">ngu</div>
                   </div>
                 </div>
               </div>
@@ -197,7 +253,7 @@ enye:
     okanye_ukuba y < num1 kwaye y < num2:
         print(y, "is less than both", num1, "and", num2)
     enye:
-        print(y, "is equal to both numbers")
+        print(y, "is equal to both numbers")
 `);
                     }}
                   >
@@ -418,7 +474,7 @@ enye:
                       copyToClipboard(`# Converting between types
 # For loop with list
 fruits = ["apple", "banana", "orange"]
-ngokulandelelana fruit in fruits:
+ngokulandelelana fruit ngaphakathi fruits:
     print("I like", fruit)`);
                     }}
                   >
@@ -463,7 +519,7 @@ ngokulandelelana fruit in fruits:
                         </span>
                         <span className="text-white"> </span>
                         <span className="text-blue-400">fruit</span>
-                        <span className="text-white"> in </span>
+                        <span className="text-purple-400"> ngaphakathi </span>
                         <span className="text-blue-400">fruits</span>
                         <span className="text-white">:</span>
                       </div>
