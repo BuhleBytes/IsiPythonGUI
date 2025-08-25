@@ -1267,9 +1267,6 @@ export function CodeEditorLight({
                 <SelectItem value="3.11">IsiPython 1.0</SelectItem>
               </SelectContent>
             </Select>
-            <Badge className="bg-gradient-to-r from-purple-500 to-pink-600 text-white border-0 shadow-md">
-              IsiPython IDE
-            </Badge>
           </div>
 
           <div className="flex items-center gap-2">
