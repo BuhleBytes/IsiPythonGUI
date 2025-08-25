@@ -358,7 +358,7 @@ export function CodeEditorLight({
       if (isDebugError(response)) {
         const msg = (response.error && String(response.error).trim()) || "";
         if (msg) {
-          setOutput(`âŒ Debug error: ${msg}`);
+          setOutput(`❌ Debug error: ${msg}`);
         } else {
           // no message â†' don't print a â€œnullâ€ error line
           setOutput("");
@@ -571,7 +571,7 @@ export function CodeEditorLight({
       }
     } catch (error: any) {
       setOutput(
-        (prev) => prev + `\n❌ Failed to provide input: ${error.message}\n`
+        (prev) => prev + `\n❌  Failed to provide input: ${error.message}\n`
       );
     } finally {
       setIsStepInProgress(false);
@@ -620,6 +620,48 @@ export function CodeEditorLight({
   const handleDebugResizeEnd = () => {
     setIsResizingDebugPanel(false);
   };
+
+  // Add effect for debug panel resizing
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizingDebugPanel) return;
+
+      // Calculate new height from bottom of viewport
+      const viewportHeight = window.innerHeight;
+      const statusBarHeight = 40; // Approximate status bar height
+      const toolbarHeight = 80; // Approximate toolbar height
+      const availableHeight = viewportHeight - statusBarHeight - toolbarHeight;
+
+      // Calculate distance from bottom
+      const distanceFromBottom = viewportHeight - e.clientY;
+      const newHeight = Math.max(
+        180,
+        Math.min(distanceFromBottom, availableHeight * 0.6)
+      );
+
+      setDebugPanelHeight(newHeight);
+    };
+
+    const handleMouseUp = () => {
+      setIsResizingDebugPanel(false);
+    };
+
+    if (isResizingDebugPanel) {
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+      document.body.style.cursor = "row-resize";
+      document.body.style.userSelect = "none";
+    }
+
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+      if (!isResizing && !isResizingTranslation) {
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+      }
+    };
+  }, [isResizingDebugPanel, isResizing, isResizingTranslation]);
   // #endregion
 
   // #region Auto-save and other existing functionality (keeping original logic)
@@ -790,7 +832,7 @@ export function CodeEditorLight({
           }
         } catch (error) {
           console.log(
-            `n❌ Network error while renaming file\n🔧 Please check your connection and try again!\n`
+            `❌ Network error while renaming file\n🔧 Please check your connection and try again!\n`
           );
         }
       } else {
@@ -798,7 +840,7 @@ export function CodeEditorLight({
           onSave(code, newFileName);
         }
         console.log(
-          `📝 File renamed to: ${newFileName}\n✨ Save the file to persist the name!\n`
+          `📝 File renamed to: ${newFileName}\n✨¨ Save the file to persist the name!\n`
         );
       }
     }
@@ -1004,7 +1046,7 @@ export function CodeEditorLight({
       setOutput(
         (prev) =>
           prev +
-          `\nâŒ Network/Connection Error:\n${error.message}\n\nðŸ"§ Please check your internet connection and try again!`
+          `\n❌ Network/Connection Error:\n${error.message}\n\n🔧 Please check your internet connection and try again!`
       );
     } finally {
       setIsRunning(false);
@@ -1225,6 +1267,9 @@ export function CodeEditorLight({
                 <SelectItem value="3.11">IsiPython 1.0</SelectItem>
               </SelectContent>
             </Select>
+            <Badge className="bg-gradient-to-r from-purple-500 to-pink-600 text-white border-0 shadow-md">
+              IsiPython IDE
+            </Badge>
           </div>
 
           <div className="flex items-center gap-2">
@@ -1449,18 +1494,38 @@ export function CodeEditorLight({
 
             {/* Debug Panel */}
             {showDebugPanel && (
-              <DebugPanel
-                isVisible={showDebugPanel}
-                onClose={handleDebugPanelClose}
-                variables={debugVariables}
-                currentLine={currentLine}
-                isDebugging={isDebugging}
-                panelHeight={debugPanelHeight}
-                onPanelHeightChange={handleDebugPanelHeightChange}
-                isResizing={isResizingDebugPanel}
-                onResizeStart={handleDebugResizeStart}
-                onResizeEnd={handleDebugResizeEnd}
-              />
+              <div
+                className="border-t border-gray-200/50 bg-white/95 backdrop-blur-xl relative flex-shrink-0 flex flex-col"
+                style={{
+                  height: `${debugPanelHeight}px`,
+                  marginLeft: "81px", // 32px (w-8 breakpoint) + 48px (w-12 line numbers) + 1px border
+                }}
+              >
+                {/* Resize handle for debug panel */}
+                <div
+                  className="absolute left-0 right-0 top-0 h-2 bg-transparent hover:bg-cyan-400 cursor-row-resize transition-colors duration-200 z-20"
+                  onMouseDown={(e) => {
+                    setIsResizingDebugPanel(true);
+                    e.preventDefault();
+                  }}
+                  title="Drag to resize debug panel"
+                >
+                  <div className="absolute left-1/2 top-0 transform -translate-x-1/2 w-16 h-1 bg-gray-300 rounded-full opacity-50 hover:opacity-100 transition-opacity duration-200"></div>
+                </div>
+
+                <DebugPanel
+                  isVisible={true}
+                  onClose={handleDebugPanelClose}
+                  variables={debugVariables}
+                  currentLine={currentLine}
+                  isDebugging={isDebugging}
+                  panelHeight={debugPanelHeight}
+                  onPanelHeightChange={handleDebugPanelHeightChange}
+                  isResizing={isResizingDebugPanel}
+                  onResizeStart={handleDebugResizeStart}
+                  onResizeEnd={handleDebugResizeEnd}
+                />
+              </div>
             )}
           </div>
 

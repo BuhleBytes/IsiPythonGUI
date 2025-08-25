@@ -3,7 +3,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Bug, ChevronDown, Eye } from "lucide-react";
-import { useEffect } from "react";
 
 // #region Debug Interfaces
 interface Variable {
@@ -34,75 +33,14 @@ export function DebugPanel({
   variables,
   currentLine,
   isDebugging,
-  panelHeight,
-  onPanelHeightChange,
-  isResizing,
-  onResizeStart,
-  onResizeEnd,
 }: DebugPanelProps) {
-  // #region Resize Handler
-  const handleDebugPanelMouseDown = (e: React.MouseEvent) => {
-    onResizeStart();
-    e.preventDefault();
-  };
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isResizing) return;
-
-      // Calculate new height based on mouse position from bottom of viewport
-      const viewportHeight = window.innerHeight;
-      const newHeight = viewportHeight - e.clientY;
-      const minHeight = 180;
-      const maxHeight = window.innerHeight * 0.4;
-
-      if (newHeight >= minHeight && newHeight <= maxHeight) {
-        onPanelHeightChange(newHeight);
-      }
-    };
-
-    const handleMouseUp = () => {
-      onResizeEnd();
-    };
-
-    if (isResizing) {
-      document.addEventListener("mousemove", handleMouseMove);
-      document.addEventListener("mouseup", handleMouseUp);
-      document.body.style.cursor = "row-resize";
-      document.body.style.userSelect = "none";
-    }
-
-    return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
-      document.removeEventListener("mouseup", handleMouseUp);
-      document.body.style.cursor = "";
-      document.body.style.userSelect = "";
-    };
-  }, [isResizing, onPanelHeightChange, onResizeEnd]);
-  // #endregion
-
   // Don't render if not visible
   if (!isVisible) return null;
 
   return (
-    <div
-      className="border-t border-gray-200/50 bg-white/95 backdrop-blur-xl relative flex-shrink-0 flex flex-col"
-      style={{
-        height: `${panelHeight}px`,
-        marginLeft: "81px", // 32px (w-8 breakpoint) + 48px (w-12 line numbers) + 1px border
-      }}
-    >
-      {/* Resize handle for debug panel */}
-      <div
-        className="absolute left-0 right-0 top-0 h-1 bg-transparent hover:bg-cyan-400 cursor-row-resize transition-colors duration-200"
-        onMouseDown={handleDebugPanelMouseDown}
-        title="Drag to resize debug panel"
-      >
-        <div className="absolute left-1/2 top-0 transform -translate-x-1/2 w-16 h-1 bg-gray-300 rounded-full opacity-0 hover:opacity-100 transition-opacity duration-200"></div>
-      </div>
-
+    <div className="flex flex-col h-full">
       {/* Debug Panel Header */}
-      <div className="flex items-center justify-between p-3 border-b border-gray-200/50">
+      <div className="flex items-center justify-between p-3 border-b border-gray-200/50 flex-shrink-0">
         <div className="flex items-center gap-2">
           <Bug className="w-4 h-4 text-green-600" />
           <span className="font-semibold text-gray-900">Debug Panel</span>
