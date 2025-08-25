@@ -13,8 +13,8 @@ const getSavedLanguage = () => {
   } catch (error) {
     console.error("Error reading language from localStorage:", error);
   }
-  // Default to English if nothing is saved or error occurs
-  return "en";
+  // Default to IsiXhosa if nothing is saved or error occurs
+  return "xh"; // Changed from "en" to "xh"
 };
 
 // Function to save language preference
@@ -31,8 +31,8 @@ i18n
   .use(HttpBackend) // Load translations from /public/locales
   .use(initReactI18next)
   .init({
-    lng: getSavedLanguage(), // Use saved language or default to English
-    fallbackLng: "en",
+    lng: getSavedLanguage(), // Use saved language or default to IsiXhosa
+    fallbackLng: "xh", // Changed from "en" to "xh" - IsiXhosa as fallback
     interpolation: { escapeValue: false },
 
     // Add backend configuration to load from public/locales
@@ -46,5 +46,11 @@ i18n.on("languageChanged", (lng) => {
   saveLanguagePreference(lng);
   console.log("Language changed to:", lng);
 });
+
+// Set IsiXhosa as default if no language is saved
+if (!localStorage.getItem("isipython_language")) {
+  localStorage.setItem("isipython_language", "IsiXhosa");
+  i18n.changeLanguage("xh");
+}
 
 export default i18n;

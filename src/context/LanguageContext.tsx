@@ -27,7 +27,7 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
   children,
 }) => {
   const { i18n } = useTranslation();
-  const [currentLanguage, setCurrentLanguage] = useState<string>("English");
+  const [currentLanguage, setCurrentLanguage] = useState<string>("IsiXhosa"); // Changed from "English" to "IsiXhosa"
   const [isLoading, setIsLoading] = useState(true);
 
   // Load saved language on mount
@@ -40,14 +40,14 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
           const languageCode = savedLanguage === "IsiXhosa" ? "xh" : "en";
           i18n.changeLanguage(languageCode);
         } else {
-          // Set default if nothing is saved
-          setCurrentLanguage("English");
-          i18n.changeLanguage("en");
+          // Set IsiXhosa as default if nothing is saved
+          setCurrentLanguage("IsiXhosa"); // Changed from "English" to "IsiXhosa"
+          i18n.changeLanguage("xh"); // Changed from "en" to "xh"
         }
       } catch (error) {
         console.error("Error loading language preference:", error);
-        setCurrentLanguage("English");
-        i18n.changeLanguage("en");
+        setCurrentLanguage("IsiXhosa"); // Changed from "English" to "IsiXhosa"
+        i18n.changeLanguage("xh"); // Changed from "en" to "xh"
       } finally {
         setIsLoading(false);
       }

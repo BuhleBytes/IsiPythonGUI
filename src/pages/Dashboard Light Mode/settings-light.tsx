@@ -110,8 +110,8 @@ export function SettingsLight() {
   };
 
   const handleResetSettings = () => {
-    // Reset to default values
-    setSelectedLanguage("English");
+    // Reset to default values - IsiXhosa as default
+    setSelectedLanguage("IsiXhosa"); // Changed from "English" to "IsiXhosa"
     setIsDarkMode(false);
     setEnglishHints(true);
 
@@ -120,8 +120,8 @@ export function SettingsLight() {
     localStorage.removeItem("isipython_dark_mode");
     localStorage.removeItem("isipython_english_hints");
 
-    // Reset language using context
-    changeLanguage("English");
+    // Reset language using context - IsiXhosa as default
+    changeLanguage("IsiXhosa"); // Changed from "English" to "IsiXhosa"
 
     console.log("Settings reset to defaults");
   };
