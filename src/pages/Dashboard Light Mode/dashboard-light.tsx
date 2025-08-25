@@ -18,7 +18,6 @@ import {
   Clock,
   FileText,
   GraduationCap,
-  Languages,
   Loader2,
   Menu,
   Play,
@@ -250,47 +249,6 @@ export function DashboardLight({
                 <Menu className="w-5 h-5" />
               </Button>
             )}
-          </div>
-          <div className="flex items-center gap-3">
-            {/* Updated Language Toggle Button */}
-            <div className="relative group">
-              <Button
-                variant="ghost"
-                onClick={toggleLanguage}
-                className={`
-                  flex items-center gap-2 px-3 py-2 rounded-lg transition-all duration-300 hover:scale-105
-                  ${
-                    currentLanguage === "IsiXhosa"
-                      ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-md hover:from-green-600 hover:to-emerald-700"
-                      : "bg-gradient-to-r from-blue-500 to-cyan-600 text-white shadow-md hover:from-blue-600 hover:to-cyan-700"
-                  }
-                `}
-              >
-                <Languages className="w-4 h-4" />
-                <span className="text-sm font-medium">
-                  {currentLanguage === "IsiXhosa" ? "XH" : "EN"}
-                </span>
-              </Button>
-
-              {/* Enhanced Tooltip */}
-              <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-3 py-2 bg-white text-gray-800 text-sm rounded-lg shadow-lg border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50 pointer-events-none">
-                <div className="flex flex-col items-center">
-                  <span className="font-medium">
-                    {currentLanguage === "IsiXhosa"
-                      ? "Switch to English"
-                      : "Tshintshela kwiSiXhosa"}
-                  </span>
-                  <span className="text-xs text-gray-500 mt-1">
-                    {currentLanguage === "IsiXhosa"
-                      ? "Current: IsiXhosa"
-                      : "Current: English"}
-                  </span>
-                </div>
-                {/* Arrow pointing up */}
-                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-b-white"></div>
-                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-b-gray-200 -mb-px"></div>
-              </div>
-            </div>
           </div>
         </div>
       </header>
