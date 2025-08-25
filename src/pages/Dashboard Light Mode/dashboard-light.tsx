@@ -18,10 +18,12 @@ import {
   FileText,
   Flame,
   GraduationCap,
+  Languages,
   Loader2,
   Menu,
   Play,
   Search,
+  Settings,
   Sparkles,
   Trash2,
   TrendingUp,
@@ -239,6 +241,22 @@ export function DashboardLight({
                 className="pl-10 w-80 bg-white/70 border-gray-300/50 focus:border-cyan-400 focus:ring-cyan-400/30 focus:ring-2 backdrop-blur-sm shadow-sm"
               />
             </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-gray-600 hover:text-green-600 hover:bg-green-50 transition-all duration-200"
+            >
+              <Languages className="w-5 h-5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-gray-600 hover:text-purple-600 hover:bg-purple-50 transition-all duration-200"
+            >
+              <Settings className="w-5 h-5" />
+            </Button>
           </div>
         </div>
       </header>
