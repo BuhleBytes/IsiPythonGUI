@@ -5,6 +5,7 @@ interface LanguageContextType {
   currentLanguage: string;
   changeLanguage: (language: string) => void;
   isLoading: boolean;
+  error: string | null;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(
@@ -26,35 +27,46 @@ interface LanguageProviderProps {
 export const LanguageProvider: React.FC<LanguageProviderProps> = ({
   children,
 }) => {
-  const { i18n } = useTranslation();
-  const [currentLanguage, setCurrentLanguage] = useState<string>("IsiXhosa"); // Changed from "English" to "IsiXhosa"
+  const { i18n, ready } = useTranslation();
+  const [currentLanguage, setCurrentLanguage] = useState<string>("IsiXhosa");
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Load saved language on mount
   useEffect(() => {
-    const loadSavedLanguage = () => {
+    const loadSavedLanguage = async () => {
       try {
+        setError(null);
         const savedLanguage = localStorage.getItem("isipython_language");
         if (savedLanguage) {
           setCurrentLanguage(savedLanguage);
           const languageCode = savedLanguage === "IsiXhosa" ? "xh" : "en";
-          i18n.changeLanguage(languageCode);
+          await i18n.changeLanguage(languageCode);
         } else {
           // Set IsiXhosa as default if nothing is saved
-          setCurrentLanguage("IsiXhosa"); // Changed from "English" to "IsiXhosa"
-          i18n.changeLanguage("xh"); // Changed from "en" to "xh"
+          setCurrentLanguage("IsiXhosa");
+          await i18n.changeLanguage("xh");
         }
       } catch (error) {
         console.error("Error loading language preference:", error);
-        setCurrentLanguage("IsiXhosa"); // Changed from "English" to "IsiXhosa"
-        i18n.changeLanguage("xh"); // Changed from "en" to "xh"
+        setError("Failed to load language preferences");
+        // Fallback to IsiXhosa
+        setCurrentLanguage("IsiXhosa");
+        try {
+          await i18n.changeLanguage("xh");
+        } catch (fallbackError) {
+          console.error("Even fallback failed:", fallbackError);
+        }
       } finally {
         setIsLoading(false);
       }
     };
 
-    loadSavedLanguage();
-  }, [i18n]);
+    // Wait for i18n to be ready before loading saved language
+    if (ready) {
+      loadSavedLanguage();
+    }
+  }, [i18n, ready]);
 
   // Listen for language changes from i18n
   useEffect(() => {
@@ -65,8 +77,10 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
       // Save to localStorage
       try {
         localStorage.setItem("isipython_language", languageName);
+        setError(null); // Clear any previous errors
       } catch (error) {
         console.error("Error saving language preference:", error);
+        setError("Failed to save language preference");
       }
     };
 
@@ -77,16 +91,27 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
     };
   }, [i18n]);
 
-  const changeLanguage = (language: string) => {
-    setCurrentLanguage(language);
-    const languageCode = language === "IsiXhosa" ? "xh" : "en";
-    i18n.changeLanguage(languageCode);
+  const changeLanguage = async (language: string) => {
+    try {
+      setError(null);
+      setCurrentLanguage(language);
+      const languageCode = language === "IsiXhosa" ? "xh" : "en";
+      await i18n.changeLanguage(languageCode);
+    } catch (error) {
+      console.error("Error changing language:", error);
+      setError(`Failed to change language to ${language}`);
+      // Revert to previous language state
+      const currentLng = i18n.language;
+      const revertLanguage = currentLng === "xh" ? "IsiXhosa" : "English";
+      setCurrentLanguage(revertLanguage);
+    }
   };
 
   const value: LanguageContextType = {
     currentLanguage,
     changeLanguage,
     isLoading,
+    error,
   };
 
   if (isLoading) {
@@ -95,6 +120,7 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">Loading language preferences...</p>
+          {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
         </div>
       </div>
     );
