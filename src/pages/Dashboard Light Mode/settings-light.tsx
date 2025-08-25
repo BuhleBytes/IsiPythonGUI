@@ -106,12 +106,12 @@ export function SettingsLight() {
     });
 
     // Show user feedback (you could add a toast notification here)
-    alert("Settings saved successfully!");
+    alert(t("Settings saved successfully!") || "Settings saved successfully!");
   };
 
   const handleResetSettings = () => {
     // Reset to default values - IsiXhosa as default
-    setSelectedLanguage("IsiXhosa"); // Changed from "English" to "IsiXhosa"
+    setSelectedLanguage("IsiXhosa");
     setIsDarkMode(false);
     setEnglishHints(true);
 
@@ -121,7 +121,7 @@ export function SettingsLight() {
     localStorage.removeItem("isipython_english_hints");
 
     // Reset language using context - IsiXhosa as default
-    changeLanguage("IsiXhosa"); // Changed from "English" to "IsiXhosa"
+    changeLanguage("IsiXhosa");
 
     console.log("Settings reset to defaults");
   };
@@ -132,7 +132,9 @@ export function SettingsLight() {
       <div className="flex-1 flex items-center justify-center">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading settings...</p>
+          <p className="text-gray-600">
+            {t("Loading settings...") || "Loading settings..."}
+          </p>
         </div>
       </div>
     );
