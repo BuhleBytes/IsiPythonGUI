@@ -41,7 +41,7 @@ export function SidebarLight({
   const { t } = useTranslation();
 
   const mainItems = [
-    { title: t("Home"), url: "/dashboard-light", icon: Home, key: "home" },
+    { title: t("Ikhaya"), url: "/dashboard-light", icon: Home, key: "home" },
     {
       title: t("Code Editor"),
       url: "/editor-light",
