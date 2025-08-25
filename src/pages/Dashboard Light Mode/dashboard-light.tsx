@@ -12,10 +12,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Activity,
   AlertCircle,
   BarChart3,
-  Bell,
   Clock,
   FileText,
   Flame,
@@ -24,12 +22,10 @@ import {
   Menu,
   Play,
   Search,
-  Settings,
   Sparkles,
   Trash2,
   TrendingUp,
   Trophy,
-  User,
   Zap,
 } from "lucide-react";
 import { useState } from "react";
@@ -243,34 +239,6 @@ export function DashboardLight({
                 className="pl-10 w-80 bg-white/70 border-gray-300/50 focus:border-cyan-400 focus:ring-cyan-400/30 focus:ring-2 backdrop-blur-sm shadow-sm"
               />
             </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-white border-0 flex items-center gap-2 px-3 py-1 shadow-md">
-              <Activity className="w-3 h-3 animate-pulse" />
-              {t("ACTIVE")}
-            </Badge>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-gray-600 hover:text-cyan-600 hover:bg-cyan-50 transition-all duration-200 relative"
-            >
-              <Bell className="w-5 h-5" />
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-red-500 to-pink-500 rounded-full animate-pulse"></div>
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-gray-600 hover:text-purple-600 hover:bg-purple-50 transition-all duration-200"
-            >
-              <Settings className="w-5 h-5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200"
-            >
-              <User className="w-5 h-5" />
-            </Button>
           </div>
         </div>
       </header>
