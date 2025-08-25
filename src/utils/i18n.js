@@ -47,7 +47,7 @@ i18n.on("languageChanged", (lng) => {
   console.log("Language changed to:", lng);
 });
 
-// Set IsiXhosa as default if no language is saved
+// Set IsiXhosa as default if no language is saved rege
 if (!localStorage.getItem("isipython_language")) {
   localStorage.setItem("isipython_language", "IsiXhosa");
   i18n.changeLanguage("xh");
