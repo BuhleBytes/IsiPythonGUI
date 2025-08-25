@@ -75,29 +75,7 @@ interface CodeEditorLightProps {
 // #endregion
 
 // Default code in IsiPython to demonstrate translation
-const defaultCode = `# Write code for your new file using IsiPython
-chaza fibonacci(n):
-    ukuba n <= 1:
-        buyisela n
-    enye:
-        a, b = 0, 1
-        ngokulandelelana i ku range(2, n + 1):
-            a, b = b, a + b
-        buyisela b
-
-chaza main():
-    numbers = [5, 8, 10, 12]
-    results = []
-    
-    ngokulandelelana num ku numbers:
-        fib_result = fibonacci(num)
-        results.append(fib_result)
-        print(f"Fibonacci({num}) = {fib_result}")
-    
-    buyisela results
-
-ukuba __name__ == "__main__":
-    main()`;
+const defaultCode = `# Write code for your new file using IsiPython`;
 
 // Helper functions to check API response status
 const isWaitingForInput = (response: any) =>
@@ -291,7 +269,6 @@ export function CodeEditorLight({
   // #region Debug Functions
   const startDebugging = async () => {
     try {
-      console.log("🚀 Starting debug session...");
       setIsDebugging(true);
       setShowDebugPanel(true);
 
@@ -299,10 +276,8 @@ export function CodeEditorLight({
       debugAllOutputRef.current = [];
 
       const response = await debugHelper.startDebugSession(code);
-      console.log("🔥 Debug start response:", response);
 
       if (isDebugError(response)) {
-        console.error("❌ Debug failed:", response);
         const msg = (response.error && String(response.error).trim()) || "";
         if (msg) {
           setOutput(`❌ Debug error: ${msg}`);
@@ -315,7 +290,6 @@ export function CodeEditorLight({
       }
 
       const newCurrentLine = response.current_line ?? 1;
-      console.log("📍 Starting at line:", newCurrentLine);
       setCurrentLine(newCurrentLine);
       setDebugSessionId(response.session_id);
 
@@ -345,16 +319,12 @@ export function CodeEditorLight({
             }))
           : [];
 
-      console.log("📊 Initial variables:", apiVariables);
       setDebugVariables(apiVariables);
 
       if (debugMessage) {
         setOutput((prev) => prev + debugMessage);
       }
-
-      console.log("✅ Debug session started successfully");
     } catch (error: any) {
-      console.error("❌ Failed to start debugging:", error);
       setOutput(`❌ Failed to start debug session: ${error.message}`);
       setIsDebugging(false);
     }
@@ -364,13 +334,10 @@ export function CodeEditorLight({
 
     try {
       setIsStepInProgress(true);
-      console.log("🔄 Stepping over with session:", debugSessionId);
 
       const response = await debugHelper.stepOnly(debugSessionId);
-      console.log("🔥 Step response:", response);
 
       if (isDebugError(response)) {
-        console.error("❌ Debug step error:", response.error);
         const msg = (response.error && String(response.error).trim()) || "";
         if (msg) {
           setOutput((prev) => prev + `\n❌ Debug error: ${msg}\n`);
@@ -380,7 +347,6 @@ export function CodeEditorLight({
       }
 
       const newCurrentLine = response.current_line;
-      console.log("📍 Moving to line:", newCurrentLine);
       setCurrentLine(newCurrentLine);
 
       let debugMessage = "";
@@ -438,10 +404,7 @@ export function CodeEditorLight({
       if (debugMessage) {
         setOutput((prev) => prev + debugMessage);
       }
-
-      console.log("✅ Step completed successfully");
     } catch (error: any) {
-      console.error("❌ Step failed:", error);
       setOutput((prev) => prev + `\n❌ Failed to step: ${error.message}\n`);
     } finally {
       setIsStepInProgress(false);
@@ -451,7 +414,6 @@ export function CodeEditorLight({
     if (!debugSessionId) return;
 
     try {
-      console.log("🔄 Providing debug input:", inputValue);
       setIsStepInProgress(true);
       setOutput((prev) => prev + `${inputValue}\n`);
 
@@ -459,10 +421,8 @@ export function CodeEditorLight({
         debugSessionId,
         inputValue
       );
-      console.log("🔥 Debug input response:", response);
 
       if (isDebugError(response)) {
-        console.error("❌ Debug input error:", response.error);
         const msg = (response.error && String(response.error).trim()) || "";
         if (msg) {
           setOutput((prev) => prev + `\n❌ Debug error: ${msg}\n`);
@@ -472,7 +432,6 @@ export function CodeEditorLight({
       }
 
       const newCurrentLine = response.current_line;
-      console.log("📍 Moving to line:", newCurrentLine);
       setCurrentLine(newCurrentLine);
 
       let debugMessage = "";
@@ -532,10 +491,7 @@ export function CodeEditorLight({
       if (debugMessage) {
         setOutput((prev) => prev + debugMessage);
       }
-
-      console.log("✅ Debug input provided successfully");
     } catch (error: any) {
-      console.error("❌ Failed to provide debug input:", error);
       setOutput(
         (prev) => prev + `\n❌ Failed to provide input: ${error.message}\n`
       );
@@ -744,11 +700,6 @@ export function CodeEditorLight({
             setHasUnsavedChanges(false);
             lastSavedCodeRef.current = code;
           } else {
-            console.log(
-              `❌ Failed to rename file to: ${newFileName}\n🔧 Backend update failed: ${
-                result?.error || result?.message || "Unknown error"
-              }\n🔧 Please try again!\n`
-            );
           }
         } catch (error) {
           console.log(
@@ -1024,9 +975,6 @@ export function CodeEditorLight({
       onSave(code, newFileName);
     }
     setHasUnsavedChanges(false);
-    console.log(
-      `💾 File saved successfully: ${newFileName}\n✨ Your code is safe and sound!\n`
-    );
   };
 
   const handleSaveNewFile = async () => {

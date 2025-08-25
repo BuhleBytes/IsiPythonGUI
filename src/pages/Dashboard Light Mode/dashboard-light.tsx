@@ -16,7 +16,6 @@ import {
   BarChart3,
   Clock,
   FileText,
-  Flame,
   GraduationCap,
   Languages,
   Loader2,
@@ -28,6 +27,7 @@ import {
   Trash2,
   TrendingUp,
   Trophy,
+  User,
   Zap,
 } from "lucide-react";
 import { useState } from "react";
@@ -232,30 +232,39 @@ export function DashboardLight({
                 <Menu className="w-5 h-5" />
               </Button>
             )}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
-              <Input
-                placeholder="Search files..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 w-80 bg-white/70 border-gray-300/50 focus:border-cyan-400 focus:ring-cyan-400/30 focus:ring-2 backdrop-blur-sm shadow-sm"
-              />
-            </div>
           </div>
           <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-gray-600 hover:text-green-600 hover:bg-green-50 transition-all duration-200"
-            >
-              <Languages className="w-5 h-5" />
-            </Button>
+            <div className="relative group">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-gray-600 hover:text-cyan-600 hover:bg-cyan-50 transition-all duration-200 relative"
+              >
+                <Languages className="w-5 h-5" />
+              </Button>
+
+              {/* Tooltip - appears below the button */}
+              <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-3 py-1 bg-white text-gray-800 text-sm rounded-md shadow-lg border opacity-0 invisible group-hover:opacity-100 group-hover:visible hover:opacity-100 hover:visible transition-all duration-200 whitespace-nowrap z-50 pointer-events-auto">
+                Translate
+                {/* Arrow pointing up */}
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-b-white"></div>
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-b-gray-200 -mb-px"></div>
+              </div>
+            </div>
+
             <Button
               variant="ghost"
               size="icon"
               className="text-gray-600 hover:text-purple-600 hover:bg-purple-50 transition-all duration-200"
             >
               <Settings className="w-5 h-5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-200"
+            >
+              <User className="w-5 h-5" />
             </Button>
           </div>
         </div>
@@ -280,7 +289,7 @@ export function DashboardLight({
             <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-blue-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
               <CardTitle className="text-sm font-medium text-gray-700">
-                Challenges Completed
+                {t("Challenges Completed")}
               </CardTitle>
               <div className="p-2 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-lg shadow-md">
                 <Trophy className="w-5 h-5 text-white" />
@@ -304,9 +313,9 @@ export function DashboardLight({
                 <div className="flex justify-between items-center">
                   <p className="text-sm text-gray-600 flex items-center gap-1">
                     <TrendingUp className="w-3 h-3 text-cyan-500" />+
-                    {stats.challenges.this_week} this week
+                    {stats.challenges.this_week} {t("This Week")}
                   </p>
-                  <Badge className="bg-cyan-100 text-cyan-700 border-cyan-300">
+                  <Badge className="bg-cyan-100 text-cyan-700 border-cyan-300 hover:bg-cyan-200 hover:text-cyan-800 hover:border-cyan-400 transition-colors duration-200 cursor-pointer">
                     {Math.round(stats.challenges.progress)}%
                   </Badge>
                 </div>
@@ -318,7 +327,7 @@ export function DashboardLight({
             <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-pink-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
               <CardTitle className="text-sm font-medium text-gray-700">
-                Quizzes Attempted
+                {t("Quizzes Attempted")}
               </CardTitle>
               <div className="p-2 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg shadow-md">
                 <GraduationCap className="w-5 h-5 text-white" />
@@ -345,10 +354,11 @@ export function DashboardLight({
                 </div>
                 <div className="flex justify-between items-center">
                   <p className="text-sm text-gray-600 flex items-center gap-1">
-                    <Flame className="w-3 h-3 text-orange-500" />
-                    Average: {Math.round(stats.quizzes.progress)}%
+                    <TrendingUp className="w-3 h-3 text-cyan-500" />+
+                    {stats.quizzes.this_week} {t("This Week")}
                   </p>
-                  <Badge className="bg-purple-100 text-purple-700 border-purple-300">
+
+                  <Badge className="bg-purple-100 text-purple-700 border-purple-300 hover:bg-purple-200 hover:text-purple-800 hover:border-purple-400 transition-colors duration-200 cursor-pointer">
                     {Math.round(
                       (stats.quizzes.attempted / stats.quizzes.total) * 100
                     )}
@@ -363,7 +373,7 @@ export function DashboardLight({
             <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-emerald-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
               <CardTitle className="text-sm font-medium text-gray-700">
-                Overall Progress
+                {t("Overall Progress")}
               </CardTitle>
               <div className="p-2 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg shadow-md">
                 <TrendingUp className="w-5 h-5 text-white" />
@@ -387,9 +397,9 @@ export function DashboardLight({
                 <div className="flex justify-between items-center">
                   <p className="text-sm text-gray-600 flex items-center gap-1">
                     <Sparkles className="w-3 h-3 text-green-500" />
-                    {stats.overall.message}
+                    {t(stats.overall.message)}
                   </p>
-                  <Badge className="bg-green-100 text-green-700 border-green-300">
+                  <Badge className="bg-green-100 text-green-700 border-green-300 hover:bg-green-200 hover:text-green-800 hover:border-green-400 transition-colors duration-200 cursor-pointer">
                     {Math.round(stats.overall.progress)}%
                   </Badge>
                 </div>
@@ -748,14 +758,14 @@ export function DashboardLight({
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="w-6 h-6 animate-spin text-cyan-600" />
                     <span className="ml-3 text-gray-600">
-                      Loading progress...
+                      {t("Loading progress...")}
                     </span>
                   </div>
                 ) : learningPathError ? (
                   <div className="text-center py-8">
                     <AlertCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-600 mb-4">
-                      Unable to load progress data
+                      {t("Unable to load progress data")}
                     </p>
                     <Button
                       onClick={refreshLearningPath}
@@ -763,7 +773,7 @@ export function DashboardLight({
                       size="sm"
                       className="text-cyan-600 border-cyan-200 hover:bg-cyan-50"
                     >
-                      Try Again
+                      {t("Try Again")}
                     </Button>
                   </div>
                 ) : learningPath.length === 0 ? (
@@ -772,10 +782,12 @@ export function DashboardLight({
                       <Trophy className="w-8 h-8 text-gray-500" />
                     </div>
                     <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      No learning activities yet
+                      {t("No learning activities yet")}
                     </h3>
                     <p className="text-gray-600 mb-4">
-                      Start with a challenge or quiz to begin your journey
+                      {t(
+                        "Start with a challenge or quiz to begin your journey"
+                      )}
                     </p>
                     <div className="flex gap-2 justify-center">
                       <Button
@@ -786,7 +798,7 @@ export function DashboardLight({
                         className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white"
                       >
                         <Trophy className="w-4 h-4 mr-2" />
-                        Start Challenge
+                        {t("Start Challenge")}
                       </Button>
                       <Button
                         onClick={() => onViewChange && onViewChange("quizzes")}
@@ -795,7 +807,7 @@ export function DashboardLight({
                         className="border-cyan-200 text-cyan-600 hover:bg-cyan-50"
                       >
                         <GraduationCap className="w-4 h-4 mr-2" />
-                        Take Quiz
+                        {t("Take Quiz")}
                       </Button>
                     </div>
                   </div>

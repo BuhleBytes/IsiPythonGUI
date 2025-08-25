@@ -2,22 +2,23 @@
 
 import type React from "react";
 
-import { useState, useRef } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import {
-  Upload,
-  FileText,
-  X,
-  CheckCircle,
   AlertCircle,
+  ArrowRight,
+  CheckCircle,
   Code,
   File,
-  ArrowRight,
+  FileText,
   Folder,
+  Upload,
+  X,
 } from "lucide-react";
+import { useRef, useState } from "react";
+import { translatePythonToIsiPython } from "./../languages/IsiPythonTranslator";
 
 interface UploadedFile {
   name: string;
@@ -39,7 +40,7 @@ export function FileImport({ onFileImported, onClose }: FileImportProps) {
   const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const supportedExtensions = [".isi"];
+  const supportedExtensions = [".isi", ".py"];
   const maxFileSize = 5 * 1024 * 1024; // 5MB
 
   const formatFileSize = (bytes: number) => {
@@ -56,15 +57,17 @@ export function FileImport({ onFileImported, onClose }: FileImportProps) {
     const extension = fileName.toLowerCase().split(".").pop();
     switch (extension) {
       case "isi":
-        return <Code className="w-5 h-5 text-cyan-400" />;
+        return <Code className="w-5 h-5 text-cyan-600" />;
+      case "py":
+        return <Code className="w-5 h-5 text-cyan-600" />;
       case "txt":
       case "md":
-        return <FileText className="w-5 h-5 text-green-400" />;
+        return <FileText className="w-5 h-5 text-green-600" />;
       case "json":
       case "xml":
-        return <File className="w-5 h-5 text-yellow-400" />;
+        return <File className="w-5 h-5 text-yellow-600" />;
       default:
-        return <File className="w-5 h-5 text-slate-400" />;
+        return <File className="w-5 h-5 text-slate-600" />;
     }
   };
 
@@ -90,28 +93,36 @@ export function FileImport({ onFileImported, onClose }: FileImportProps) {
     setUploadProgress(0);
 
     const validFiles: UploadedFile[] = [];
-    const totalFiles = files.length;
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      const error = validateFile(file);
+    // Only process the first file for single file import
+    const file = files[0];
+    const error = validateFile(file);
 
-      if (!error) {
-        try {
-          const content = await readFileContent(file);
-          validFiles.push({
-            name: file.name,
-            size: file.size,
-            type: file.type || "text/plain",
-            content,
-            lastModified: new Date(file.lastModified),
-          });
-        } catch (err) {
-          console.error(`Error reading file ${file.name}:`, err);
+    if (!error) {
+      try {
+        setUploadProgress(50);
+        const content = await readFileContent(file);
+
+        // Check if it's a Python file and translate to IsiPython
+        const extension = "." + file.name.toLowerCase().split(".").pop();
+        let processedContent = content;
+
+        if (extension === ".py") {
+          processedContent = translatePythonToIsiPython(content);
         }
-      }
 
-      setUploadProgress(((i + 1) / totalFiles) * 100);
+        validFiles.push({
+          name: file.name,
+          size: file.size,
+          type: file.type || "text/plain",
+          content: processedContent,
+          lastModified: new Date(file.lastModified),
+        });
+
+        setUploadProgress(100);
+      } catch (err) {
+        console.error(`Error reading file ${file.name}:`, err);
+      }
     }
 
     setTimeout(() => {
@@ -165,19 +176,19 @@ export function FileImport({ onFileImported, onClose }: FileImportProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-      <Card className="bg-slate-900/95 border-slate-800/50 w-full max-w-2xl max-h-[90vh] overflow-hidden">
-        <CardHeader className="border-b border-slate-800/50">
+    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50">
+      <Card className="bg-white border-gray-200 w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-xl">
+        <CardHeader className="border-b border-gray-200">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-lg flex items-center justify-center">
                 <Upload className="w-5 h-5 text-white" />
               </div>
               <div>
-                <CardTitle className="text-xl font-bold text-white">
+                <CardTitle className="text-xl font-bold text-gray-900">
                   Import Files
                 </CardTitle>
-                <p className="text-sm text-slate-400">
+                <p className="text-sm text-gray-600">
                   Upload files to open in the code editor
                 </p>
               </div>
@@ -186,7 +197,7 @@ export function FileImport({ onFileImported, onClose }: FileImportProps) {
               variant="ghost"
               size="icon"
               onClick={onClose}
-              className="text-slate-400 hover:text-cyan-400 hover:bg-slate-800/50"
+              className="text-gray-500 hover:text-cyan-600 hover:bg-gray-100"
             >
               <X className="w-4 h-4" />
             </Button>
@@ -198,8 +209,8 @@ export function FileImport({ onFileImported, onClose }: FileImportProps) {
           <div
             className={`border-2 border-dashed rounded-lg p-8 text-center transition-all ${
               dragActive
-                ? "border-cyan-500 bg-cyan-500/10"
-                : "border-slate-700 hover:border-slate-600 hover:bg-slate-800/30"
+                ? "border-cyan-500 bg-cyan-50"
+                : "border-gray-300 hover:border-gray-400 hover:bg-gray-50"
             }`}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
@@ -207,20 +218,20 @@ export function FileImport({ onFileImported, onClose }: FileImportProps) {
             onDrop={handleDrop}
           >
             <div className="space-y-4">
-              <div className="w-16 h-16 bg-slate-800/50 rounded-full flex items-center justify-center mx-auto">
-                <Upload className="w-8 h-8 text-slate-400" />
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto">
+                <Upload className="w-8 h-8 text-gray-500" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-white mb-2">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
                   {dragActive ? "Drop files here" : "Drag & drop files here"}
                 </h3>
-                <p className="text-slate-400 mb-4">or click to browse files</p>
+                <p className="text-gray-600 mb-4">or click to browse a file</p>
                 <Button
                   onClick={() => fileInputRef.current?.click()}
                   className="bg-cyan-600 hover:bg-cyan-700 text-white"
                 >
                   <Folder className="w-4 h-4 mr-2" />
-                  Browse Files
+                  Browse File
                 </Button>
               </div>
             </div>
@@ -229,15 +240,14 @@ export function FileImport({ onFileImported, onClose }: FileImportProps) {
           <input
             ref={fileInputRef}
             type="file"
-            multiple
             accept={supportedExtensions.join(",")}
             onChange={handleFileSelect}
             className="hidden"
           />
 
           {/* Supported Formats */}
-          <div className="bg-slate-800/30 rounded-lg p-4">
-            <h4 className="text-sm font-medium text-white mb-2">
+          <div className="bg-gray-50 rounded-lg p-4">
+            <h4 className="text-sm font-medium text-gray-900 mb-2">
               Supported Formats
             </h4>
             <div className="flex flex-wrap gap-2">
@@ -245,13 +255,13 @@ export function FileImport({ onFileImported, onClose }: FileImportProps) {
                 <Badge
                   key={ext}
                   variant="secondary"
-                  className="bg-slate-700 text-slate-300 text-xs"
+                  className="bg-gray-200 text-gray-700 text-xs"
                 >
                   {ext}
                 </Badge>
               ))}
             </div>
-            <p className="text-xs text-slate-400 mt-2">
+            <p className="text-xs text-gray-500 mt-2">
               Maximum file size: {formatFileSize(maxFileSize)}
             </p>
           </div>
@@ -260,16 +270,16 @@ export function FileImport({ onFileImported, onClose }: FileImportProps) {
           {uploading && (
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-300">
+                <span className="text-sm text-gray-700">
                   Uploading files...
                 </span>
-                <span className="text-sm text-cyan-400">
+                <span className="text-sm text-cyan-600">
                   {Math.round(uploadProgress)}%
                 </span>
               </div>
-              <Progress value={uploadProgress} className="h-2 bg-slate-800">
+              <Progress value={uploadProgress} className="h-2 bg-gray-200">
                 <div
-                  className="h-full bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full transition-all"
+                  className="h-full bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full transition-all"
                   style={{ width: `${uploadProgress}%` }}
                 />
               </Progress>
@@ -279,25 +289,30 @@ export function FileImport({ onFileImported, onClose }: FileImportProps) {
           {/* Uploaded Files */}
           {uploadedFiles.length > 0 && (
             <div className="space-y-3">
-              <h4 className="text-lg font-semibold text-white flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-green-400" />
-                Uploaded Files ({uploadedFiles.length})
+              <h4 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                <CheckCircle className="w-5 h-5 text-green-500" />
+                Uploaded File
               </h4>
-              <div className="space-y-2 max-h-64 overflow-y-auto">
+              <div className="space-y-2">
                 {uploadedFiles.map((file, index) => (
                   <Card
                     key={index}
-                    className="bg-slate-800/50 border-slate-700/50 hover:border-cyan-500/50 transition-colors"
+                    className="bg-white border-gray-200 hover:border-cyan-500 transition-colors shadow-sm"
                   >
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3 flex-1 min-w-0">
                           {getFileIcon(file.name)}
                           <div className="flex-1 min-w-0">
-                            <h5 className="font-medium text-white truncate">
+                            <h5 className="font-medium text-gray-900 truncate">
                               {file.name}
+                              {file.name.endsWith(".py") && (
+                                <span className="ml-2 text-xs text-cyan-600 bg-cyan-50 px-2 py-1 rounded">
+                                  Translated to IsiPython
+                                </span>
+                              )}
                             </h5>
-                            <div className="flex items-center gap-3 text-xs text-slate-400">
+                            <div className="flex items-center gap-3 text-xs text-gray-500">
                               <span>{formatFileSize(file.size)}</span>
                               <span>•</span>
                               <span>
@@ -311,7 +326,7 @@ export function FileImport({ onFileImported, onClose }: FileImportProps) {
                             variant="ghost"
                             size="icon"
                             onClick={() => handleRemoveFile(index)}
-                            className="text-slate-400 hover:text-red-400 hover:bg-slate-700/50 h-8 w-8"
+                            className="text-gray-500 hover:text-red-500 hover:bg-gray-100 h-8 w-8"
                           >
                             <X className="w-3 h-3" />
                           </Button>
@@ -320,7 +335,7 @@ export function FileImport({ onFileImported, onClose }: FileImportProps) {
                             size="sm"
                             className="bg-cyan-600 hover:bg-cyan-700 text-white"
                           >
-                            Open in Editor
+                            Open File
                             <ArrowRight className="w-3 h-3 ml-1" />
                           </Button>
                         </div>
@@ -335,40 +350,31 @@ export function FileImport({ onFileImported, onClose }: FileImportProps) {
           {/* No Files Message */}
           {!uploading && uploadedFiles.length === 0 && (
             <div className="text-center py-8">
-              <div className="w-12 h-12 bg-slate-800/50 rounded-full flex items-center justify-center mx-auto mb-3">
-                <FileText className="w-6 h-6 text-slate-600" />
+              <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <FileText className="w-6 h-6 text-gray-400" />
               </div>
-              <p className="text-slate-400">No files uploaded yet</p>
+              <p className="text-gray-500">No file uploaded yet</p>
             </div>
           )}
         </CardContent>
 
         {/* Footer */}
-        <div className="border-t border-slate-800/50 p-4 bg-slate-900/50">
+        <div className="border-t border-gray-200 p-4 bg-gray-50">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xs text-slate-400">
+            <div className="flex items-center gap-2 text-xs text-gray-500">
               <AlertCircle className="w-3 h-3" />
-              <span>Files are processed locally and not stored on servers</span>
+              <span>
+                Python files are automatically translated to IsiPython
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
                 onClick={onClose}
-                className="text-slate-400 hover:text-white"
+                className="text-gray-600 hover:text-gray-900"
               >
                 Cancel
               </Button>
-              {uploadedFiles.length > 0 && (
-                <Button
-                  onClick={() =>
-                    uploadedFiles.length > 0 && handleOpenFile(uploadedFiles[0])
-                  }
-                  className="bg-cyan-600 hover:bg-cyan-700 text-white"
-                >
-                  Open First File
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              )}
             </div>
           </div>
         </div>
