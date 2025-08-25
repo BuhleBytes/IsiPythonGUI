@@ -82,7 +82,7 @@ const isWaitingForInput = (response: any) =>
   response?.waiting_for_input === true;
 const isCompleted = (response: any) => response?.completed === true;
 
-// 🎯 TRANSLATION IS HANDLED BY THE IMPORTED isiPythonTranslator.ts FILE
+// ðŸŽ¯ TRANSLATION IS HANDLED BY THE IMPORTED isiPythonTranslator.ts FILE
 
 export function CodeEditorLight({
   initialCode,
@@ -99,6 +99,10 @@ export function CodeEditorLight({
   };
   const { saveNewFile } = useUserFiles();
   const { t } = useTranslation();
+
+  // Add ref for Monaco editor instance
+  const editorRef = useRef(null);
+  const currentLineDecorationRef = useRef([]);
   // #endregion
 
   // #region Basic Editor States
@@ -150,6 +154,80 @@ export function CodeEditorLight({
   const translationTimerRef = useRef<NodeJS.Timeout | null>(null);
   // #endregion
 
+  // #region Monaco Editor Handler
+  const handleEditorDidMount = (editor, monaco) => {
+    editorRef.current = editor;
+  };
+
+  // #region Update current line decoration when debugging
+  useEffect(() => {
+    if (editorRef.current && currentLine && isDebugging) {
+      const editor = editorRef.current;
+
+      // Clear previous decorations
+      currentLineDecorationRef.current = editor.deltaDecorations(
+        currentLineDecorationRef.current,
+        []
+      );
+
+      // Add new decoration for current line
+      currentLineDecorationRef.current = editor.deltaDecorations(
+        [],
+        [
+          {
+            range: new window.monaco.Range(currentLine, 1, currentLine, 1),
+            options: {
+              isWholeLine: true,
+              className: "current-debug-line",
+              glyphMarginClassName: "current-debug-line-glyph",
+              linesDecorationsClassName: "current-debug-line-decoration",
+            },
+          },
+        ]
+      );
+    } else if (editorRef.current && !isDebugging) {
+      // Clear decorations when not debugging
+      currentLineDecorationRef.current = editorRef.current.deltaDecorations(
+        currentLineDecorationRef.current,
+        []
+      );
+    }
+  }, [currentLine, isDebugging]);
+
+  // Add CSS styles for the debug line highlighting
+  useEffect(() => {
+    // Create or update the style element
+    let styleElement = document.getElementById("debug-line-styles");
+    if (!styleElement) {
+      styleElement = document.createElement("style");
+      styleElement.id = "debug-line-styles";
+      document.head.appendChild(styleElement);
+    }
+
+    styleElement.textContent = `
+      .current-debug-line {
+        background-color: rgba(255, 235, 59, 0.3) !important;
+        border: 1px solid rgba(255, 235, 59, 0.6) !important;
+      }
+      .current-debug-line-glyph {
+        background-color: rgba(255, 235, 59, 0.5) !important;
+      }
+      .current-debug-line-decoration {
+        background-color: rgba(255, 235, 59, 0.7) !important;
+        width: 4px !important;
+      }
+    `;
+
+    return () => {
+      // Cleanup on unmount
+      const element = document.getElementById("debug-line-styles");
+      if (element) {
+        element.remove();
+      }
+    };
+  }, []);
+  // #endregion
+
   // #region Live Translation Logic
   useEffect(() => {
     if (!liveTranslationEnabled) {
@@ -164,7 +242,7 @@ export function CodeEditorLight({
 
     // Debounce translation to avoid excessive updates
     translationTimerRef.current = setTimeout(() => {
-      // 🔥 USING THE IMPORTED TRANSLATION FUNCTION FROM isiPythonTranslator.ts
+      // ðŸ"¥ USING THE IMPORTED TRANSLATION FUNCTION FROM isiPythonTranslator.ts
       const translated = translateIsiPythonToPython(code);
       setTranslatedCode(translated);
     }, 200); // 200ms delay for more responsive feel
@@ -190,7 +268,7 @@ export function CodeEditorLight({
     setLiveTranslationEnabled(newState);
 
     if (newState) {
-      // 🔥 USING THE IMPORTED TRANSLATION FUNCTION FROM isiPythonTranslator.ts
+      // ðŸ"¥ USING THE IMPORTED TRANSLATION FUNCTION FROM isiPythonTranslator.ts
       const translated = translateIsiPythonToPython(code);
       setTranslatedCode(translated);
     } else {
@@ -280,9 +358,9 @@ export function CodeEditorLight({
       if (isDebugError(response)) {
         const msg = (response.error && String(response.error).trim()) || "";
         if (msg) {
-          setOutput(`❌ Debug error: ${msg}`);
+          setOutput(`âŒ Debug error: ${msg}`);
         } else {
-          // no message → don't print a “null” error line
+          // no message â†' don't print a â€œnullâ€ error line
           setOutput("");
         }
         setIsDebugging(false);
@@ -507,6 +585,14 @@ export function CodeEditorLight({
     setDebugVariables([]);
     debugAllOutputRef.current = [];
     setDebugWaitingForInput(false);
+
+    // Clear debug line decorations
+    if (editorRef.current) {
+      currentLineDecorationRef.current = editorRef.current.deltaDecorations(
+        currentLineDecorationRef.current,
+        []
+      );
+    }
   };
   // #endregion
 
@@ -700,10 +786,11 @@ export function CodeEditorLight({
             setHasUnsavedChanges(false);
             lastSavedCodeRef.current = code;
           } else {
+            console.log("");
           }
         } catch (error) {
           console.log(
-            `❌ Network error while renaming file\n🔧 Please check your connection and try again!\n`
+            `n❌ Network error while renaming file\n🔧 Please check your connection and try again!\n`
           );
         }
       } else {
@@ -917,7 +1004,7 @@ export function CodeEditorLight({
       setOutput(
         (prev) =>
           prev +
-          `\n❌ Network/Connection Error:\n${error.message}\n\n🔧 Please check your internet connection and try again!`
+          `\nâŒ Network/Connection Error:\n${error.message}\n\nðŸ"§ Please check your internet connection and try again!`
       );
     } finally {
       setIsRunning(false);
@@ -1138,9 +1225,6 @@ export function CodeEditorLight({
                 <SelectItem value="3.11">IsiPython 1.0</SelectItem>
               </SelectContent>
             </Select>
-            <Badge className="bg-gradient-to-r from-purple-500 to-pink-600 text-white border-0 shadow-md">
-              IsiPython IDE
-            </Badge>
           </div>
 
           <div className="flex items-center gap-2">
@@ -1344,6 +1428,7 @@ export function CodeEditorLight({
                   onChange={(value) => handleCodeChange(value || "")}
                   theme="isipython-theme"
                   beforeMount={handleEditorWillMount}
+                  onMount={handleEditorDidMount}
                   options={{
                     minimap: { enabled: false },
                     fontSize: 14,
@@ -1359,17 +1444,6 @@ export function CodeEditorLight({
                     padding: { top: 0, bottom: 0 },
                   }}
                 />
-
-                {/* Current line highlight for debugging */}
-                {currentLine && (
-                  <div
-                    className="absolute left-0 right-0 bg-yellow-200 opacity-50 pointer-events-none z-10"
-                    style={{
-                      top: `${(currentLine - 1) * 22}px`,
-                      height: "22px",
-                    }}
-                  />
-                )}
               </div>
             </div>
 
