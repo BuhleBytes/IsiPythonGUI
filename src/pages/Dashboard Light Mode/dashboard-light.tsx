@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
-  Languages,
   Select,
   SelectContent,
   SelectItem,
@@ -19,6 +18,7 @@ import {
   Clock,
   FileText,
   GraduationCap,
+  Languages,
   Loader2,
   Menu,
   Play,
@@ -256,6 +256,7 @@ export function DashboardLight({
               </span>
             </Button>
           </div>
+
           <div className="flex items-center gap-4">
             {!sidebarOpen && (
               <Button
