@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
+  Languages,
   Select,
   SelectContent,
   SelectItem,
@@ -237,6 +238,23 @@ export function DashboardLight({
                 <Menu className="w-5 h-5" />
               </Button>
             )}
+          </div>
+          <div className="flex items-center gap-4">
+            {/* Language Toggle Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleLanguage}
+              className="flex items-center gap-2 text-gray-600 hover:text-cyan-600 hover:bg-cyan-50 transition-all duration-300 hover:scale-105 border border-gray-200/50 bg-white/50 backdrop-blur-sm shadow-sm"
+              title={`Switch to ${
+                currentLanguage === "English" ? "IsiXhosa" : "English"
+              }`}
+            >
+              <Languages className="w-4 h-4" />
+              <span className="hidden sm:inline-block font-medium">
+                {currentLanguage === "English" ? "EN" : "XH"}
+              </span>
+            </Button>
           </div>
           <div className="flex items-center gap-4">
             {!sidebarOpen && (
