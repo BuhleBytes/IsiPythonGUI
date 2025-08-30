@@ -239,7 +239,7 @@ export function DashboardLight({
               </Button>
             )}
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center justify-start gap-4 gap-4">
             {/* Language Toggle Button */}
             <Button
               variant="ghost"
