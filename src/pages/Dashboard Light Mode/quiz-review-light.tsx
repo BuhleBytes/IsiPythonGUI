@@ -23,6 +23,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuizDetails } from "../../useQuizDetails";
 import { useUser } from "../../useUser";
@@ -31,7 +32,7 @@ export function QuizReviewLight() {
   const { id } = useParams<{ id: string }>();
   console.log("👁️ REVIEW COMPONENT DEBUG - Quiz ID from route params:", id);
   const navigate = useNavigate();
-
+  const { t } = useTranslation();
   const { userId, isLoggedIn, loading: userLoading } = useUser();
 
   const {
@@ -141,17 +142,17 @@ export function QuizReviewLight() {
             <Loader2 className="w-12 h-12 animate-spin text-cyan-600 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
               {userLoading
-                ? "Loading User Data"
+                ? t("Loading User Data")
                 : fetchingResults
-                ? "Loading Quiz Results"
-                : "Loading Quiz"}
+                ? t("Loading Quiz Results")
+                : t("Loading Quiz")}
             </h3>
             <p className="text-gray-600">
               {userLoading
-                ? "Authenticating user..."
+                ? t("Authenticating user...")
                 : fetchingResults
-                ? "Fetching your quiz results..."
-                : "Loading quiz details..."}
+                ? t("Fetching your quiz results...")
+                : t("Loading quiz details...")}
             </p>
           </CardContent>
         </Card>
@@ -168,7 +169,9 @@ export function QuizReviewLight() {
               <AlertCircle className="w-8 h-8 text-red-600" />
             </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              {!isLoggedIn ? "Login Required" : "Failed to Load Quiz Results"}
+              {!isLoggedIn
+                ? t("Login Required")
+                : t("Failed to Load Quiz Results")}
             </h3>
             <p className="text-gray-600 mb-4">
               {!isLoggedIn
@@ -195,7 +198,7 @@ export function QuizReviewLight() {
                   ) : (
                     <RefreshCw className="w-4 h-4 mr-2" />
                   )}
-                  {loading ? "Retrying..." : "Try Again"}
+                  {loading ? t("Retrying...") : t("Try Again")}
                 </Button>
               )}
               <Button
@@ -206,7 +209,7 @@ export function QuizReviewLight() {
                 className="flex-1"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Quizzes
+                {t("Back to Quizzes")}
               </Button>
             </div>
           </CardContent>
@@ -222,9 +225,9 @@ export function QuizReviewLight() {
           <CardContent className="p-6 text-center">
             <Loader2 className="w-12 h-12 animate-spin text-cyan-600 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Loading Quiz Results
+              {t("Loading Quiz Results")}
             </h3>
-            <p className="text-gray-600">Please wait...</p>
+            <p className="text-gray-600">t("Please wait...")</p>
           </CardContent>
         </Card>
       </div>
@@ -267,11 +270,11 @@ export function QuizReviewLight() {
             </Button>
             <div className="min-w-0 flex-1">
               <h1 className="text-base sm:text-lg font-bold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent truncate">
-                {quiz.title} - Review
+                {quiz.title} - {t("Review")}
               </h1>
               <p className="text-xs text-gray-600">
-                Question {currentQuestionIndex + 1} of {totalQuestions} • Review
-                Mode
+                {t("Question")} {currentQuestionIndex + 1} of {totalQuestions} •{" "}
+                {t("Review Mode")}
               </p>
             </div>
           </div>
@@ -292,7 +295,7 @@ export function QuizReviewLight() {
 
             <div className="hidden sm:flex items-center gap-2 text-purple-600">
               <Eye className="w-4 h-4" />
-              <span className="text-sm font-mono font-bold">Review</span>
+              <span className="text-sm font-mono font-bold">{t("Review")}</span>
             </div>
             <Badge className="bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 border-green-200 text-xs">
               {scoreData.score}/{scoreData.total} ({scoreData.percentage}%)
@@ -338,10 +341,10 @@ export function QuizReviewLight() {
                           : "bg-red-100 text-red-700 border-red-200"
                       }
                     >
-                      {answerStatus?.isCorrect ? "Correct" : "Incorrect"}
+                      {answerStatus?.isCorrect ? t("Correct") : t("Incorrect")}
                     </Badge>
                     <p className="text-xs text-gray-500 mt-1">
-                      Points: {answerStatus?.pointsEarned}/
+                      {t("Points")}: {answerStatus?.pointsEarned}/
                       {answerStatus?.totalPoints}
                     </p>
                   </div>
@@ -350,7 +353,7 @@ export function QuizReviewLight() {
                   <div className="text-lg font-bold text-gray-900">
                     {answerStatus?.pointsEarned}/{answerStatus?.totalPoints}
                   </div>
-                  <p className="text-xs text-gray-500">Points</p>
+                  <p className="text-xs text-gray-500">{t("Points")}</p>
                 </div>
               </div>
             </CardHeader>
@@ -404,7 +407,7 @@ export function QuizReviewLight() {
                               variant="outline"
                               className="bg-blue-50 text-blue-700 border-blue-200 text-xs"
                             >
-                              Your Answer
+                              {t("Your Answer")}
                             </Badge>
                           )}
                           {isCorrectAnswer && (
@@ -412,7 +415,7 @@ export function QuizReviewLight() {
                               variant="outline"
                               className="bg-green-50 text-green-700 border-green-200 text-xs"
                             >
-                              Correct
+                              {t("Correct")}
                             </Badge>
                           )}
                         </div>
@@ -427,7 +430,7 @@ export function QuizReviewLight() {
                   <div className="flex items-center gap-2 mb-2">
                     <Brain className="w-4 h-4 text-blue-600" />
                     <h4 className="font-medium text-blue-900 text-sm">
-                      Explanation:
+                      {t("Explanation")}:
                     </h4>
                   </div>
                   <p className="text-blue-800 text-xs leading-relaxed">
@@ -441,7 +444,9 @@ export function QuizReviewLight() {
                   <div>
                     <div className="flex items-center justify-center gap-1 mb-1">
                       <Target className="w-3 h-3 text-purple-600" />
-                      <span className="text-xs text-gray-600">Question</span>
+                      <span className="text-xs text-gray-600">
+                        {t("Question")}
+                      </span>
                     </div>
                     <p className="text-sm font-bold text-gray-900">
                       {currentQuestionIndex + 1}/{totalQuestions}
@@ -450,7 +455,9 @@ export function QuizReviewLight() {
                   <div>
                     <div className="flex items-center justify-center gap-1 mb-1">
                       <Star className="w-3 h-3 text-orange-600" />
-                      <span className="text-xs text-gray-600">Points</span>
+                      <span className="text-xs text-gray-600">
+                        {t("Points")}
+                      </span>
                     </div>
                     <p className="text-sm font-bold text-gray-900">
                       {answerStatus?.pointsEarned}/{answerStatus?.totalPoints}
@@ -459,7 +466,9 @@ export function QuizReviewLight() {
                   <div>
                     <div className="flex items-center justify-center gap-1 mb-1">
                       <TrendingUp className="w-3 h-3 text-cyan-600" />
-                      <span className="text-xs text-gray-600">Status</span>
+                      <span className="text-xs text-gray-600">
+                        {t("Status")}
+                      </span>
                     </div>
                     <p
                       className={`text-sm font-bold ${
@@ -468,7 +477,7 @@ export function QuizReviewLight() {
                           : "text-red-600"
                       }`}
                     >
-                      {answerStatus?.isCorrect ? "Correct" : "Incorrect"}
+                      {answerStatus?.isCorrect ? t("Correct") : t("Incorrect")}
                     </p>
                   </div>
                 </div>
@@ -499,7 +508,7 @@ export function QuizReviewLight() {
           <div className="flex-1 overflow-y-auto space-y-3">
             <div>
               <h3 className="text-sm font-semibold text-gray-900 mb-2">
-                Question Navigation
+                {t("Question Navigation")}
               </h3>
               <div className="grid grid-cols-5 gap-1">
                 {quizResults.questions.map((question, index) => {
@@ -535,15 +544,15 @@ export function QuizReviewLight() {
             <div className="space-y-1">
               <div className="flex items-center gap-2 text-xs">
                 <div className="w-3 h-3 rounded border-purple-400 bg-gradient-to-br from-purple-100 to-indigo-100"></div>
-                <span className="text-gray-600">Current</span>
+                <span className="text-gray-600">{t("Current")}</span>
               </div>
               <div className="flex items-center gap-2 text-xs">
                 <div className="w-3 h-3 rounded border-green-400 bg-gradient-to-br from-green-100 to-emerald-100"></div>
-                <span className="text-gray-600">Correct</span>
+                <span className="text-gray-600">{t("Correct")}</span>
               </div>
               <div className="flex items-center gap-2 text-xs">
                 <div className="w-3 h-3 rounded border-red-400 bg-gradient-to-br from-red-100 to-pink-100"></div>
-                <span className="text-gray-600">Incorrect</span>
+                <span className="text-gray-600">{t("Incorrect")}</span>
               </div>
             </div>
 
@@ -551,16 +560,25 @@ export function QuizReviewLight() {
               <div className="flex items-center gap-2 mb-2">
                 <Flag className="w-3 h-3 text-blue-600" />
                 <span className="text-xs font-medium text-blue-700">
-                  Quiz Summary
+                  {t("Quiz Summary")}
                 </span>
               </div>
               <div className="space-y-1 text-xs text-gray-600">
-                <p>Total Questions: {totalQuestions}</p>
-                <p>Correct: {scoreData.score}</p>
-                <p>Incorrect: {scoreData.total - scoreData.score}</p>
-                <p>Score: {scoreData.percentage}%</p>
                 <p>
-                  Points: {scoreData.pointsEarned}/{scoreData.totalPoints}
+                  {t("Total Questions")}: {totalQuestions}
+                </p>
+                <p>
+                  {t("Correct")}: {scoreData.score}
+                </p>
+                <p>
+                  {t("Incorrect")}: {scoreData.total - scoreData.score}
+                </p>
+                <p>
+                  {t("Score")}: {scoreData.percentage}%
+                </p>
+                <p>
+                  {t("Points")}: {scoreData.pointsEarned}/
+                  {scoreData.totalPoints}
                 </p>
               </div>
             </div>
@@ -573,7 +591,7 @@ export function QuizReviewLight() {
                 onClick={() => setShowExplanations(!showExplanations)}
                 className="w-full bg-white/50 border-gray-300 text-gray-700 hover:bg-white/70 backdrop-blur-sm text-xs"
               >
-                {showExplanations ? "Hide" : "Show"} Explanations
+                {showExplanations ? t("Hide") : t("Show")} {t("Explanations")}
               </Button>
             </div>
 
@@ -581,13 +599,13 @@ export function QuizReviewLight() {
               <div className="flex items-center gap-2 mb-2">
                 <Target className="w-3 h-3 text-gray-600" />
                 <span className="text-xs font-medium text-gray-700">
-                  Shortcuts
+                  {t("Shortcuts")}
                 </span>
               </div>
               <div className="space-y-1 text-xs text-gray-600">
-                <p>← → Navigate</p>
-                <p>E Toggle explanations</p>
-                <p>Esc Back to home</p>
+                <p>← → {t("Navigate")}</p>
+                <p>E {t("Toggle explanations")}</p>
+                <p>Esc {t("Back to home")}</p>
               </div>
             </div>
           </div>
@@ -610,7 +628,7 @@ export function QuizReviewLight() {
             className="bg-white/50 border-gray-300 text-gray-700 hover:bg-white/70 backdrop-blur-sm disabled:opacity-50 px-3 py-1.5 text-xs"
           >
             <ChevronLeft className="w-3 h-3 mr-1" />
-            Previous
+            {t("Previous")}
           </Button>
 
           <div className="flex items-center gap-2">
@@ -626,7 +644,7 @@ export function QuizReviewLight() {
             disabled={currentQuestionIndex === totalQuestions - 1}
             className="bg-white/50 border-gray-300 text-gray-700 hover:bg-white/70 backdrop-blur-sm disabled:opacity-50 px-3 py-1.5 text-xs"
           >
-            Next
+            {t("Next")}
             <ChevronRight className="w-3 h-3 ml-1" />
           </Button>
         </div>

@@ -407,7 +407,8 @@ export function ChallengesLight() {
                       <div className="flex items-center gap-2 text-gray-600">
                         <Users className="w-4 h-4" />
                         <span>
-                          {challenge.passedStudents.toLocaleString()} passed
+                          {challenge.passedStudents.toLocaleString()}{" "}
+                          {t("passed")}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 text-gray-600">
@@ -418,7 +419,7 @@ export function ChallengesLight() {
 
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="text-gray-600">Pass Rate</span>
+                        <span className="text-gray-600">{t("Pass Rate")}</span>
                         <span className="font-medium text-gray-800">
                           {passRate}%
                         </span>

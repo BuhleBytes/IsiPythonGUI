@@ -141,7 +141,7 @@ export function QuizzesLight() {
               <AlertCircle className="w-8 h-8 text-red-600" />
             </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Failed to Load Quizzes
+              {t("Failed to Load Quizzes")}
             </h3>
             <p className="text-gray-600 mb-4">{error}</p>
             <Button
@@ -149,7 +149,7 @@ export function QuizzesLight() {
               className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white"
             >
               <RefreshCw className="w-4 h-4 mr-2" />
-              Try Again
+              {t("Try Again")}
             </Button>
           </CardContent>
         </Card>
@@ -325,7 +325,7 @@ export function QuizzesLight() {
             </SelectContent>
           </Select>
 
-          <Select value={sortBy} onValueChange={setSortBy}>
+          {/* <Select value={sortBy} onValueChange={setSortBy}>
             <SelectTrigger className="w-32 bg-white/20 backdrop-blur-xl border-white/30 text-gray-900 shadow-lg">
               <SelectValue placeholder="Sort by" />
             </SelectTrigger>
@@ -335,7 +335,7 @@ export function QuizzesLight() {
               <SelectItem value="totalMarks">{t("Total Marks")}</SelectItem>
               <SelectItem value="progress">{t("Progress")}</SelectItem>
             </SelectContent>
-          </Select>
+          </Select> */}
         </div>
       </div>
 
@@ -346,9 +346,9 @@ export function QuizzesLight() {
             <div className="text-center">
               <Loader2 className="w-12 h-12 animate-spin text-cyan-600 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                Loading Quizzes
+                {t("Loading Quizzes")}
               </h3>
-              <p className="text-gray-600">Fetching your quiz data...</p>
+              <p className="text-gray-600">{t("Fetching your quiz data...")}</p>
             </div>
           </div>
         ) : (
@@ -400,7 +400,9 @@ export function QuizzesLight() {
                       <div className="flex items-center gap-2">
                         <Badge className={getStatusColor(quiz.status)}>
                           {getStatusIcon(quiz.status)}
-                          <span className="ml-1 capitalize">{quiz.status}</span>
+                          <span className="ml-1 capitalize">
+                            {t(quiz.status)}
+                          </span>
                         </Badge>
                       </div>
                     </div>
@@ -505,7 +507,7 @@ export function QuizzesLight() {
                         </span>
                         <span className="text-gray-900 font-medium">
                           {quiz.usersPassed}/{quiz.usersAttempted} (
-                          {quiz.classProgress}%)
+                          {quiz.passRate}%)
                         </span>
                       </div>
                       <div className="w-full bg-white/30 rounded-full h-2 backdrop-blur-xl shadow-inner">

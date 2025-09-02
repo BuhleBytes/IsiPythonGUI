@@ -21,12 +21,14 @@ import {
   Timer,
 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQuizDetails } from "../../useQuizDetails";
 import { useUser } from "../../useUser";
 
 export function QuizTakerLight() {
   const { id } = useParams<{ id: string }>();
+  const { t } = useTranslation();
   console.log("🎯 COMPONENT DEBUG - Quiz ID from route params:", id);
   const navigate = useNavigate();
 
@@ -239,7 +241,7 @@ export function QuizTakerLight() {
     // Validate minimum requirements
     if (answeredCount === 0) {
       console.log("❌ COMPONENT DEBUG - No answers provided");
-      setError("Please answer at least one question before submitting");
+      setError(t("Please answer at least one question before submitting"));
       return;
     }
 
@@ -261,7 +263,7 @@ export function QuizTakerLight() {
         "❌ COMPONENT DEBUG - Quiz submission failed:",
         result.error
       );
-      setError(result.error || "Failed to submit quiz");
+      setError(result.error || t("Failed to submit quiz"));
     }
   };
 
@@ -308,7 +310,7 @@ export function QuizTakerLight() {
       console.log("✅ DEBUG - Quiz results loaded for review");
     } else {
       console.error("❌ DEBUG - Failed to load quiz results:", result.error);
-      setError(result.error || "Failed to load quiz results");
+      setError(result.error || t("Failed to load quiz results"));
     }
   };
 
@@ -407,12 +409,12 @@ export function QuizTakerLight() {
           <CardContent className="p-8 text-center">
             <Loader2 className="w-12 h-12 animate-spin text-cyan-600 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              {userLoading ? "Loading User Data" : "Loading Quiz"}
+              {userLoading ? t("Loading User Data") : t("Loading Quiz")}
             </h3>
             <p className="text-gray-600">
               {userLoading
-                ? "Authenticating user..."
-                : "Fetching quiz details..."}
+                ? t("Authenticating user...")
+                : t("Fetching quiz details...")}
             </p>
           </CardContent>
         </Card>
@@ -430,12 +432,12 @@ export function QuizTakerLight() {
               <AlertCircle className="w-8 h-8 text-red-600" />
             </div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              {!isLoggedIn ? "Login Required" : "Failed to Load Quiz"}
+              {!isLoggedIn ? t("Login Required") : t("Failed to Load Quiz")}
             </h3>
             <p className="text-gray-600 mb-4">
               {!isLoggedIn
-                ? "You must be logged in to take a quiz"
-                : displayError || "Quiz not found or failed to load"}
+                ? t("You must be logged in to take a quiz")
+                : displayError || t("Quiz not found or failed to load")}
             </p>
 
             <div className="flex gap-2">
@@ -444,7 +446,7 @@ export function QuizTakerLight() {
                   onClick={() => navigate("/login")}
                   className="flex-1 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white"
                 >
-                  Go to Login
+                  {t("Go to Login")}
                 </Button>
               ) : (
                 <Button
@@ -457,7 +459,7 @@ export function QuizTakerLight() {
                   ) : (
                     <RefreshCw className="w-4 h-4 mr-2" />
                   )}
-                  {loading ? "Retrying..." : "Try Again"}
+                  {loading ? t("Retrying...") : t("Try Again")}
                 </Button>
               )}
               <Button
@@ -468,7 +470,7 @@ export function QuizTakerLight() {
                 className="flex-1"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Quizzes
+                {t("Back to Quizzes")}
               </Button>
             </div>
           </CardContent>
@@ -484,9 +486,9 @@ export function QuizTakerLight() {
           <CardContent className="p-8 text-center">
             <Loader2 className="w-12 h-12 animate-spin text-cyan-600 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Loading Quiz
+              {t("Loading Quiz")}
             </h3>
-            <p className="text-gray-600">Please wait...</p>
+            <p className="text-gray-600">{t("Please wait...")}</p>
           </CardContent>
         </Card>
       </div>
@@ -522,21 +524,21 @@ export function QuizTakerLight() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-gradient-to-br from-cyan-50 to-blue-50 backdrop-blur-sm rounded-lg p-4 text-center border border-cyan-200/50">
                 <Timer className="w-6 h-6 text-cyan-600 mx-auto mb-2" />
-                <p className="text-sm text-gray-600">Duration</p>
+                <p className="text-sm text-gray-600">{t("Duration")}</p>
                 <p className="text-lg font-bold text-gray-900">
-                  {quiz.duration} minutes
+                  {quiz.duration} {t("minutes")}
                 </p>
               </div>
               <div className="bg-gradient-to-br from-purple-50 to-pink-50 backdrop-blur-sm rounded-lg p-4 text-center border border-purple-200/50">
                 <Target className="w-6 h-6 text-purple-600 mx-auto mb-2" />
-                <p className="text-sm text-gray-600">Questions</p>
+                <p className="text-sm text-gray-600">{t("Questions")}</p>
                 <p className="text-lg font-bold text-gray-900">
                   {totalQuestions}
                 </p>
               </div>
               <div className="bg-gradient-to-br from-green-50 to-emerald-50 backdrop-blur-sm rounded-lg p-4 text-center border border-green-200/50">
                 <CheckCircle className="w-6 h-6 text-green-600 mx-auto mb-2" />
-                <p className="text-sm text-gray-600">Total Marks</p>
+                <p className="text-sm text-gray-600">{t("Total Marks")}</p>
                 <p className="text-lg font-bold text-gray-900">
                   {quiz.totalMarks}
                 </p>
@@ -545,7 +547,7 @@ export function QuizTakerLight() {
 
             <div className="bg-gradient-to-br from-slate-50 to-gray-50 backdrop-blur-sm rounded-lg p-4 border border-gray-200/50">
               <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                Instructions
+                {t("Instructions")}
               </h3>
               <ul className="space-y-2 text-sm text-gray-700">
                 {quiz.instructions.map((instruction, index) => (
@@ -561,7 +563,7 @@ export function QuizTakerLight() {
               onClick={handleStartQuiz}
               className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white py-3 text-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
             >
-              Start Quiz
+              {t("Start Quiz")}
               <ChevronRight className="w-5 h-5 ml-2" />
             </Button>
           </CardContent>
@@ -597,9 +599,9 @@ export function QuizTakerLight() {
               <CheckCircle className="w-10 h-10 text-white" />
             </div>
             <CardTitle className="text-2xl font-bold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent">
-              Quiz Completed!
+              {t("Quiz Completed!")}
             </CardTitle>
-            <p className="text-gray-600">Here are your results</p>
+            <p className="text-gray-600">{t("Here are your results")}</p>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="text-center">
@@ -619,22 +621,24 @@ export function QuizTakerLight() {
                 }
               >
                 {scoreData.percentage >= 70
-                  ? "Excellent!"
+                  ? t("Excellent!")
                   : scoreData.percentage >= 50
-                  ? "Good Job!"
-                  : "Keep Practicing!"}
+                  ? t("Good Job!")
+                  : t("Keep Practicing!")}
               </Badge>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-gradient-to-br from-green-50 to-emerald-50 backdrop-blur-sm rounded-lg p-4 text-center border border-green-200/50">
-                <p className="text-sm text-gray-600">Correct Answers</p>
+                <p className="text-sm text-gray-600">{t("Correct Answers")}</p>
                 <p className="text-2xl font-bold text-green-600">
                   {scoreData.score}
                 </p>
               </div>
               <div className="bg-gradient-to-br from-red-50 to-pink-50 backdrop-blur-sm rounded-lg p-4 text-center border border-red-200/50">
-                <p className="text-sm text-gray-600">Incorrect Answers</p>
+                <p className="text-sm text-gray-600">
+                  {t("Incorrect Answers")}
+                </p>
                 <p className="text-2xl font-bold text-red-600">
                   {scoreData.total - scoreData.score}
                 </p>
@@ -642,12 +646,12 @@ export function QuizTakerLight() {
             </div>
 
             <div className="bg-gradient-to-br from-cyan-50 to-blue-50 backdrop-blur-sm rounded-lg p-4 text-center border border-cyan-200/50">
-              <p className="text-sm text-gray-600 mb-1">Points Earned</p>
+              <p className="text-sm text-gray-600 mb-1">{t("Points Earned")}</p>
               <p className="text-2xl font-bold text-cyan-600">
                 {scoreData.pointsEarned}/{scoreData.totalPoints}
               </p>
               <p className="text-xs text-gray-500">
-                Time Taken: {Math.floor(submission.time_taken / 60)}m{" "}
+                {t("Time Taken")}: {Math.floor(submission.time_taken / 60)}m{" "}
                 {submission.time_taken % 60}s
               </p>
             </div>
@@ -701,10 +705,10 @@ export function QuizTakerLight() {
               </Button>
               <div>
                 <h1 className="text-xl font-bold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent">
-                  {quiz.title} - Review
+                  {quiz.title} - {t("Review")}
                 </h1>
                 <p className="text-sm text-gray-600">
-                  Score: {submissionResults.questions_correct}/
+                  {t("Score")}: {submissionResults.questions_correct}/
                   {submissionResults.questions_total} (
                   {Math.round(submissionResults.percentage)}%)
                 </p>
@@ -748,11 +752,11 @@ export function QuizTakerLight() {
                             : "bg-red-100 text-red-700 border-red-200"
                         }
                       >
-                        {isCorrect ? "Correct" : "Incorrect"}
+                        {isCorrect ? t("Correct") : t("Incorrect")}
                       </Badge>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm text-gray-600">Points</p>
+                      <p className="text-sm text-gray-600">{t("Points")}</p>
                       <p className="font-bold text-gray-900">
                         {isCorrect ? resultDetail.points_weight : 0}/
                         {resultDetail.points_weight}
@@ -816,7 +820,7 @@ export function QuizTakerLight() {
                   {question.explanation && (
                     <div className="bg-gradient-to-br from-blue-50 to-cyan-50 backdrop-blur-sm rounded-lg p-4 border border-blue-200/50">
                       <h4 className="font-medium text-blue-900 mb-2">
-                        Explanation:
+                        {t("Explanation")}:
                       </h4>
                       <p className="text-blue-800 text-sm">
                         {question.explanation}
@@ -874,7 +878,7 @@ export function QuizTakerLight() {
               </span>
             </div>
             <Badge className="bg-gradient-to-r from-cyan-100 to-blue-100 text-cyan-700 border-cyan-200">
-              {Math.round(progress)}% Complete
+              {Math.round(progress)}% {t("Complete")}
             </Badge>
           </div>
         </div>
@@ -973,7 +977,7 @@ export function QuizTakerLight() {
           <div className="space-y-4">
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                Question Navigation
+                {t("Question Navigation")}
               </h3>
               <div className="grid grid-cols-5 gap-2">
                 {quiz.questions.map((question, index) => (
@@ -1000,15 +1004,15 @@ export function QuizTakerLight() {
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm">
                 <div className="w-3 h-3 rounded border-cyan-400 bg-gradient-to-br from-cyan-100 to-blue-100"></div>
-                <span className="text-gray-600">Current</span>
+                <span className="text-gray-600">{t("Current")}</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <div className="w-3 h-3 rounded border-green-400 bg-gradient-to-br from-green-100 to-emerald-100"></div>
-                <span className="text-gray-600">Answered</span>
+                <span className="text-gray-600">{t("Answered")}</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <div className="w-3 h-3 rounded border-gray-300 bg-white/50"></div>
-                <span className="text-gray-600">Not Answered</span>
+                <span className="text-gray-600">{t("Not Answered")}</span>
               </div>
             </div>
 
@@ -1017,7 +1021,7 @@ export function QuizTakerLight() {
               <div className="flex items-center gap-2 mb-2">
                 <CheckCircle className="w-4 h-4 text-blue-600" />
                 <span className="text-sm font-medium text-blue-700">
-                  Progress Summary
+                  {t("Progress Summary")}
                 </span>
               </div>
               <div className="space-y-1 text-xs text-gray-600">
@@ -1038,7 +1042,7 @@ export function QuizTakerLight() {
                 <div className="flex items-center gap-2 mb-2">
                   <Flag className="w-4 h-4 text-orange-600" />
                   <span className="text-sm font-medium text-orange-700">
-                    Flagged Questions
+                    {t("Flagged Questions")}
                   </span>
                 </div>
                 <p className="text-xs text-gray-600">
@@ -1073,7 +1077,7 @@ export function QuizTakerLight() {
                     showSubmissionWarning ? "text-yellow-700" : "text-red-700"
                   }`}
                 >
-                  {showSubmissionWarning ? "Submission Warning" : "Error"}
+                  {showSubmissionWarning ? t("Submission Warning") : t("Error")}
                 </p>
                 <p
                   className={`text-xs mt-1 ${
@@ -1093,7 +1097,7 @@ export function QuizTakerLight() {
                       : "text-red-500 hover:text-red-700"
                   }`}
                 >
-                  Dismiss
+                  {t("Dismiss")}
                 </button>
               </div>
             </div>
@@ -1108,7 +1112,7 @@ export function QuizTakerLight() {
             className="bg-white/50 border-gray-300 text-gray-700 hover:bg-white/70 backdrop-blur-sm disabled:opacity-50"
           >
             <ChevronLeft className="w-4 h-4 mr-2" />
-            Previous
+            {t("Previous")}
           </Button>
 
           <div className="flex items-center gap-3">
@@ -1123,7 +1127,7 @@ export function QuizTakerLight() {
                 ) : (
                   <Send className="w-4 h-4 mr-2" />
                 )}
-                {submitting ? "Submitting..." : "Submit Quiz"}
+                {submitting ? t("Submitting...") : t("Submit Quiz")}
               </Button>
             ) : (
               <Button
@@ -1131,7 +1135,7 @@ export function QuizTakerLight() {
                 disabled={currentQuestionIndex === totalQuestions - 1}
                 className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white px-8 shadow-lg hover:shadow-xl transition-all duration-300"
               >
-                Next Question
+                {t("Next Question")}
                 <ChevronRight className="w-4 h-4 ml-2" />
               </Button>
             )}

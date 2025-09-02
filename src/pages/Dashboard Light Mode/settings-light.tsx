@@ -9,11 +9,9 @@ import {
   HelpCircle,
   Languages,
   Menu,
-  Moon,
   RotateCcw,
   Save,
   Settings,
-  Sun,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -151,7 +149,7 @@ export function SettingsLight() {
         >
           <Menu className="w-5 h-5" />
         </Button>
-        <h1 className="text-xl font-bold text-gray-900">{t("settings")}</h1>
+        <h1 className="text-xl font-bold text-gray-900">{t("Settings")}</h1>
       </div>
 
       {/* Main Content */}
@@ -171,9 +169,11 @@ export function SettingsLight() {
             </div>
             <div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-                {t("settings")}
+                {t("Settings")}
               </h1>
-              <p className="text-gray-600">{t("settings_description")}</p>
+              <p className="text-gray-600">
+                {t("Customise your student dashboard")}
+              </p>
             </div>
           </div>
 
@@ -182,13 +182,13 @@ export function SettingsLight() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-gray-900">
                 <Languages className="w-5 h-5" />
-                {t("language_settings")}
+                {t("Language Settings")}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
                 <Label className="text-sm font-medium text-gray-700 mb-3 block">
-                  {t("choose_language")}
+                  {t("Choose Language")}
                 </Label>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {languages.map((language) => (
@@ -220,56 +220,12 @@ export function SettingsLight() {
             </CardContent>
           </Card>
 
-          {/* Theme Settings */}
-          <Card className="bg-white/20 backdrop-blur-xl border-white/30 shadow-xl">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-gray-900">
-                {isDarkMode ? (
-                  <Moon className="w-5 h-5" />
-                ) : (
-                  <Sun className="w-5 h-5" />
-                )}
-                {t("theme_settings")}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center justify-between p-4 bg-white/30 backdrop-blur-xl rounded-lg shadow-lg">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-r from-purple-400 to-indigo-500 rounded-lg flex items-center justify-center shadow-lg">
-                    {isDarkMode ? (
-                      <Moon className="w-5 h-5 text-white" />
-                    ) : (
-                      <Sun className="w-5 h-5 text-white" />
-                    )}
-                  </div>
-                  <div>
-                    <Label
-                      htmlFor="theme-toggle"
-                      className="text-sm font-medium text-gray-900"
-                    >
-                      {t("dark_mode")}
-                    </Label>
-                    <p className="text-xs text-gray-600">
-                      {t("dark_mode_description")}
-                    </p>
-                  </div>
-                </div>
-                <Switch
-                  id="theme-toggle"
-                  checked={isDarkMode}
-                  onCheckedChange={handleDarkModeChange}
-                  className="data-[state=checked]:bg-gradient-to-r data-[state=checked]:from-purple-400 data-[state=checked]:to-indigo-500"
-                />
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Learning Assistance */}
           <Card className="bg-white/20 backdrop-blur-xl border-white/30 shadow-xl">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-gray-900">
                 <HelpCircle className="w-5 h-5" />
-                {t("learning_assistance")}
+                {t("Learning Assistance")}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -283,10 +239,12 @@ export function SettingsLight() {
                       htmlFor="english-hints"
                       className="text-sm font-medium text-gray-900"
                     >
-                      {t("english_hints")}
+                      {t("English Hints")}
                     </Label>
                     <p className="text-xs text-gray-600">
-                      {t("english_hints_description")}
+                      {t(
+                        "When you hover over UI components -  a hint in english will popup"
+                      )}
                     </p>
                   </div>
                 </div>
@@ -307,7 +265,7 @@ export function SettingsLight() {
               className="flex-1 bg-gradient-to-r from-cyan-400 to-blue-500 text-white hover:from-cyan-500 hover:to-blue-600 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
             >
               <Save className="w-4 h-4 mr-2" />
-              {t("save_settings")}
+              {t("Save Settings")}
             </Button>
             <Button
               onClick={handleResetSettings}
@@ -315,7 +273,7 @@ export function SettingsLight() {
               className="flex-1 bg-white/30 backdrop-blur-xl border-white/50 text-gray-700 hover:bg-white/50 hover:scale-105 transition-all duration-300"
             >
               <RotateCcw className="w-4 h-4 mr-2" />
-              {t("reset_settings")}
+              {t("Reset Settings")}
             </Button>
           </div>
 
@@ -323,7 +281,7 @@ export function SettingsLight() {
           <Card className="bg-white/20 backdrop-blur-xl border-white/30 shadow-xl">
             <CardHeader>
               <CardTitle className="text-gray-900">
-                {t("current_settings_preview")}
+                {t("Current Settings Preview")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -346,7 +304,7 @@ export function SettingsLight() {
                 </div>
                 <div className="p-3 bg-white/30 backdrop-blur-xl rounded-lg">
                   <p className="text-sm font-medium text-gray-700">
-                    {t("english_hints")}
+                    {t("English Hints")}
                   </p>
                   <p className="text-lg font-bold text-gray-900">
                     {englishHints ? t("enabled") : t("disabled")}

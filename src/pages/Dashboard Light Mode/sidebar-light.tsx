@@ -8,6 +8,7 @@ import {
   GraduationCap,
   HelpCircle,
   Home,
+  Medal,
   Settings,
   Trophy,
   Upload,
@@ -59,6 +60,12 @@ export function SidebarLight({
       url: "/quizzes-light",
       icon: GraduationCap,
       key: "quizzes",
+    },
+    {
+      title: t("Leaderboard"),
+      url: "/leaderboard-light",
+      icon: Medal,
+      key: "leaderboard",
     },
   ];
 

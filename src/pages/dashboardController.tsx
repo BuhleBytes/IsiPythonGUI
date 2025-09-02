@@ -6,10 +6,10 @@ import { ChallengesLight } from "./Dashboard Light Mode/challenges-light";
 import { DashboardLight } from "./Dashboard Light Mode/dashboard-light";
 import EditorLightPage from "./Dashboard Light Mode/editor-light-page";
 import Component from "./Dashboard Light Mode/glossary";
+import LeaderboardScreen from "./Dashboard Light Mode/leaderboard-light";
 import { QuizzesLight } from "./Dashboard Light Mode/quizzes-light";
 import { SettingsLight } from "./Dashboard Light Mode/settings-light";
 import { SidebarLight } from "./Dashboard Light Mode/sidebar-light";
-
 export default function DashboardLightPage() {
   const location = useLocation();
 
@@ -95,12 +95,10 @@ export default function DashboardLightPage() {
         return <QuizzesLight />;
       case "documentation":
         return <Component />;
-      case "templates":
-        return <div className="p-8">Templates Component Coming Soon...</div>;
-      case "learn":
-        return <div className="p-8">Learn Component Coming Soon...</div>;
       case "settings":
         return <SettingsLight />;
+      case "leaderboard":
+        return <LeaderboardScreen />;
       default:
         return (
           <DashboardLight

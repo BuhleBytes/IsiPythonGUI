@@ -239,8 +239,9 @@ export function DashboardLight({
               </Button>
             )}
           </div>
-          <div className="flex items-center justify-end gap-4">
-            {/* Language Toggle Button */}
+
+          {/* Language Toggle Button - Positioned to the right */}
+          <div className="flex items-center gap-4">
             <Button
               variant="ghost"
               size="sm"
@@ -255,19 +256,6 @@ export function DashboardLight({
                 {currentLanguage === "English" ? "EN" : "XH"}
               </span>
             </Button>
-          </div>
-
-          <div className="flex items-center gap-4">
-            {!sidebarOpen && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onToggleSidebar}
-                className="text-gray-600 hover:text-cyan-600 hover:bg-cyan-50 lg:hidden transition-all duration-200"
-              >
-                <Menu className="w-5 h-5" />
-              </Button>
-            )}
           </div>
         </div>
       </header>
@@ -836,15 +824,15 @@ export function DashboardLight({
                             {item.title}
                           </div>
                           <div className="text-sm text-gray-600 flex items-center gap-2">
-                            {item.status}
+                            {t(item.status)}
                             {item.type && (
                               <Badge
                                 variant="outline"
                                 className="text-xs px-2 py-0.5 bg-white/60"
                               >
                                 {item.type === "challenge"
-                                  ? "Challenge"
-                                  : "Quiz"}
+                                  ? t("Challenge")
+                                  : t("Quiz")}
                               </Badge>
                             )}
                           </div>
@@ -875,8 +863,8 @@ export function DashboardLight({
                           }
                         >
                           {item.originalStatus === "not_started"
-                            ? "Start"
-                            : item.status}
+                            ? t("Start")
+                            : t(item.status)}
                         </Badge>
                       </div>
                     </div>

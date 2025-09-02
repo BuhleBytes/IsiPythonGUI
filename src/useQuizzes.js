@@ -167,6 +167,7 @@ export const useQuizzes = () => {
       datePosted: publishedDate.toISOString().split("T")[0],
       dueDate: dueDate.toISOString(), // Keep full ISO string for time display
       classProgress: classProgress,
+      passRate: apiQuiz.class_statistics.pass_rate,
       usersPassed: apiQuiz.class_statistics.users_passed,
       usersAttempted: apiQuiz.class_statistics.users_attempted,
       totalStudents: Math.max(

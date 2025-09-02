@@ -111,7 +111,7 @@ export function CodeEditorLight({
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
-  const [pythonVersion, setPythonVersion] = useState("3.11");
+  const [pythonVersion, setPythonVersion] = useState("1.0");
   const [currentFileName, setCurrentFileName] = useState(
     fileName || "untitled.isi"
   );
@@ -1264,7 +1264,7 @@ export function CodeEditorLight({
                 <SelectValue placeholder="Python" />
               </SelectTrigger>
               <SelectContent className="bg-white/95 backdrop-blur-xl border-gray-200 z-50">
-                <SelectItem value="3.11">IsiPython 1.0</SelectItem>
+                <SelectItem value="1.0">IsiPython 1.0</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -1287,7 +1287,7 @@ export function CodeEditorLight({
               }
             >
               <Languages className="w-4 h-4 mr-2" />
-              {liveTranslationEnabled ? "Live ON" : "Live Translation"}
+              {liveTranslationEnabled ? t("Live ON") : t("Live Translation")}
             </Button>
 
             <Separator orientation="vertical" className="h-6" />
@@ -1618,7 +1618,7 @@ export function CodeEditorLight({
                           )
                         : waitingForInput
                         ? t(
-                            "The program is waiting for input! Write it above and press enter to continue"
+                            "The program is waiting for input! Write it here and press enter to continue"
                           )
                         : t("Enter input for your program...")
                     }
@@ -1716,7 +1716,7 @@ export function CodeEditorLight({
           <div className="flex items-center gap-4 text-gray-600">
             <span className="flex items-center gap-1">
               <Zap className="w-3 h-3 text-yellow-500" />
-              Python {pythonVersion}
+              IsiPython {pythonVersion}
             </span>
             <span>UTF-8</span>
             <span>Ln {code.split("\n").length}, Col 1</span>
@@ -1730,7 +1730,7 @@ export function CodeEditorLight({
             {liveTranslationEnabled && (
               <span className="flex items-center gap-1 text-emerald-600">
                 <Languages className="w-3 h-3" />
-                Live Translation Active
+                {t("Live Translation Active")}
               </span>
             )}
             {/* Debug Panel Toggle */}
@@ -1747,7 +1747,7 @@ export function CodeEditorLight({
               ) : (
                 <ChevronUp className="w-3 h-3 mr-1" />
               )}
-              Phonononga
+              {t("Debug")}
             </Button>
           </div>
           <div className="flex items-center gap-4">
