@@ -18,6 +18,7 @@ import {
   X,
 } from "lucide-react";
 import { useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { translatePythonToIsiPython } from "./../languages/IsiPythonTranslator";
 
 interface UploadedFile {
@@ -37,6 +38,7 @@ export function FileImport({ onFileImported, onClose }: FileImportProps) {
   const [dragActive, setDragActive] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [uploading, setUploading] = useState(false);
+  const { t } = useTranslation();
   const [uploadProgress, setUploadProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -74,13 +76,13 @@ export function FileImport({ onFileImported, onClose }: FileImportProps) {
   const validateFile = (file: File): string | null => {
     // Check file size
     if (file.size > maxFileSize) {
-      return `File size exceeds ${formatFileSize(maxFileSize)} limit`;
+      return `${t("File size exceeds")} ${formatFileSize(maxFileSize)} limit`;
     }
 
     // Check file extension
     const extension = "." + file.name.toLowerCase().split(".").pop();
     if (!supportedExtensions.includes(extension)) {
-      return `Unsupported file type. Supported: ${supportedExtensions.join(
+      return `${t("Unsupported file type. Supported")}: ${supportedExtensions.join(
         ", "
       )}`;
     }
@@ -186,10 +188,10 @@ export function FileImport({ onFileImported, onClose }: FileImportProps) {
               </div>
               <div>
                 <CardTitle className="text-xl font-bold text-gray-900">
-                  Import Files
+                  {t("Import Files")}
                 </CardTitle>
                 <p className="text-sm text-gray-600">
-                  Upload files to open in the code editor
+                  {t("Upload files to open in the code editor")}
                 </p>
               </div>
             </div>
@@ -223,15 +225,15 @@ export function FileImport({ onFileImported, onClose }: FileImportProps) {
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  {dragActive ? "Drop files here" : "Drag & drop files here"}
+                  {dragActive ? t("Drop files here") : t("Drag & drop files here")}
                 </h3>
-                <p className="text-gray-600 mb-4">or click to browse a file</p>
+                <p className="text-gray-600 mb-4">{t("or click to browse a file")}</p>
                 <Button
                   onClick={() => fileInputRef.current?.click()}
                   className="bg-cyan-600 hover:bg-cyan-700 text-white"
                 >
                   <Folder className="w-4 h-4 mr-2" />
-                  Browse File
+                  {t("Browse File")}
                 </Button>
               </div>
             </div>
@@ -248,7 +250,7 @@ export function FileImport({ onFileImported, onClose }: FileImportProps) {
           {/* Supported Formats */}
           <div className="bg-gray-50 rounded-lg p-4">
             <h4 className="text-sm font-medium text-gray-900 mb-2">
-              Supported Formats
+              {t("Supported Formats")}
             </h4>
             <div className="flex flex-wrap gap-2">
               {supportedExtensions.map((ext) => (
@@ -262,7 +264,7 @@ export function FileImport({ onFileImported, onClose }: FileImportProps) {
               ))}
             </div>
             <p className="text-xs text-gray-500 mt-2">
-              Maximum file size: {formatFileSize(maxFileSize)}
+              {t("Maximum file size")}: {formatFileSize(maxFileSize)}
             </p>
           </div>
 
@@ -271,7 +273,7 @@ export function FileImport({ onFileImported, onClose }: FileImportProps) {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-700">
-                  Uploading files...
+                  {t("Uploading files...")}
                 </span>
                 <span className="text-sm text-cyan-600">
                   {Math.round(uploadProgress)}%
@@ -291,7 +293,7 @@ export function FileImport({ onFileImported, onClose }: FileImportProps) {
             <div className="space-y-3">
               <h4 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
                 <CheckCircle className="w-5 h-5 text-green-500" />
-                Uploaded File
+                {t("Uploaded File")}
               </h4>
               <div className="space-y-2">
                 {uploadedFiles.map((file, index) => (
@@ -308,7 +310,7 @@ export function FileImport({ onFileImported, onClose }: FileImportProps) {
                               {file.name}
                               {file.name.endsWith(".py") && (
                                 <span className="ml-2 text-xs text-cyan-600 bg-cyan-50 px-2 py-1 rounded">
-                                  Translated to IsiPython
+                                  {t("Translated to IsiPython")}
                                 </span>
                               )}
                             </h5>
@@ -335,7 +337,7 @@ export function FileImport({ onFileImported, onClose }: FileImportProps) {
                             size="sm"
                             className="bg-cyan-600 hover:bg-cyan-700 text-white"
                           >
-                            Open File
+                            {t("Open File")}
                             <ArrowRight className="w-3 h-3 ml-1" />
                           </Button>
                         </div>
@@ -353,7 +355,7 @@ export function FileImport({ onFileImported, onClose }: FileImportProps) {
               <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <FileText className="w-6 h-6 text-gray-400" />
               </div>
-              <p className="text-gray-500">No file uploaded yet</p>
+              <p className="text-gray-500">{t("No file uploaded yet")}</p>
             </div>
           )}
         </CardContent>
@@ -364,7 +366,7 @@ export function FileImport({ onFileImported, onClose }: FileImportProps) {
             <div className="flex items-center gap-2 text-xs text-gray-500">
               <AlertCircle className="w-3 h-3" />
               <span>
-                Python files are automatically translated to IsiPython
+                {t("Python files are automatically translated to IsiPython")}
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -373,7 +375,7 @@ export function FileImport({ onFileImported, onClose }: FileImportProps) {
                 onClick={onClose}
                 className="text-gray-600 hover:text-gray-900"
               >
-                Cancel
+                {t("Cancel")}
               </Button>
             </div>
           </div>

@@ -332,8 +332,7 @@ export default function LeaderboardScreen() {
           <div className="p-6 border-b border-gray-200/50">
             <h2 className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent flex items-center gap-2">
               <span className="text-yellow-500 text-2xl">🏆</span>
-              {activeTab === "challenges" ? t("Challenge") : t("Quiz")}{" "}
-              Leaderboard
+              {activeTab === "challenges" ? t("Challenge Leaderboard") : t("Quiz Leaderboard")}{" "}
             </h2>
           </div>
           <div className="p-0">
@@ -469,12 +468,12 @@ export default function LeaderboardScreen() {
                   </div>
                   <div className="text-white/90 text-sm">
                     {activeTab === "challenges"
-                      ? `${filteredData[0].total_score} points from ${filteredData[0].challenges_completed} challenges`
+                      ? `${filteredData[0].total_score} ${t("points from")} ${filteredData[0].challenges_completed} ${t("challenges")}`
                       : `${filteredData[0].average_percentage.toFixed(
                           1
-                        )}% average from ${
+                        )}% ${t("average from")} ${
                           filteredData[0].quizzes_completed
-                        } quizzes`}
+                        } ${t("quizzes")}`}
                   </div>
                 </div>
               )}
@@ -508,8 +507,8 @@ export default function LeaderboardScreen() {
                       </div>
                       <div className="text-white/90 text-sm">
                         {activeTab === "challenges"
-                          ? `${mostActive.challenges_completed} challenges completed`
-                          : `${mostActive.quizzes_completed} quizzes taken`}
+                          ? `${mostActive.challenges_completed} ${t("challenges completed")}`
+                          : `${mostActive.quizzes_completed} ${t("quizzes taken")}`}
                       </div>
                     </div>
                   )

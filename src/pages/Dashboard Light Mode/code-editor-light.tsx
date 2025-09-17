@@ -79,9 +79,6 @@ interface CodeEditorLightProps {
 }
 // #endregion
 
-// Default code in IsiPython to demonstrate translation
-const defaultCode = `# Write code for your new file using IsiPython`;
-
 // Helper functions to check API response status
 const isWaitingForInput = (response: any) =>
   response?.waiting_for_input === true;
@@ -104,6 +101,9 @@ export function CodeEditorLight({
   };
   const { saveNewFile } = useUserFiles();
   const { t } = useTranslation();
+  // Default code in IsiPython to demonstrate translation
+  const defaultCode = t("# Write code for your new file using IsiPython");
+
 
   // Add ref for Monaco editor instance
   const editorRef = useRef(null);
@@ -362,7 +362,7 @@ export function CodeEditorLight({
 
     if (errorsToShow.length > 0) {
       const errorTitle =
-        language === "english" ? "Execution Error" : "Impazamo Yesicelo";
+        language === "english" ? "Execution Error" : "Impazamo";
       const tryAgainText =
         language === "english"
           ? "Check your code and try again!"
@@ -464,7 +464,7 @@ export function CodeEditorLight({
             String(getErrorMessage(response)).trim()) ||
           "";
         if (msg) {
-          setOutput(`❌ Debug error: ${msg}`);
+          setOutput(`❌ ${t("Debug error")}: ${msg}`);
         } else {
           // no message – don't print a "null" error line
           setOutput("");
@@ -525,7 +525,7 @@ export function CodeEditorLight({
         // Use response.error directly like the original code, not getErrorMessage
         const msg = (response.error && String(response.error).trim()) || "";
         if (msg) {
-          setOutput((prev) => prev + `\n❌ Debug error: ${msg}\n`);
+          setOutput((prev) => prev + `\n❌ ${t("Debug error")}: ${msg}\n`);
         }
         // If there's no error message, just stop debugging gracefully without showing anything
         stopDebugging();
@@ -614,7 +614,7 @@ export function CodeEditorLight({
             String(getErrorMessage(response)).trim()) ||
           "";
         if (msg) {
-          setOutput((prev) => prev + `\n❌ Debug error: ${msg}\n`);
+          setOutput((prev) => prev + `\n❌ ${t("Debug error")}: ${msg}\n`);
         }
         stopDebugging();
         return;
@@ -1164,7 +1164,7 @@ export function CodeEditorLight({
           currentOutput.includes("ValueError:") ||
           currentOutput.includes("IndentationError:") ||
           currentOutput.includes("Execution Error:") ||
-          currentOutput.includes("Impazamo Yesicelo:");
+          currentOutput.includes("Impazamo:");
 
         if (!hasErrorInOutput) {
           // Only add our error formatting if the backend hasn't already formatted the error
@@ -1184,7 +1184,7 @@ export function CodeEditorLight({
           const errorTitle =
             errorLanguage === "english"
               ? "Execution Error"
-              : "Impazamo Yesicelo";
+              : "Impazamo";
           const tryAgainText =
             errorLanguage === "english"
               ? "Check your code and try again!"
@@ -1337,7 +1337,7 @@ export function CodeEditorLight({
       case "saving":
         return {
           icon: Clock,
-          text: "Saving...",
+          text: t("Saving..."),
           color: "text-blue-600",
           bgColor: "bg-blue-100",
         };
@@ -1345,15 +1345,15 @@ export function CodeEditorLight({
         return {
           icon: CheckCircle,
           text: lastAutoSaveTime
-            ? `Saved ${lastAutoSaveTime.toLocaleTimeString()}`
-            : "Saved",
+            ? `${t("Saved")} ${lastAutoSaveTime.toLocaleTimeString()}`
+            : t("Saved"),
           color: "text-green-600",
           bgColor: "bg-green-100",
         };
       case "error":
         return {
           icon: AlertCircle,
-          text: "Save failed",
+          text: t("Save failed"),
           color: "text-red-600",
           bgColor: "bg-red-100",
         };
@@ -1404,7 +1404,7 @@ export function CodeEditorLight({
 
               {hasUnsavedChanges && (
                 <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white border-0 shadow-sm animate-pulse">
-                  Unsaved
+                  {t("Unsaved")}
                 </Badge>
               )}
 
@@ -1452,8 +1452,8 @@ export function CodeEditorLight({
               }`}
               title={
                 liveTranslationEnabled
-                  ? "Disable Live Translation"
-                  : "Enable Live Translation"
+                  ? t("Disable Live Translation")
+                  : t("Enable Live Translation")
               }
             >
               <Languages className="w-4 h-4" />
@@ -1471,8 +1471,8 @@ export function CodeEditorLight({
               }`}
               title={
                 errorLanguage === "english"
-                  ? "Switch to IsiXhosa Errors"
-                  : "Switch to English Errors"
+                  ? t("Switch to IsiXhosa Errors")
+                  : t("Switch to English Errors")
               }
             >
               <Globe className="w-4 h-4" />
@@ -1487,7 +1487,7 @@ export function CodeEditorLight({
                 size="icon"
                 onClick={startDebugging}
                 className="text-gray-600 hover:text-green-600 hover:bg-green-50 transition-all duration-200"
-                title="Start Debug Session"
+                title={t("Start Debug Session")}
               >
                 <Bug className="h-4 w-4" />
               </Button>
@@ -1504,7 +1504,7 @@ export function CodeEditorLight({
                       : "text-blue-600 border-blue-600 hover:bg-blue-50"
                   } transition-all duration-200`}
                   title={
-                    debugWaitingForInput ? "Waiting for input" : "Step Over"
+                    debugWaitingForInput ? t("Waiting for input") : t("Step Over")
                   }
                 >
                   {isStepInProgress ? (
@@ -1517,7 +1517,7 @@ export function CodeEditorLight({
                   onClick={stopDebugging}
                   variant="destructive"
                   size="sm"
-                  title="Stop Debug"
+                  title={t("Stop Debug")}
                 >
                   <Square className="h-4 w-4 fill-current" />
                 </Button>
@@ -1532,7 +1532,7 @@ export function CodeEditorLight({
               size="icon"
               onClick={handleSaveNewFile}
               className="text-gray-600 hover:text-green-600 hover:bg-green-50 transition-all duration-200"
-              title={fileId ? "Update File" : "Save File"}
+              title={fileId ? t("Update File") : t("Save File")}
               disabled={autoSaveStatus === "saving"}
             >
               {autoSaveStatus === "saving" ? (
@@ -1546,7 +1546,7 @@ export function CodeEditorLight({
               size="icon"
               onClick={handleDownloadCode}
               className="text-gray-600 hover:text-cyan-600 hover:bg-cyan-50 transition-all duration-200"
-              title="Download File"
+              title={t("Download File")}
             >
               <Download className="w-4 h-4" />
             </Button>
@@ -1555,7 +1555,7 @@ export function CodeEditorLight({
               size="icon"
               onClick={handleCopyCode}
               className="text-gray-600 hover:text-purple-600 hover:bg-purple-50 transition-all duration-200"
-              title="Copy IsiPython Code"
+              title={t("Copy IsiPython Code")}
             >
               <Copy className="w-4 h-4" />
             </Button>
@@ -1882,7 +1882,7 @@ export function CodeEditorLight({
               <Globe className="w-3 h-3" />
               {errorLanguage === "english"
                 ? "Errors: English"
-                : "Amaphutha: IsiXhosa"}
+                : "Iimpazamo: IsiXhosa"}
             </span>
             {/* Debug Panel Toggle */}
             <Button
@@ -1903,14 +1903,14 @@ export function CodeEditorLight({
           </div>
           <div className="flex items-center gap-4">
             <span className="text-gray-500">
-              {fileId ? `ID: ${fileId.slice(0, 8)}...` : "New File"}
+              {fileId ? `ID: ${fileId.slice(0, 8)}...` : t("New File")}
             </span>
             {isDebugging && (
               <span className="flex items-center gap-2 text-green-600">
                 <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                Debugging
-                {currentLine && ` - Line ${currentLine}`}
-                {debugWaitingForInput && " (Waiting for input)"}
+                {t("Debugging")}
+                {currentLine && ` - ${t("Line")} ${currentLine}`}
+                {debugWaitingForInput && ` (${t("Waiting for input")})`}
               </span>
             )}
             <span

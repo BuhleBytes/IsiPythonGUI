@@ -208,7 +208,7 @@ export function DashboardLight({
             disabled={isDeleting}
           >
             <Play className="w-4 h-4 mr-2" />
-            Open
+            {t("Open")}
           </Button>
         </CardContent>
       </Card>

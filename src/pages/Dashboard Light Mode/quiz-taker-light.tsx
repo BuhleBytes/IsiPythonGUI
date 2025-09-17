@@ -228,7 +228,7 @@ export function QuizTakerLight() {
       if (!showSubmissionWarning) {
         setShowSubmissionWarning(true);
         setError(
-          `You have ${unanswered.length} unanswered question(s). Click submit again to proceed with unanswered questions.`
+          `${t("You have")} ${unanswered.length} ${t("unanswered question(s)")}. ${t("Click submit again to proceed with unanswered questions.")}`
         );
         return;
       }
@@ -650,10 +650,6 @@ export function QuizTakerLight() {
               <p className="text-2xl font-bold text-cyan-600">
                 {scoreData.pointsEarned}/{scoreData.totalPoints}
               </p>
-              <p className="text-xs text-gray-500">
-                {t("Time Taken")}: {Math.floor(submission.time_taken / 60)}m{" "}
-                {submission.time_taken % 60}s
-              </p>
             </div>
 
             <div className="flex gap-3">
@@ -676,7 +672,7 @@ export function QuizTakerLight() {
                   navigate("/dash", { state: { activeView: "quizzes" } });
                 }}
               >
-                Back to Quizzes
+                {t("Back to Quizzes")}
               </Button>
             </div>
           </CardContent>
@@ -1026,12 +1022,12 @@ export function QuizTakerLight() {
               </div>
               <div className="space-y-1 text-xs text-gray-600">
                 <p>
-                  Answered: {Object.keys(selectedAnswers).length}/
+                  {t("Answered")}: {Object.keys(selectedAnswers).length}/
                   {totalQuestions}
                 </p>
-                <p>Flagged: {flaggedQuestions.size}</p>
+                <p>{t("Flagged")}: {flaggedQuestions.size}</p>
                 <p>
-                  Remaining:{" "}
+                  {t("Remaining")}:{" "}
                   {totalQuestions - Object.keys(selectedAnswers).length}
                 </p>
               </div>

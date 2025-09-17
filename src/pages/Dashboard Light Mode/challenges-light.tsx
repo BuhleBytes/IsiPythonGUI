@@ -250,7 +250,7 @@ export function ChallengesLight() {
                   value={category}
                   className="text-gray-900 hover:bg-cyan-50"
                 >
-                  {category}
+                  {t(category)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -268,7 +268,7 @@ export function ChallengesLight() {
                 value="All"
                 className="text-gray-900 hover:bg-cyan-50"
               >
-                All
+                {t("All")}
               </SelectItem>
               <SelectItem
                 value="Low"

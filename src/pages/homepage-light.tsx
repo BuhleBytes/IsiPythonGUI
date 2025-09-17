@@ -142,24 +142,7 @@ export function HomepageLight() {
                 </p>
               </div>
 
-              <div className="flex flex-wrap gap-4">
-                <Button
-                  size="lg"
-                  className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white px-8 shadow-lg"
-                >
-                  <Rocket className="w-5 h-5 mr-2" />
-                  {t("Get Started")}
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="border-gray-300 text-gray-700 hover:bg-gray-50 bg-white shadow-sm"
-                >
-                  <Play className="w-5 h-5 mr-2" />
-                  {t("Watch Demo")}
-                </Button>
-              </div>
-
+         
               <div className="flex items-center gap-6 text-sm text-gray-600">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
@@ -203,12 +186,12 @@ export function HomepageLight() {
                         <span className="text-cyan-400">==</span>{" "}
                         <span className="text-green-400">5</span>:{"\n"}
                         {"    "}
-                        <span className="text-yellow-400">printa</span>(
-                        <span className="text-green-400">"x is 5"</span>){"\n"}
-                        <span className="text-cyan-400">okanye</span>:{"\n"}
+                        <span className="text-yellow-400">print(</span>(
+                        <span className="text-green-400">"x is 5")</span>){"\n"}
+                        <span className="text-cyan-400">okanye_ukuba:</span>:{"\n"}
                         {"    "}
-                        <span className="text-yellow-400">printa</span>(
-                        <span className="text-green-400">"x is not 5"</span>)
+                        <span className="text-yellow-400">print(</span>(
+                        <span className="text-green-400">"x is not 5")</span>)
                       </code>
                     </pre>
                   </div>

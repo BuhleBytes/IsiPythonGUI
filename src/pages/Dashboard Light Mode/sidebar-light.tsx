@@ -89,7 +89,7 @@ export function SidebarLight({
   const handleCreateFile = () => {
     // Create new file with empty content and switch to editor
     onViewChange("editor", {
-      content: t("# Write code for your new file"), // New default content
+      content: t("# Write code for your new file using IsiPython"), // New default content
       filename: "untitled.isi",
       isNewFile: true, // Flag to indicate this is a new file creation
     });
