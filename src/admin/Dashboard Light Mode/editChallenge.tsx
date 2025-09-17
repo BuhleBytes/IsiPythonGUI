@@ -1,5 +1,6 @@
 "use client";
 
+import { ChallengePreviewModal } from "@/components/challenge-preview-modal";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,6 +39,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useChallengeAPI } from "../useChallengeAPI";
 import { useChallengeDetails } from "../useChallengeDetails";
 
 interface TestCase {
@@ -62,8 +64,20 @@ export default function EditChallenge({
   onSave,
 }: EditChallengeProps) {
   // Use the custom hook to fetch challenge details
-  const { challenge, loading, error, refetch } =
-    useChallengeDetails(challengeId);
+  const { challenge, loading, error, refetch } = useChallengeDetails(
+    challengeId || ""
+  );
+
+  // Use the enhanced custom hook for API interactions (same as createChallenge)
+  const {
+    isSubmitting,
+    error: apiError,
+    saveDraft,
+    publishChallenge,
+    clearError,
+    draftChallengeId,
+    resetDraft,
+  } = useChallengeAPI();
 
   const [title, setTitle] = useState("");
   const [shortDescription, setShortDescription] = useState("");
@@ -83,7 +97,6 @@ export default function EditChallenge({
   const [notificationType, setNotificationType] = useState<
     "success" | "draft" | "error"
   >("success");
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Update form data when challenge is loaded
   useEffect(() => {
@@ -100,7 +113,22 @@ export default function EditChallenge({
     }
   }, [challenge]);
 
-  // Inline Notification Component
+  // Handle API errors using notification (same pattern as createChallenge)
+  useEffect(() => {
+    if (apiError) {
+      setNotificationMessage(apiError);
+      setNotificationType("error");
+      setShowNotification(true);
+      clearError();
+
+      // Auto-hide error notifications after 6 seconds
+      setTimeout(() => {
+        setShowNotification(false);
+      }, 6000);
+    }
+  }, [apiError, clearError]);
+
+  // Inline Notification Component (same as createChallenge)
   const Notification = () => {
     if (!showNotification) return null;
 
@@ -194,7 +222,6 @@ export default function EditChallenge({
   };
 
   const getFormData = () => ({
-    id: challengeId,
     title,
     shortDescription,
     problemDescription,
@@ -206,38 +233,220 @@ export default function EditChallenge({
     testCases,
   });
 
-  const handleSaveDraft = async () => {
-    setIsSubmitting(true);
+  // Enhanced API hook for editing - we need to create a modified version that handles existing challenge IDs
+  const submitEditChallenge = async (action: "save_draft" | "publish") => {
+    const formData = getFormData();
 
-    // Simulate API call
-    setTimeout(() => {
-      setNotificationMessage("Challenge draft updated successfully!");
-      setNotificationType("draft");
-      setShowNotification(true);
-      setIsSubmitting(false);
+    // Create a modified version of the form data that includes the challenge ID
+    const enhancedFormData = {
+      ...formData,
+      challengeId: challengeId, // Include the existing challenge ID
+    };
 
-      if (onSave) {
-        onSave(getFormData());
+    // Manually construct the API request since we need to handle existing challenges
+    try {
+      const apiBaseUrl = "https://isipython-dev.onrender.com";
+      const endpoint = `${apiBaseUrl}/api/admin/challenges`;
+
+      // Format data according to API requirements
+      const requestBody = {
+        id: challengeId, // This is the key difference - we always include the existing ID
+        title: formData.title.trim(),
+        short_description: formData.shortDescription.trim(),
+        problem_statement: formData.problemDescription.trim(),
+        difficulty_level: formData.difficulty,
+        reward_points: parseInt(formData.rewardPoints) || 0,
+        estimated_time: parseInt(formData.estimatedTime) || 0,
+        tags: formData.tags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter((tag) => tag.length > 0),
+        send_notifications: formData.sendNotifications,
+        test_cases: formData.testCases.map((tc) => {
+          let inputData;
+          const trimmedInput = tc.input.trim();
+
+          if (trimmedInput.startsWith("[") && trimmedInput.endsWith("]")) {
+            try {
+              inputData = JSON.parse(trimmedInput);
+              if (Array.isArray(inputData)) {
+                inputData = inputData.map((item) => String(item));
+              } else {
+                inputData = [String(inputData)];
+              }
+            } catch (e) {
+              inputData = trimmedInput
+                .slice(1, -1)
+                .split(",")
+                .map((item) => item.trim().replace(/^["']|["']$/g, ""))
+                .filter((item) => item !== "");
+            }
+          } else {
+            if (trimmedInput.includes(",")) {
+              inputData = trimmedInput
+                .split(",")
+                .map((item) => item.trim().replace(/^["']|["']$/g, ""))
+                .filter((item) => item !== "");
+            } else {
+              inputData = [trimmedInput];
+            }
+          }
+
+          return {
+            input_data: inputData,
+            expected_output: tc.expectedOutput.trim(),
+            explanation:
+              tc.explanation.trim() || `Test case ${tc.id} explanation`,
+            is_hidden: tc.isHidden,
+            is_example: tc.isExample,
+            points_weight: Number(tc.pointsWeight),
+          };
+        }),
+        action: action,
+      };
+
+      console.log(
+        "Edit Challenge API Request:",
+        JSON.stringify(requestBody, null, 2)
+      );
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      console.log("Edit Challenge Response status:", response.status);
+
+      if (response.ok) {
+        let responseData;
+        try {
+          responseData = await response.json();
+        } catch (parseError) {
+          responseData = {};
+        }
+
+        console.log("Edit Challenge Success response:", responseData);
+        return { success: true, data: responseData };
+      } else {
+        // Enhanced error handling (same as useChallengeAPI)
+        let errorData;
+        try {
+          const errorText = await response.text();
+          console.error("Edit Challenge Error response text:", errorText);
+
+          try {
+            errorData = JSON.parse(errorText);
+          } catch {
+            errorData = { message: errorText };
+          }
+        } catch {
+          errorData = { message: "Network error" };
+        }
+
+        // Extract specific error messages
+        let specificError = "Unknown server error";
+
+        if (errorData.errors && typeof errorData.errors === "object") {
+          const errorKeys = Object.keys(errorData.errors);
+          if (errorKeys.length > 0) {
+            const errorMessages = errorKeys.map(
+              (key) => `${key}: ${errorData.errors[key]}`
+            );
+            specificError = errorMessages.join(", ");
+          }
+        } else if (errorData.message) {
+          specificError = errorData.message;
+        } else if (errorData.error) {
+          specificError = errorData.error;
+        } else if (errorData.detail) {
+          specificError = errorData.detail;
+        } else if (response.status) {
+          specificError = `HTTP ${response.status} ${response.statusText}`;
+        }
+
+        const errorMessage = `Failed to ${
+          action === "save_draft" ? "update draft" : "publish"
+        } challenge: ${specificError}`;
+
+        throw new Error(errorMessage);
       }
-    }, 1000);
+    } catch (error) {
+      console.error("Edit Challenge Network/Request error:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Network error occurred";
+      throw new Error(errorMessage);
+    }
+  };
+
+  const handleSaveDraft = async () => {
+    try {
+      const result = await submitEditChallenge("save_draft");
+
+      if (result.success) {
+        setShowNotification(false);
+        setTimeout(() => {
+          setNotificationMessage("Challenge draft updated successfully!");
+          setNotificationType("draft");
+          setShowNotification(true);
+        }, 100);
+
+        // Optional: Call onSave callback if provided
+        if (onSave) {
+          onSave(result.data);
+        }
+
+        // Refetch challenge data to ensure UI is in sync
+        if (refetch) {
+          await refetch();
+        }
+      }
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to update challenge draft";
+      setNotificationMessage(errorMessage);
+      setNotificationType("error");
+      setShowNotification(true);
+    }
   };
 
   const handlePublish = async () => {
-    setIsSubmitting(true);
+    try {
+      const result = await submitEditChallenge("publish");
 
-    // Simulate API call
-    setTimeout(() => {
-      setNotificationMessage(
-        "Challenge published successfully! Students can now access and solve this challenge."
-      );
-      setNotificationType("success");
-      setShowNotification(true);
-      setIsSubmitting(false);
+      if (result.success) {
+        setShowNotification(false);
+        setTimeout(() => {
+          setNotificationMessage(
+            challenge?.status === "draft"
+              ? "Draft challenge published successfully! Students can now access and solve this challenge."
+              : "Challenge updated and published successfully!"
+          );
+          setNotificationType("success");
+          setShowNotification(true);
+        }, 100);
 
-      if (onSave) {
-        onSave({ ...getFormData(), status: "published" });
+        // Optional: Call onSave callback if provided
+        if (onSave) {
+          onSave(result.data);
+        }
+
+        // Refetch challenge data to ensure UI is in sync
+        if (refetch) {
+          await refetch();
+        }
       }
-    }, 1000);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to publish challenge";
+      setNotificationMessage(errorMessage);
+      setNotificationType("error");
+      setShowNotification(true);
+    }
   };
 
   const handleBackToList = () => {
@@ -245,6 +454,27 @@ export default function EditChallenge({
       onBackToList();
     }
   };
+
+  // Handle case where no challengeId is provided
+  if (!challengeId) {
+    return (
+      <div className="flex-1 bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30 min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-4 max-w-md">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
+          <div className="text-xl font-semibold text-gray-700">
+            Invalid Challenge ID
+          </div>
+          <div className="text-sm text-gray-500">
+            No challenge ID was provided.
+          </div>
+          <Button onClick={handleBackToList} variant="outline" className="mt-4">
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Drafts
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   // Loading state
   if (loading) {
@@ -284,7 +514,7 @@ export default function EditChallenge({
               className="mt-4"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to List
+              Back to Drafts
             </Button>
           </div>
         </div>
@@ -306,7 +536,7 @@ export default function EditChallenge({
           </div>
           <Button onClick={handleBackToList} variant="outline" className="mt-4">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to List
+            Back to Drafts
           </Button>
         </div>
       </div>
@@ -344,21 +574,19 @@ export default function EditChallenge({
             Update and refine your coding challenge before publishing
           </p>
           <div className="flex items-center gap-4 mt-4">
-            <Badge className="bg-amber-100 text-amber-700 border-amber-200 font-medium">
+            <Badge className="bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-200 hover:text-amber-800 hover:border-amber-300 font-medium transition-all duration-200">
               {challenge.status === "draft"
                 ? "Draft Challenge"
                 : "Published Challenge"}
             </Badge>
-            <Badge className="bg-blue-100 text-blue-700 border-blue-200 font-medium">
-              ID: {challenge.id}
-            </Badge>
-            <Badge className="bg-gray-100 text-gray-700 border-gray-200 font-medium">
+
+            <Badge className="bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200 hover:text-gray-800 hover:border-gray-300 font-medium transition-all duration-200">
               Last Modified: {challenge.lastModified}
             </Badge>
           </div>
         </div>
 
-        {/* Content */}
+        {/* Content - Same form structure as createChallenge */}
         <div className="space-y-6">
           {/* Challenge Details */}
           <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-xl hover:shadow-2xl transition-all duration-500 relative overflow-hidden group">
@@ -583,16 +811,16 @@ export default function EditChallenge({
                     <CardContent className="p-5">
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2">
-                          <Badge className="bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-200 font-medium transition-colors duration-200">
+                          <Badge className="bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-200 hover:text-purple-800 hover:border-purple-300 font-medium transition-all duration-200">
                             Test Case {index + 1}
                           </Badge>
                           {testCase.isExample && (
-                            <Badge className="bg-blue-100 text-blue-700 border-blue-200 font-medium">
+                            <Badge className="bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200 hover:text-blue-800 hover:border-blue-300 font-medium transition-all duration-200">
                               Example
                             </Badge>
                           )}
                           {testCase.isHidden && (
-                            <Badge className="bg-gray-100 text-gray-700 border-gray-200 font-medium">
+                            <Badge className="bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200 hover:text-gray-800 hover:border-gray-300 font-medium transition-all duration-200">
                               Hidden
                             </Badge>
                           )}
@@ -733,7 +961,7 @@ export default function EditChallenge({
             </CardContent>
           </Card>
 
-          {/* Action Buttons */}
+          {/* Action Buttons - Fixed to actually work */}
           <div className="flex items-center justify-end gap-4 pt-4">
             <Button
               onClick={() => setShowPreview(true)}
@@ -759,7 +987,11 @@ export default function EditChallenge({
               disabled={isSubmitting}
             >
               <Send className="w-4 h-4 mr-2" />
-              {isSubmitting ? "Publishing..." : "Publish Challenge"}
+              {isSubmitting
+                ? "Publishing..."
+                : challenge?.status === "draft"
+                ? "Publish Draft"
+                : "Publish Update"}
             </Button>
           </div>
         </div>
@@ -767,6 +999,24 @@ export default function EditChallenge({
 
       {/* Inline Notification */}
       <Notification />
+
+      {/* Challenge Preview Modal */}
+      <ChallengePreviewModal
+        isOpen={showPreview}
+        onClose={() => setShowPreview(false)}
+        challengeData={{
+          title,
+          shortDescription,
+          difficulty,
+          rewardPoints,
+          problemDescription,
+          testCases: testCases.map((tc) => ({
+            id: tc.id,
+            input: tc.input,
+            expectedOutput: tc.expectedOutput,
+          })),
+        }}
+      />
     </div>
   );
 }

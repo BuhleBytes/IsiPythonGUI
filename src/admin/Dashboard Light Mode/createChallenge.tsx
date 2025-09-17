@@ -78,9 +78,17 @@ export default function CreateChallenge() {
     "success" | "draft" | "error"
   >("success");
 
-  // Use the custom hook for API interactions
-  const { isSubmitting, error, saveDraft, publishChallenge, clearError } =
-    useChallengeAPI();
+  // Use the enhanced custom hook for API interactions
+  const {
+    isSubmitting,
+    error,
+    saveDraft,
+    publishChallenge,
+    clearError,
+    hasDraft,
+    resetDraft,
+    draftChallengeId,
+  } = useChallengeAPI();
 
   // Handle API errors using notification instead of alert
   useEffect(() => {
@@ -90,10 +98,10 @@ export default function CreateChallenge() {
       setShowNotification(true);
       clearError();
 
-      // Auto-hide error notifications after 5 seconds
+      // Auto-hide error notifications after 6 seconds
       setTimeout(() => {
         setShowNotification(false);
-      }, 5000);
+      }, 6000);
     }
   }, [error, clearError]);
 
@@ -210,6 +218,8 @@ export default function CreateChallenge() {
         pointsWeight: 25.0,
       },
     ]);
+    // Clear the draft state when resetting
+    resetDraft();
   };
 
   const getFormData = () => ({
@@ -241,6 +251,7 @@ export default function CreateChallenge() {
         setShowNotification(true);
       }, 100);
     }
+    // Error handling is now automatic via the enhanced hook
   };
 
   const handlePublish = async () => {
@@ -261,6 +272,25 @@ export default function CreateChallenge() {
         resetForm();
       }, 100);
     }
+    // Error handling is now automatic via the enhanced hook
+  };
+
+  const handleClearDraft = () => {
+    if (
+      confirm(
+        "Are you sure you want to start over? This will clear your current draft and all unsaved changes."
+      )
+    ) {
+      resetForm();
+      setShowNotification(false);
+      setTimeout(() => {
+        setNotificationMessage(
+          "Draft cleared. You can start creating a new challenge."
+        );
+        setNotificationType("draft");
+        setShowNotification(true);
+      }, 100);
+    }
   };
 
   return (
@@ -274,14 +304,27 @@ export default function CreateChallenge() {
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto p-6 space-y-8 relative z-10">
-        {/* Header Section with modern styling */}
+        {/* Header Section with modern styling and draft indicator */}
         <div className="space-y-3">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 via-cyan-600 to-emerald-600 bg-clip-text text-transparent flex items-center gap-3">
-            Create New Challenge
-            <Sparkles className="w-8 h-8 text-cyan-500 animate-pulse" />
-          </h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 via-cyan-600 to-emerald-600 bg-clip-text text-transparent flex items-center gap-3">
+              Create New Challenge
+              <Sparkles className="w-8 h-8 text-cyan-500 animate-pulse" />
+            </h1>
+            {hasDraft && (
+              <Badge className="bg-amber-100 text-amber-800 border-amber-300 px-3 py-1 text-sm font-medium">
+                Draft Saved
+              </Badge>
+            )}
+          </div>
           <p className="text-lg text-gray-600">
             Design engaging coding challenges to inspire and educate students
+            {hasDraft && (
+              <span className="block text-sm text-amber-600 mt-1">
+                You have an unsaved draft. Click "Publish Draft" to make it live
+                or "Update Draft" to save changes.
+              </span>
+            )}
           </p>
         </div>
 
@@ -648,7 +691,7 @@ export default function CreateChallenge() {
             </CardContent>
           </Card>
 
-          {/* Action Buttons */}
+          {/* Action Buttons - Enhanced with draft state management */}
           <div className="flex items-center justify-end gap-4 pt-4">
             <Button
               onClick={() => setShowPreview(true)}
@@ -659,6 +702,7 @@ export default function CreateChallenge() {
               <Eye className="w-4 h-4 mr-2" />
               Preview Challenge
             </Button>
+
             <Button
               onClick={handleSaveDraft}
               variant="outline"
@@ -666,16 +710,37 @@ export default function CreateChallenge() {
               disabled={isSubmitting}
             >
               <Save className="w-4 h-4 mr-2" />
-              {isSubmitting ? "Saving..." : "Save as Draft"}
+              {isSubmitting
+                ? "Saving..."
+                : hasDraft
+                ? "Update Draft"
+                : "Save as Draft"}
             </Button>
+
             <Button
               onClick={handlePublish}
               className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg px-6 py-3 font-medium hover:scale-105"
               disabled={isSubmitting}
             >
               <Send className="w-4 h-4 mr-2" />
-              {isSubmitting ? "Publishing..." : "Publish Challenge"}
+              {isSubmitting
+                ? "Publishing..."
+                : hasDraft
+                ? "Publish Draft"
+                : "Publish Challenge"}
             </Button>
+
+            {hasDraft && (
+              <Button
+                onClick={handleClearDraft}
+                variant="outline"
+                className="border-red-200 text-red-600 hover:bg-red-50 bg-white/80 rounded-lg font-medium px-4 py-3 hover:scale-105 transition-all duration-300 shadow-sm hover:shadow-md"
+                disabled={isSubmitting}
+              >
+                <X className="w-4 h-4 mr-2" />
+                Clear Draft
+              </Button>
+            )}
           </div>
         </div>
       </main>
@@ -698,7 +763,7 @@ export default function CreateChallenge() {
         }}
       />
 
-      {/* Inline Notification */}
+      {/* Enhanced Notification with better error display */}
       <Notification />
     </div>
   );

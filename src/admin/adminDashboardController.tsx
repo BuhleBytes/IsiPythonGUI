@@ -4,22 +4,16 @@ import { useLocation } from "react-router-dom";
 import { loadState, saveCurrentRoute, saveCurrentView } from "../utils/storage";
 import CreateChallenge from "./Dashboard Light Mode/createChallenge";
 import DraftChallenges from "./Dashboard Light Mode/draftChallenges";
+import EditChallenge from "./Dashboard Light Mode/editChallenge";
 import AdminDashboard from "./Dashboard Light Mode/homeDashboard";
+import PublishedChallenges from "./Dashboard Light Mode/publishedChallenges";
 import { AdminSidebar } from "./Dashboard Light Mode/sidebar";
-// import AdminDashboard from "./adminDashboard-home";
-// Import other admin components as they're created
-// import DraftChallenges from "./draft-challenges";
-// import PublishedChallenges from "./published-challenges";
-// import AdminAnalytics from "./admin-analytics";
-// import AdminSettings from "./admin-settings";
-
+import ViewChallenge from "./Dashboard Light Mode/viewChallenge";
 export default function AdminDashboardController() {
   const location = useLocation();
 
-  // Load persisted state on component mount
-  const [sidebarOpen, setSidebarOpen] = useState(false); // Admin sidebar starts collapsed
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeView, setActiveView] = useState(() => {
-    // First check URL state (for programmatic navigation)
     const urlActiveView = location.state?.activeView;
     if (urlActiveView) return urlActiveView;
 
@@ -32,6 +26,12 @@ export default function AdminDashboardController() {
     // Default to "dashboard" for admin (home view)
     return "dashboard";
   });
+
+  // Add state for storing edit challenge ID
+  const [editChallengeId, setEditChallengeId] = useState<string>("");
+
+  // Add state for storing view challenge ID
+  const [viewChallengeId, setViewChallengeId] = useState<string>("");
 
   // Save current route when component mounts or location changes
   useEffect(() => {
@@ -51,11 +51,36 @@ export default function AdminDashboardController() {
     // Change the view without navigation
     setActiveView(view);
 
-    // Handle any data passing if needed for future components
+    // Handle data passing for edit challenge
+    if (view === "edit" && data?.challengeId) {
+      setEditChallengeId(data.challengeId);
+      console.log("Switching to edit view for challenge:", data.challengeId);
+    } else if (view !== "edit") {
+      setEditChallengeId(""); // Clear when leaving edit view
+    }
+
+    // Handle data passing for view challenge
+    if (view === "view" && data?.challengeId) {
+      setViewChallengeId(data.challengeId);
+      console.log("Switching to view challenge for ID:", data.challengeId);
+    } else if (view !== "view") {
+      setViewChallengeId(""); // Clear when leaving view
+    }
+
+    // Handle any other data passing if needed for future components
     if (data) {
-      // Store data in state or localStorage as needed
       console.log("View data:", data);
     }
+  };
+
+  const handleBackToList = () => {
+    // Go back to drafts view when editing is done
+    handleViewChange("drafts");
+  };
+
+  const handleBackToPublishedList = () => {
+    // Go back to published challenges view when viewing is done
+    handleViewChange("published");
   };
 
   const renderMainContent = () => {
@@ -69,21 +94,45 @@ export default function AdminDashboardController() {
           />
         );
       case "create":
-        // Placeholder for create challenge component
         return <CreateChallenge />;
       case "drafts":
-        // Placeholder for draft challenges component
-        return <DraftChallenges />;
-      case "published":
-        // Placeholder for published challenges component
         return (
-          <div className="p-6">
-            <h1 className="text-2xl font-bold">Published Challenges</h1>
-            <p>Published Challenges component will be implemented here</p>
-          </div>
+          <DraftChallenges
+            onEditChallenge={(challengeId: string) =>
+              handleViewChange("edit", { challengeId })
+            }
+            onCreateNew={() => handleViewChange("create")}
+          />
+        );
+      case "edit":
+        return (
+          <EditChallenge
+            challengeId={editChallengeId}
+            onBackToList={handleBackToList}
+            onSave={(updatedChallenge) => {
+              console.log("Challenge saved:", updatedChallenge);
+              // Optionally go back to drafts after saving
+              handleViewChange("drafts");
+            }}
+          />
+        );
+      case "published":
+        return (
+          <PublishedChallenges
+            onViewChallenge={(challengeId: string) =>
+              handleViewChange("view", { challengeId })
+            }
+            onCreateNew={() => handleViewChange("create")}
+          />
+        );
+      case "view":
+        return (
+          <ViewChallenge
+            challengeId={viewChallengeId}
+            onBackToList={handleBackToPublishedList}
+          />
         );
       case "analytics":
-        // Placeholder for analytics component
         return (
           <div className="p-6">
             <h1 className="text-2xl font-bold">Analytics</h1>
@@ -91,7 +140,6 @@ export default function AdminDashboardController() {
           </div>
         );
       case "settings":
-        // Placeholder for admin settings component
         return (
           <div className="p-6">
             <h1 className="text-2xl font-bold">Admin Settings</h1>

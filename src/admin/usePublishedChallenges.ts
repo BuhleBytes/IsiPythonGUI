@@ -11,11 +11,18 @@ interface ApiChallenge {
   status: "draft" | "published";
   created_at: string;
   updated_at: string;
+  published_at: string | null;
   problem_statement: string;
   send_notifications?: boolean;
+  statistics?: {
+    pass_rate: number;
+    submissions_count: number;
+    users_attempted: number;
+    users_completed: number;
+  };
 }
 
-interface DraftChallenge {
+interface PublishedChallenge {
   id: string;
   title: string;
   shortDescription: string;
@@ -26,8 +33,15 @@ interface DraftChallenge {
   testCases: number;
   createdAt: string;
   lastModified: string;
+  publishedAt: string;
   problemDescription?: string;
   sendNotifications?: boolean;
+  statistics: {
+    passRate: number;
+    submissionsCount: number;
+    usersAttempted: number;
+    usersCompleted: number;
+  };
 }
 
 interface ApiResponse {
@@ -48,8 +62,8 @@ interface DeleteResponse {
   error?: string;
 }
 
-interface UseDraftChallengesReturn {
-  draftChallenges: DraftChallenge[];
+interface UsePublishedChallengesReturn {
+  publishedChallenges: PublishedChallenge[];
   loading: boolean;
   error: string | null;
   deletingIds: Set<string>;
@@ -57,15 +71,17 @@ interface UseDraftChallengesReturn {
   deleteChallenge: (challengeId: string) => Promise<boolean>;
 }
 
-export const useDraftChallenges = (): UseDraftChallengesReturn => {
-  const [draftChallenges, setDraftChallenges] = useState<DraftChallenge[]>([]);
+export const usePublishedChallenges = (): UsePublishedChallengesReturn => {
+  const [publishedChallenges, setPublishedChallenges] = useState<
+    PublishedChallenge[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
 
   const transformApiChallengeToLocal = (
     apiChallenge: ApiChallenge
-  ): DraftChallenge => {
+  ): PublishedChallenge => {
     return {
       id: apiChallenge.id,
       title: apiChallenge.title,
@@ -75,27 +91,36 @@ export const useDraftChallenges = (): UseDraftChallengesReturn => {
       rewardPoints: apiChallenge.reward_points,
       estimatedTime: apiChallenge.estimated_time || 30,
       tags: apiChallenge.tags || [],
-      testCases: Math.floor(Math.random() * 5) + 2,
+      testCases: Math.floor(Math.random() * 5) + 2, // Mock test cases count
       createdAt: apiChallenge.created_at.split("T")[0],
       lastModified: apiChallenge.updated_at.split("T")[0],
+      publishedAt:
+        apiChallenge.published_at?.split("T")[0] ||
+        apiChallenge.updated_at.split("T")[0],
       problemDescription: apiChallenge.problem_statement,
       sendNotifications: apiChallenge.send_notifications ?? true,
+      statistics: {
+        passRate: apiChallenge.statistics?.pass_rate || 0,
+        submissionsCount: apiChallenge.statistics?.submissions_count || 0,
+        usersAttempted: apiChallenge.statistics?.users_attempted || 0,
+        usersCompleted: apiChallenge.statistics?.users_completed || 0,
+      },
     };
   };
 
-  const fetchDraftChallenges = async () => {
+  const fetchPublishedChallenges = async () => {
     setLoading(true);
     setError(null);
 
     try {
-      console.log("🚀 Fetching draft challenges from API...");
+      console.log("🚀 Fetching published challenges from API...");
 
       const apiBaseUrl = "https://isipython-dev.onrender.com";
       const response = await fetch(
         `${apiBaseUrl}/api/admin/challenges?order_by=created_at&order_direction=desc`
       );
 
-      console.log("📥 API Response status:", response.status);
+      console.log("🔥 API Response status:", response.status);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -108,16 +133,19 @@ export const useDraftChallenges = (): UseDraftChallengesReturn => {
       const data: ApiResponse = await response.json();
       console.log("✅ API Response data:", data);
 
-      const drafts = data.data
-        .filter((challenge) => challenge.status === "draft")
+      const published = data.data
+        .filter((challenge) => challenge.status === "published")
         .map(transformApiChallengeToLocal);
 
-      console.log(`📋 Found ${drafts.length} draft challenges:`, drafts);
-      setDraftChallenges(drafts);
+      console.log(
+        `📋 Found ${published.length} published challenges:`,
+        published
+      );
+      setPublishedChallenges(published);
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Unknown error occurred";
-      console.error("💥 Error fetching draft challenges:", errorMessage);
+      console.error("💥 Error fetching published challenges:", errorMessage);
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -125,7 +153,7 @@ export const useDraftChallenges = (): UseDraftChallengesReturn => {
   };
 
   const deleteChallenge = async (challengeId: string): Promise<boolean> => {
-    console.log("🗑️ Attempting to delete challenge:", challengeId);
+    console.log("🗑️ Attempting to delete published challenge:", challengeId);
 
     // Add to deleting set
     setDeletingIds((prev) => new Set([...prev, challengeId]));
@@ -134,7 +162,7 @@ export const useDraftChallenges = (): UseDraftChallengesReturn => {
       const apiBaseUrl = "https://isipython-dev.onrender.com";
       const deleteUrl = `${apiBaseUrl}/api/admin/challenges/${challengeId}`;
 
-      console.log("🌐 DELETE request to:", deleteUrl);
+      console.log("🌍 DELETE request to:", deleteUrl);
 
       const response = await fetch(deleteUrl, {
         method: "DELETE",
@@ -143,7 +171,7 @@ export const useDraftChallenges = (): UseDraftChallengesReturn => {
         },
       });
 
-      console.log("📥 Delete response status:", response.status);
+      console.log("🔥 Delete response status:", response.status);
 
       if (!response.ok) {
         let errorMessage = `HTTP ${response.status} ${response.statusText}`;
@@ -190,14 +218,14 @@ export const useDraftChallenges = (): UseDraftChallengesReturn => {
       console.log("✅ Delete response:", responseData);
 
       // Remove the challenge from local state immediately for better UX
-      setDraftChallenges((prev) =>
+      setPublishedChallenges((prev) =>
         prev.filter((challenge) => challenge.id !== challengeId)
       );
 
-      console.log("🎉 Challenge deleted successfully:", challengeId);
+      console.log("🎉 Published challenge deleted successfully:", challengeId);
       return true;
     } catch (error) {
-      console.error("💥 Error deleting challenge:", error);
+      console.error("💥 Error deleting published challenge:", error);
 
       // Set a temporary error state that will be cleared
       const errorMessage =
@@ -219,16 +247,16 @@ export const useDraftChallenges = (): UseDraftChallengesReturn => {
   };
 
   const refetch = () => {
-    console.log("🔄 Refetching draft challenges...");
-    fetchDraftChallenges();
+    console.log("🔄 Refetching published challenges...");
+    fetchPublishedChallenges();
   };
 
   useEffect(() => {
-    fetchDraftChallenges();
+    fetchPublishedChallenges();
   }, []);
 
   return {
-    draftChallenges,
+    publishedChallenges,
     loading,
     error,
     deletingIds,
