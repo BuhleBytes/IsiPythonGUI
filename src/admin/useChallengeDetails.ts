@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 
+// API response structure for individual test cases
 interface ApiTestCase {
   id: string;
   challenge_id: string;
@@ -12,6 +13,7 @@ interface ApiTestCase {
   created_at: string;
 }
 
+// API response structure for complete challenge details
 interface ApiChallengeDetails {
   id: string;
   title: string;
@@ -31,6 +33,7 @@ interface ApiChallengeDetails {
   search_vector: string;
 }
 
+// Transformed challenge data structure used throughout the app
 interface DetailedChallenge {
   id: string;
   title: string;
@@ -47,6 +50,7 @@ interface DetailedChallenge {
   status: "draft" | "published";
 }
 
+// Simplified test case structure for frontend use
 interface TestCase {
   id: string;
   input: string;
@@ -57,11 +61,13 @@ interface TestCase {
   pointsWeight: number;
 }
 
+// API wrapper response structure
 interface ApiDetailResponse {
   data: ApiChallengeDetails;
   message: string;
 }
 
+// Hook return type definition
 interface UseChallengeDetailsReturn {
   challenge: DetailedChallenge | null;
   loading: boolean;
@@ -76,6 +82,7 @@ export const useChallengeDetails = (
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Converts API response format to frontend-friendly format
   const transformApiChallengeToLocal = (
     apiChallenge: ApiChallengeDetails
   ): DetailedChallenge => {
@@ -90,6 +97,7 @@ export const useChallengeDetails = (
       estimatedTime: apiChallenge.estimated_time || 30,
       tags: apiChallenge.tags || [],
       sendNotifications: apiChallenge.send_notifications ?? true,
+      // Transform test cases and convert input data to JSON string
       testCases: apiChallenge.test_cases.map((testCase) => ({
         id: testCase.id,
         input: JSON.stringify(testCase.input_data), // Convert array to JSON string
@@ -99,12 +107,14 @@ export const useChallengeDetails = (
         isExample: testCase.is_example,
         pointsWeight: testCase.points_weight,
       })),
+      // Extract date portion only for display
       createdAt: apiChallenge.created_at.split("T")[0],
       lastModified: apiChallenge.updated_at.split("T")[0],
       status: apiChallenge.status,
     };
   };
 
+  // Fetches challenge details from API and handles loading states
   const fetchChallengeDetails = async () => {
     if (!challengeId) return;
 
@@ -112,45 +122,36 @@ export const useChallengeDetails = (
     setError(null);
 
     try {
-      console.log(`🚀 Fetching challenge details for ID: ${challengeId}`);
-
       const apiBaseUrl = "https://isipython-dev.onrender.com";
       const response = await fetch(
         `${apiBaseUrl}/api/admin/challenges/${challengeId}`
       );
 
-      console.log("📥 API Response status:", response.status);
-
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("❌ API Error:", errorText);
         throw new Error(
           `Failed to fetch challenge details: ${response.status} ${response.statusText}`
         );
       }
 
       const data: ApiDetailResponse = await response.json();
-      console.log("✅ API Response data:", data);
-
       const transformedChallenge = transformApiChallengeToLocal(data.data);
-      console.log("🔄 Transformed challenge:", transformedChallenge);
-
       setChallenge(transformedChallenge);
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Unknown error occurred";
-      console.error("💥 Error fetching challenge details:", errorMessage);
       setError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
+  // Manually triggers a refetch of challenge data
   const refetch = () => {
-    console.log(`🔄 Refetching challenge details for ID: ${challengeId}`);
     fetchChallengeDetails();
   };
 
+  // Fetch challenge details when challengeId changes
   useEffect(() => {
     fetchChallengeDetails();
   }, [challengeId]);

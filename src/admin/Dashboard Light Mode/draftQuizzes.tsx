@@ -13,125 +13,119 @@ import {
 } from "@/components/ui/select";
 import {
   AlertCircle,
+  Bell,
   Calendar,
+  CheckCircle2,
   Clock,
   Edit3,
   Eye,
-  FileText,
+  FileQuestion,
   Loader2,
   Plus,
   RefreshCw,
+  RotateCcw,
   Search,
+  Shuffle,
   Target,
   Trash2,
   Trophy,
-  Zap,
 } from "lucide-react";
 import { useState } from "react";
-import { useDraftChallenges } from "../useDraftChallenges";
+import { useDraftQuizzes } from "../useDraftQuizzes";
 
-interface DraftChallenge {
+interface DraftQuiz {
   id: string;
   title: string;
-  shortDescription: string;
-  difficulty: "Easy" | "Medium" | "Hard";
-  rewardPoints: number;
-  estimatedTime: number;
-  tags: string[];
-  testCases: number;
+  description: string;
+  dueDate: string;
+  timeLimit: number;
+  totalPoints: number;
+  totalQuestions: number;
   createdAt: string;
   lastModified: string;
+  allowMultipleAttempts: boolean;
+  sendNotifications: boolean;
+  showResultsImmediately: boolean;
+  randomizeQuestions: boolean;
+  instructions: string[];
 }
 
-interface DraftChallengesProps {
-  onEditChallenge?: (challengeId: string) => void;
+interface DraftQuizzesProps {
+  onEditQuiz?: (quizId: string) => void;
   onCreateNew?: () => void;
 }
 
-export default function DraftChallenges({
-  onEditChallenge,
+export default function DraftQuizzes({
+  onEditQuiz,
   onCreateNew,
-}: DraftChallengesProps) {
+}: DraftQuizzesProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [difficultyFilter, setDifficultyFilter] = useState<string>("all");
+  const [timeFilter, setTimeFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("recent");
 
-  // Uses custom hook for enhanced to fetch challenges saved as drafts
-  const {
-    draftChallenges,
-    loading,
-    error,
-    deletingIds,
-    refetch,
-    deleteChallenge,
-  } = useDraftChallenges();
+  // Uses custom hook to fetch quizzes saved as drafts
+  const { draftQuizzes, loading, error, deletingIds, refetch, deleteQuiz } =
+    useDraftQuizzes();
 
-  // Get challenge icon and styling based on difficulty
-  const getChallengeStyle = (difficulty: string) => {
-    switch (difficulty) {
-      case "Easy":
-        return {
-          icon: Target,
-          gradient: "from-green-500 to-emerald-600",
-          bgGradient: "from-green-50/50 to-emerald-50/50",
-          borderColor: "border-green-200/50",
-          badgeColor: "bg-emerald-100 text-emerald-700 border-emerald-200",
-        };
-      case "Medium":
-        return {
-          icon: Zap,
-          gradient: "from-orange-500 to-yellow-600",
-          bgGradient: "from-orange-50/50 to-yellow-50/50",
-          borderColor: "border-orange-200/50",
-          badgeColor: "bg-orange-100 text-orange-700 border-orange-200",
-        };
-      case "Hard":
-        return {
-          icon: AlertCircle,
-          gradient: "from-red-500 to-pink-600",
-          bgGradient: "from-red-50/50 to-pink-50/50",
-          borderColor: "border-red-200/50",
-          badgeColor: "bg-red-100 text-red-700 border-red-200",
-        };
-      default:
-        return {
-          icon: Target,
-          gradient: "from-cyan-500 to-blue-600",
-          bgGradient: "from-cyan-50/50 to-blue-50/50",
-          borderColor: "border-cyan-200/50",
-          badgeColor: "bg-cyan-100 text-cyan-700 border-cyan-200",
-        };
+  // Get quiz icon and styling based on time limit
+  const getQuizStyle = (timeLimit: number) => {
+    if (timeLimit <= 20) {
+      return {
+        icon: Target,
+        gradient: "from-green-500 to-emerald-600",
+        bgGradient: "from-green-50/50 to-emerald-50/50",
+        borderColor: "border-green-200/50",
+        badgeColor: "bg-emerald-100 text-emerald-700 border-emerald-200",
+        label: "Quick",
+      };
+    } else if (timeLimit <= 45) {
+      return {
+        icon: Clock,
+        gradient: "from-blue-500 to-cyan-600",
+        bgGradient: "from-blue-50/50 to-cyan-50/50",
+        borderColor: "border-blue-200/50",
+        badgeColor: "bg-blue-100 text-blue-700 border-blue-200",
+        label: "Standard",
+      };
+    } else {
+      return {
+        icon: AlertCircle,
+        gradient: "from-purple-500 to-indigo-600",
+        bgGradient: "from-purple-50/50 to-indigo-50/50",
+        borderColor: "border-purple-200/50",
+        badgeColor: "bg-purple-100 text-purple-700 border-purple-200",
+        label: "Extended",
+      };
     }
   };
 
-  // Get tag styling with proper hover colors
-  const getTagStyle = (index: number) => {
+  // Get feature badge styling
+  const getFeatureBadge = (index: number) => {
     const colors = [
-      "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 hover:text-blue-800",
-      "bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100 hover:text-purple-800",
-      "bg-green-50 text-green-700 border-green-200 hover:bg-green-100 hover:text-green-800",
-      "bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100 hover:text-orange-800",
-      "bg-pink-50 text-pink-700 border-pink-200 hover:bg-pink-100 hover:text-pink-800",
-      "bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100 hover:text-indigo-800",
+      "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100",
+      "bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100",
+      "bg-green-50 text-green-700 border-green-200 hover:bg-green-100",
+      "bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100",
     ];
     return colors[index % colors.length];
   };
 
-  // Filter and sort challenges
-  const filteredChallenges = draftChallenges
-    .filter((challenge) => {
+  // Filter and sort quizzes
+  const filteredQuizzes = draftQuizzes
+    .filter((quiz) => {
       const matchesSearch =
-        challenge.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        challenge.shortDescription
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase()) ||
-        challenge.tags.some((tag) =>
-          tag.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-      const matchesDifficulty =
-        difficultyFilter === "all" ||
-        challenge.difficulty.toLowerCase() === difficultyFilter;
-      return matchesSearch && matchesDifficulty;
+        quiz.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        quiz.description.toLowerCase().includes(searchQuery.toLowerCase());
+
+      const matchesTime =
+        timeFilter === "all" ||
+        (timeFilter === "quick" && quiz.timeLimit <= 20) ||
+        (timeFilter === "standard" &&
+          quiz.timeLimit > 20 &&
+          quiz.timeLimit <= 45) ||
+        (timeFilter === "extended" && quiz.timeLimit > 45);
+
+      return matchesSearch && matchesTime;
     })
     .sort((a, b) => {
       switch (sortBy) {
@@ -142,19 +136,20 @@ export default function DraftChallenges({
           );
         case "title":
           return a.title.localeCompare(b.title);
-        case "difficulty":
-          const difficultyOrder = { Easy: 1, Medium: 2, Hard: 3 };
-          return difficultyOrder[a.difficulty] - difficultyOrder[b.difficulty];
+        case "time":
+          return a.timeLimit - b.timeLimit;
         case "points":
-          return b.rewardPoints - a.rewardPoints;
+          return b.totalPoints - a.totalPoints;
+        case "questions":
+          return b.totalQuestions - a.totalQuestions;
         default:
           return 0;
       }
     });
 
-  const handleEditChallenge = (challenge: DraftChallenge) => {
-    if (onEditChallenge) {
-      onEditChallenge(challenge.id);
+  const handleEditQuiz = (quiz: DraftQuiz) => {
+    if (onEditQuiz) {
+      onEditQuiz(quiz.id);
     }
   };
 
@@ -164,30 +159,27 @@ export default function DraftChallenges({
     }
   };
 
-  // Handle delete challenge with confirmation
-  const handleDeleteChallenge = async (
-    challenge: DraftChallenge,
-    event: React.MouseEvent
-  ) => {
+  // Handle delete quiz with confirmation
+  const handleDeleteQuiz = async (quiz: DraftQuiz, event: React.MouseEvent) => {
     // Prevent event bubbling to avoid triggering card click events
     event.stopPropagation();
 
-    const confirmMessage = `Are you sure you want to delete "${challenge.title}"?\n\nThis action cannot be undone and will permanently remove the draft challenge from your account.`;
+    const confirmMessage = `Are you sure you want to delete "${quiz.title}"?\n\nThis action cannot be undone and will permanently remove the draft quiz from your account.`;
 
     if (!window.confirm(confirmMessage)) {
       return;
     }
-    const success = await deleteChallenge(challenge.id);
+    const success = await deleteQuiz(quiz.id);
   };
 
-  // Loading state - for when drafts are being fectched from the backend -  and still laoding
+  // Loading state
   if (loading) {
     return (
       <div className="flex-1 bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30 min-h-screen flex items-center justify-center">
         <div className="text-center space-y-4">
           <RefreshCw className="w-12 h-12 text-cyan-500 animate-spin mx-auto" />
           <div className="text-xl font-semibold text-gray-700">
-            Loading Draft Challenges...
+            Loading Draft Quizzes...
           </div>
           <div className="text-sm text-gray-500">
             Fetching your latest drafts
@@ -206,7 +198,7 @@ export default function DraftChallenges({
           <div className="text-xl font-semibold text-gray-700">
             {error.includes("delete")
               ? "Delete Error"
-              : "Failed to Load Draft Challenges"}
+              : "Failed to Load Draft Quizzes"}
           </div>
           <div className="text-sm text-gray-500">{error}</div>
           <Button onClick={refetch} className="mt-4">
@@ -232,15 +224,15 @@ export default function DraftChallenges({
         {/* Header Section */}
         <div className="space-y-3">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 via-cyan-600 to-emerald-600 bg-clip-text text-transparent flex items-center gap-3">
-            Draft Challenges
-            <FileText className="w-8 h-8 text-cyan-500 animate-pulse" />
+            Draft Quizzes
+            <FileQuestion className="w-8 h-8 text-cyan-500 animate-pulse" />
           </h1>
           <p className="text-lg text-gray-600">
-            Manage and edit your challenge drafts before publishing
+            Manage and edit your quiz drafts before publishing
           </p>
         </div>
 
-        {/* Create New Challenge Button */}
+        {/* Create New Quiz Button */}
         <Card
           className="bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-600 border-0 shadow-xl hover:shadow-2xl transition-all duration-300 transform-gpu hover:scale-[1.01] cursor-pointer group overflow-hidden"
           onClick={handleCreateNew}
@@ -254,10 +246,10 @@ export default function DraftChallenges({
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-white mb-1">
-                    Create New Challenge
+                    Create New Quiz
                   </h2>
                   <p className="text-white/80 text-base">
-                    Start drafting a new coding challenge
+                    Start drafting a new quiz assessment
                   </p>
                 </div>
               </div>
@@ -284,12 +276,12 @@ export default function DraftChallenges({
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-gray-700">
-                  Search Challenges
+                  Search Quizzes
                 </label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <Input
-                    placeholder="Search by title, description, or tags..."
+                    placeholder="Search by title or description..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10 bg-white/70 border-gray-300/50 text-gray-900 placeholder-gray-500 focus:border-cyan-400 focus:ring-cyan-400/30 focus:ring-2 backdrop-blur-sm shadow-sm"
@@ -299,20 +291,21 @@ export default function DraftChallenges({
 
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-gray-700">
-                  Difficulty
+                  Time Limit
                 </label>
-                <Select
-                  value={difficultyFilter}
-                  onValueChange={setDifficultyFilter}
-                >
+                <Select value={timeFilter} onValueChange={setTimeFilter}>
                   <SelectTrigger className="bg-white/70 border-gray-300/50 text-gray-900 focus:border-cyan-400 focus:ring-cyan-400/30 backdrop-blur-sm shadow-sm">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-white/95 backdrop-blur-xl border-gray-200/50 shadow-xl">
-                    <SelectItem value="all">All Difficulties</SelectItem>
-                    <SelectItem value="easy">Easy</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="hard">Hard</SelectItem>
+                    <SelectItem value="all">All Time Limits</SelectItem>
+                    <SelectItem value="quick">Quick (≤20 min)</SelectItem>
+                    <SelectItem value="standard">
+                      Standard (21-45 min)
+                    </SelectItem>
+                    <SelectItem value="extended">
+                      Extended (&gt;45 min)
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -328,8 +321,9 @@ export default function DraftChallenges({
                   <SelectContent className="bg-white/95 backdrop-blur-xl border-gray-200/50 shadow-xl">
                     <SelectItem value="recent">Recently Modified</SelectItem>
                     <SelectItem value="title">Title (A-Z)</SelectItem>
-                    <SelectItem value="difficulty">Difficulty</SelectItem>
-                    <SelectItem value="points">Reward Points</SelectItem>
+                    <SelectItem value="time">Time Limit</SelectItem>
+                    <SelectItem value="points">Total Points</SelectItem>
+                    <SelectItem value="questions">Question Count</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -340,25 +334,36 @@ export default function DraftChallenges({
                 </label>
                 <div className="h-10 px-3 py-2 bg-gradient-to-r from-cyan-50 to-purple-50 border border-cyan-200/50 rounded-md flex items-center">
                   <span className="text-lg font-bold bg-gradient-to-r from-cyan-600 to-purple-600 bg-clip-text text-transparent">
-                    {filteredChallenges.length}
+                    {filteredQuizzes.length}
                   </span>
-                  <span className="text-sm text-gray-600 ml-2">challenges</span>
+                  <span className="text-sm text-gray-600 ml-2">quizzes</span>
                 </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Draft Challenges Grid */}
+        {/* Draft Quizzes Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {filteredChallenges.map((challenge) => {
-            const style = getChallengeStyle(challenge.difficulty);
+          {filteredQuizzes.map((quiz) => {
+            const style = getQuizStyle(quiz.timeLimit);
             const IconComponent = style.icon;
-            const isDeleting = deletingIds.has(challenge.id);
+            const isDeleting = deletingIds.has(quiz.id);
+
+            // Get quiz features for display
+            const features = [];
+            if (quiz.allowMultipleAttempts)
+              features.push({ icon: RotateCcw, text: "Multiple attempts" });
+            if (quiz.randomizeQuestions)
+              features.push({ icon: Shuffle, text: "Randomized" });
+            if (quiz.showResultsImmediately)
+              features.push({ icon: CheckCircle2, text: "Instant results" });
+            if (quiz.sendNotifications)
+              features.push({ icon: Bell, text: "Notifications" });
 
             return (
               <Card
-                key={challenge.id}
+                key={quiz.id}
                 className={`bg-gradient-to-r ${style.bgGradient} border ${
                   style.borderColor
                 } shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-[1.02] hover:-translate-y-1 relative overflow-hidden group cursor-pointer ${
@@ -372,7 +377,7 @@ export default function DraftChallenges({
                   <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-20">
                     <div className="flex items-center gap-3 text-gray-700">
                       <Loader2 className="w-6 h-6 animate-spin" />
-                      <span className="font-medium">Deleting challenge...</span>
+                      <span className="font-medium">Deleting quiz...</span>
                     </div>
                   </div>
                 )}
@@ -387,13 +392,13 @@ export default function DraftChallenges({
                       </div>
                       <div className="flex-1">
                         <CardTitle className="text-lg font-bold text-gray-900 group-hover:text-cyan-700 transition-colors duration-200 mb-2">
-                          {challenge.title}
+                          {quiz.title}
                         </CardTitle>
                         <div className="flex flex-wrap gap-2">
                           <Badge
                             className={`font-medium text-xs ${style.badgeColor} hover:scale-105 transition-transform duration-200`}
                           >
-                            {challenge.difficulty}
+                            {style.label}
                           </Badge>
                           <Badge className="bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-200 hover:text-purple-800 font-medium text-xs hover:scale-105 transition-all duration-200">
                             Draft
@@ -406,66 +411,79 @@ export default function DraftChallenges({
 
                 <CardContent className="p-6 relative z-10">
                   <div className="space-y-4">
-                    <p className="text-gray-700 text-sm leading-relaxed">
-                      {challenge.shortDescription}
+                    <p className="text-gray-700 text-sm leading-relaxed line-clamp-2">
+                      {quiz.description}
                     </p>
 
-                    <div className="grid grid-cols-1 gap-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Trophy className="w-4 h-4 text-orange-500" />
-                          <span className="text-sm font-medium text-gray-700">
-                            {challenge.rewardPoints} points
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Clock className="w-4 h-4 text-blue-500" />
-                          <span className="text-sm font-medium text-gray-700">
-                            {challenge.estimatedTime} min
-                          </span>
-                        </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex items-center gap-2">
+                        <Trophy className="w-4 h-4 text-orange-500" />
+                        <span className="text-sm font-medium text-gray-700">
+                          {quiz.totalPoints} points
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-green-500" />
+                        <Clock className="w-4 h-4 text-blue-500" />
                         <span className="text-sm font-medium text-gray-700">
-                          Modified:{" "}
-                          {new Date(
-                            challenge.lastModified
-                          ).toLocaleDateString()}
+                          {quiz.timeLimit} min
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <FileQuestion className="w-4 h-4 text-green-500" />
+                        <span className="text-sm font-medium text-gray-700">
+                          {quiz.totalQuestions} questions
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-purple-500" />
+                        <span className="text-sm font-medium text-gray-700">
+                          Due: {new Date(quiz.dueDate).toLocaleDateString()}
                         </span>
                       </div>
                     </div>
 
-                    <div className="flex flex-wrap gap-1">
-                      {challenge.tags.slice(0, 3).map((tag, index) => (
-                        <Badge
-                          key={tag}
-                          variant="outline"
-                          className={`text-xs transition-all duration-200 hover:scale-105 ${getTagStyle(
-                            index
-                          )}`}
-                        >
-                          {tag}
-                        </Badge>
-                      ))}
-                      {challenge.tags.length > 3 && (
-                        <Badge
-                          variant="outline"
-                          className="text-xs bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 hover:text-gray-700 transition-all duration-200"
-                        >
-                          +{challenge.tags.length - 3} more
-                        </Badge>
-                      )}
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-green-500" />
+                      <span className="text-sm font-medium text-gray-700">
+                        Modified:{" "}
+                        {new Date(quiz.lastModified).toLocaleDateString()}
+                      </span>
                     </div>
+
+                    {/* Quiz Features */}
+                    {features.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {features.slice(0, 3).map((feature, index) => (
+                          <Badge
+                            key={index}
+                            variant="outline"
+                            className={`text-xs transition-all duration-200 hover:scale-105 ${getFeatureBadge(
+                              index
+                            )} flex items-center gap-1`}
+                          >
+                            <feature.icon className="w-3 h-3" />
+                            {feature.text}
+                          </Badge>
+                        ))}
+                        {features.length > 3 && (
+                          <Badge
+                            variant="outline"
+                            className="text-xs bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 hover:text-gray-700 transition-all duration-200"
+                          >
+                            +{features.length - 3} more
+                          </Badge>
+                        )}
+                      </div>
+                    )}
 
                     <div className="flex gap-3 pt-2">
                       <Button
-                        onClick={() => handleEditChallenge(challenge)}
+                        onClick={() => handleEditQuiz(quiz)}
                         className={`flex-1 bg-gradient-to-r ${style.gradient} hover:shadow-lg text-white rounded-lg hover:scale-105 transition-all duration-300 font-medium`}
                         disabled={isDeleting}
                       >
                         <Edit3 className="w-4 h-4 mr-2" />
-                        Edit Challenge
+                        Edit Quiz
                       </Button>
                       <Button
                         variant="outline"
@@ -478,10 +496,10 @@ export default function DraftChallenges({
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={(e) => handleDeleteChallenge(challenge, e)}
+                        onClick={(e) => handleDeleteQuiz(quiz, e)}
                         className="border-red-200 text-red-700 hover:bg-red-50 bg-white/80 rounded-lg hover:scale-105 transition-all duration-300 shadow-sm disabled:opacity-50"
                         disabled={isDeleting}
-                        title="Delete this draft challenge"
+                        title="Delete this draft quiz"
                       >
                         {isDeleting ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
@@ -498,26 +516,26 @@ export default function DraftChallenges({
         </div>
 
         {/* Empty State */}
-        {filteredChallenges.length === 0 && (
+        {filteredQuizzes.length === 0 && (
           <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-xl relative overflow-hidden">
             <CardContent className="p-12 text-center">
               <div className="w-20 h-20 bg-gradient-to-r from-gray-400 to-gray-600 rounded-full flex items-center justify-center mx-auto mb-6 opacity-50">
-                <FileText className="w-10 h-10 text-white" />
+                <FileQuestion className="w-10 h-10 text-white" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                No Draft Challenges Found
+                No Draft Quizzes Found
               </h3>
               <p className="text-gray-600 mb-6">
-                {searchQuery || difficultyFilter !== "all"
+                {searchQuery || timeFilter !== "all"
                   ? "Try adjusting your search criteria or filters."
-                  : "You haven't created any draft challenges yet. Start by creating your first challenge!"}
+                  : "You haven't created any draft quizzes yet. Start by creating your first quiz!"}
               </p>
               <Button
                 onClick={handleCreateNew}
                 className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg px-6 py-3 font-medium hover:scale-105"
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Create New Challenge
+                Create New Quiz
               </Button>
             </CardContent>
           </Card>

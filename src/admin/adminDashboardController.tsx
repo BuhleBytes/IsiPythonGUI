@@ -3,86 +3,102 @@ import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { loadState, saveCurrentRoute, saveCurrentView } from "../utils/storage";
 import CreateChallenge from "./Dashboard Light Mode/createChallenge";
+import CreateQuiz from "./Dashboard Light Mode/createQuiz";
 import DraftChallenges from "./Dashboard Light Mode/draftChallenges";
+import DraftQuizzes from "./Dashboard Light Mode/draftQuizzes";
 import EditChallenge from "./Dashboard Light Mode/editChallenge";
 import AdminDashboard from "./Dashboard Light Mode/homeDashboard";
 import PublishedChallenges from "./Dashboard Light Mode/publishedChallenges";
 import { AdminSidebar } from "./Dashboard Light Mode/sidebar";
 import ViewChallenge from "./Dashboard Light Mode/viewChallenge";
+
 export default function AdminDashboardController() {
   const location = useLocation();
 
+  // Sidebar toggle state
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Determine initial active view from URL state, saved state, or default
   const [activeView, setActiveView] = useState(() => {
     const urlActiveView = location.state?.activeView;
     if (urlActiveView) return urlActiveView;
 
-    // Check if there's a saved view from previous session (for browser refresh)
+    // Check for saved view from previous session (handles browser refresh)
     const savedState = loadState();
     if (savedState.currentView) {
       return savedState.currentView;
     }
 
-    // Default to "dashboard" for admin (home view)
+    // Default to dashboard home view
     return "dashboard";
   });
 
-  // Add state for storing edit challenge ID
+  // Track which challenge is being edited
   const [editChallengeId, setEditChallengeId] = useState<string>("");
 
-  // Add state for storing view challenge ID
+  // Track which quiz is being edited
+  const [editQuizId, setEditQuizId] = useState<string>("");
+
+  // Track which challenge is being viewed
   const [viewChallengeId, setViewChallengeId] = useState<string>("");
 
-  // Save current route when component mounts or location changes
+  // Persist current route for session management
   useEffect(() => {
     saveCurrentRoute(location.pathname);
   }, [location.pathname]);
 
-  // Save current view whenever it changes
+  // Persist current view for session management
   useEffect(() => {
     saveCurrentView(activeView);
   }, [activeView]);
 
+  // Toggle sidebar open/closed state
   const handleToggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
 
+  // Main view switching logic with data passing
   const handleViewChange = (view: string, data = null) => {
-    // Change the view without navigation
     setActiveView(view);
 
-    // Handle data passing for edit challenge
+    // Handle challenge editing - store challenge ID and clear when leaving
     if (view === "edit" && data?.challengeId) {
       setEditChallengeId(data.challengeId);
-      console.log("Switching to edit view for challenge:", data.challengeId);
     } else if (view !== "edit") {
-      setEditChallengeId(""); // Clear when leaving edit view
+      setEditChallengeId("");
     }
 
-    // Handle data passing for view challenge
+    // Handle quiz editing - store quiz ID and clear when leaving
+    if (view === "edit-quiz" && data?.quizId) {
+      setEditQuizId(data.quizId);
+    } else if (view !== "edit-quiz") {
+      setEditQuizId("");
+    }
+
+    // Handle challenge viewing - store challenge ID and clear when leaving
     if (view === "view" && data?.challengeId) {
       setViewChallengeId(data.challengeId);
-      console.log("Switching to view challenge for ID:", data.challengeId);
     } else if (view !== "view") {
-      setViewChallengeId(""); // Clear when leaving view
-    }
-
-    // Handle any other data passing if needed for future components
-    if (data) {
-      console.log("View data:", data);
+      setViewChallengeId("");
     }
   };
 
+  // Navigation handler: return to draft challenges list
   const handleBackToList = () => {
-    // Go back to drafts view when editing is done
     handleViewChange("drafts");
   };
 
+  // Navigation handler: return to draft quizzes list
+  const handleBackToQuizDrafts = () => {
+    handleViewChange("draft-quizzes");
+  };
+
+  // Navigation handler: return to published challenges list
   const handleBackToPublishedList = () => {
-    // Go back to published challenges view when viewing is done
     handleViewChange("published");
   };
 
+  // Main content renderer based on active view
   const renderMainContent = () => {
     switch (activeView) {
       case "dashboard":
@@ -95,6 +111,8 @@ export default function AdminDashboardController() {
         );
       case "create":
         return <CreateChallenge />;
+      case "create-quiz":
+        return <CreateQuiz />;
       case "drafts":
         return (
           <DraftChallenges
@@ -104,14 +122,17 @@ export default function AdminDashboardController() {
             onCreateNew={() => handleViewChange("create")}
           />
         );
+      case "draft-quizzes":
+        return (
+          <DraftQuizzes onCreateNew={() => handleViewChange("create-quiz")} />
+        );
       case "edit":
         return (
           <EditChallenge
             challengeId={editChallengeId}
             onBackToList={handleBackToList}
             onSave={(updatedChallenge) => {
-              console.log("Challenge saved:", updatedChallenge);
-              // Optionally go back to drafts after saving
+              // Return to drafts list after successful save
               handleViewChange("drafts");
             }}
           />
@@ -146,7 +167,9 @@ export default function AdminDashboardController() {
             <p>Admin Settings component will be implemented here</p>
           </div>
         );
+
       default:
+        // Fallback to dashboard for any unrecognized views
         return (
           <AdminDashboard
             sidebarOpen={sidebarOpen}
@@ -159,12 +182,15 @@ export default function AdminDashboardController() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
+      {/* Sidebar navigation */}
       <AdminSidebar
         isCollapsed={!sidebarOpen}
         onToggle={handleToggleSidebar}
         activeView={activeView}
         onViewChange={handleViewChange}
       />
+
+      {/* Main content area with responsive margin based on sidebar state */}
       <div
         className={`flex-1 flex flex-col overflow-hidden transition-all duration-300 ${
           sidebarOpen ? "ml-64" : "ml-16"

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 
+// API response structure for individual challenges
 interface ApiChallenge {
   id: string;
   title: string;
@@ -22,6 +23,7 @@ interface ApiChallenge {
   };
 }
 
+// Transformed challenge data structure for frontend use
 interface PublishedChallenge {
   id: string;
   title: string;
@@ -44,6 +46,7 @@ interface PublishedChallenge {
   };
 }
 
+// API response wrapper for challenges list
 interface ApiResponse {
   data: ApiChallenge[];
   total_count: number;
@@ -56,12 +59,14 @@ interface ApiResponse {
   };
 }
 
+// Response structure for delete operations
 interface DeleteResponse {
   success: boolean;
   message?: string;
   error?: string;
 }
 
+// Hook return type definition
 interface UsePublishedChallengesReturn {
   publishedChallenges: PublishedChallenge[];
   loading: boolean;
@@ -79,6 +84,7 @@ export const usePublishedChallenges = (): UsePublishedChallengesReturn => {
   const [error, setError] = useState<string | null>(null);
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
 
+  // Converts API challenge format to frontend-friendly format
   const transformApiChallengeToLocal = (
     apiChallenge: ApiChallenge
   ): PublishedChallenge => {
@@ -91,7 +97,9 @@ export const usePublishedChallenges = (): UsePublishedChallengesReturn => {
       rewardPoints: apiChallenge.reward_points,
       estimatedTime: apiChallenge.estimated_time || 30,
       tags: apiChallenge.tags || [],
-      testCases: Math.floor(Math.random() * 5) + 2, // Mock test cases count
+      // Generate mock test cases count (2-6 cases) - TODO: get from API
+      testCases: Math.floor(Math.random() * 5) + 2,
+      // Extract date portion only for display
       createdAt: apiChallenge.created_at.split("T")[0],
       lastModified: apiChallenge.updated_at.split("T")[0],
       publishedAt:
@@ -108,61 +116,49 @@ export const usePublishedChallenges = (): UsePublishedChallengesReturn => {
     };
   };
 
+  // Fetches all challenges and filters for published ones
   const fetchPublishedChallenges = async () => {
     setLoading(true);
     setError(null);
 
     try {
-      console.log("🚀 Fetching published challenges from API...");
-
       const apiBaseUrl = "https://isipython-dev.onrender.com";
       const response = await fetch(
         `${apiBaseUrl}/api/admin/challenges?order_by=created_at&order_direction=desc`
       );
 
-      console.log("🔥 API Response status:", response.status);
-
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("❌ API Error:", errorText);
         throw new Error(
           `Failed to fetch challenges: ${response.status} ${response.statusText}`
         );
       }
 
       const data: ApiResponse = await response.json();
-      console.log("✅ API Response data:", data);
 
+      // Filter for published challenges only and transform to local format
       const published = data.data
         .filter((challenge) => challenge.status === "published")
         .map(transformApiChallengeToLocal);
 
-      console.log(
-        `📋 Found ${published.length} published challenges:`,
-        published
-      );
       setPublishedChallenges(published);
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Unknown error occurred";
-      console.error("💥 Error fetching published challenges:", errorMessage);
       setError(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
+  // Deletes a challenge and updates local state optimistically
   const deleteChallenge = async (challengeId: string): Promise<boolean> => {
-    console.log("🗑️ Attempting to delete published challenge:", challengeId);
-
-    // Add to deleting set
+    // Track deletion state for UI feedback
     setDeletingIds((prev) => new Set([...prev, challengeId]));
 
     try {
       const apiBaseUrl = "https://isipython-dev.onrender.com";
       const deleteUrl = `${apiBaseUrl}/api/admin/challenges/${challengeId}`;
-
-      console.log("🌍 DELETE request to:", deleteUrl);
 
       const response = await fetch(deleteUrl, {
         method: "DELETE",
@@ -171,16 +167,13 @@ export const usePublishedChallenges = (): UsePublishedChallengesReturn => {
         },
       });
 
-      console.log("🔥 Delete response status:", response.status);
-
       if (!response.ok) {
         let errorMessage = `HTTP ${response.status} ${response.statusText}`;
 
         try {
           const errorText = await response.text();
-          console.error("❌ Delete error response:", errorText);
 
-          // Try to parse error response
+          // Try to parse structured error response
           try {
             const errorData = JSON.parse(errorText);
             if (errorData.error) {
@@ -189,19 +182,19 @@ export const usePublishedChallenges = (): UsePublishedChallengesReturn => {
               errorMessage = errorData.message;
             }
           } catch {
-            // If not JSON, use the text as error message
+            // Use raw text if not JSON
             if (errorText) {
               errorMessage = errorText;
             }
           }
         } catch {
-          // If we can't read the response, use the status text
+          // Use status text if can't read response
         }
 
         throw new Error(`Failed to delete challenge: ${errorMessage}`);
       }
 
-      // Parse response if it exists
+      // Parse response if it exists (DELETE responses may be empty)
       let responseData: DeleteResponse = { success: true };
       try {
         const responseText = await response.text();
@@ -209,35 +202,27 @@ export const usePublishedChallenges = (): UsePublishedChallengesReturn => {
           responseData = JSON.parse(responseText);
         }
       } catch {
-        // Response might be empty, which is fine for DELETE
-        console.log(
-          "ℹ️ Empty or non-JSON response from delete API (this is normal)"
-        );
+        // Empty response is fine for DELETE operations
       }
 
-      console.log("✅ Delete response:", responseData);
-
-      // Remove the challenge from local state immediately for better UX
+      // Update local state immediately for better UX
       setPublishedChallenges((prev) =>
         prev.filter((challenge) => challenge.id !== challengeId)
       );
 
-      console.log("🎉 Published challenge deleted successfully:", challengeId);
       return true;
     } catch (error) {
-      console.error("💥 Error deleting published challenge:", error);
-
-      // Set a temporary error state that will be cleared
+      // Show error temporarily, then auto-clear
       const errorMessage =
         error instanceof Error ? error.message : "Failed to delete challenge";
       setError(errorMessage);
 
-      // Clear error after 5 seconds
+      // Auto-clear error after 5 seconds
       setTimeout(() => setError(null), 5000);
 
       return false;
     } finally {
-      // Remove from deleting set
+      // Remove from deleting state regardless of outcome
       setDeletingIds((prev) => {
         const newSet = new Set(prev);
         newSet.delete(challengeId);
@@ -246,11 +231,12 @@ export const usePublishedChallenges = (): UsePublishedChallengesReturn => {
     }
   };
 
+  // Manually triggers a refetch of challenges data
   const refetch = () => {
-    console.log("🔄 Refetching published challenges...");
     fetchPublishedChallenges();
   };
 
+  // Fetch challenges on component mount
   useEffect(() => {
     fetchPublishedChallenges();
   }, []);

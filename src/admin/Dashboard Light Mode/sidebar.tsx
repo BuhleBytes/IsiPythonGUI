@@ -2,14 +2,12 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
-  BarChart3,
   Code2,
   FileText,
   Globe,
   LayoutDashboard,
   Menu,
   Plus,
-  Settings,
   Sparkles,
   X,
 } from "lucide-react";
@@ -26,24 +24,24 @@ const menuItems = [
     icon: Plus,
   },
   {
-    title: "Draft Challenges",
+    title: "Create Quiz",
+    key: "create-quiz",
+    icon: Plus,
+  },
+  {
+    title: "Drafted Challenges",
     key: "drafts",
+    icon: FileText,
+  },
+  {
+    title: "Drafted Quizzes",
+    key: "draft-quizzes",
     icon: FileText,
   },
   {
     title: "Published Challenges",
     key: "published",
     icon: Globe,
-  },
-  {
-    title: "Analytics",
-    key: "analytics",
-    icon: BarChart3,
-  },
-  {
-    title: "Settings",
-    key: "settings",
-    icon: Settings,
   },
 ];
 
