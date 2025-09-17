@@ -307,7 +307,7 @@ export function QuizzesLight() {
             <SelectContent className="bg-white/90 backdrop-blur-xl border-white/30">
               {categories.map((category) => (
                 <SelectItem key={category} value={category}>
-                  {category}
+                  {t(category)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -318,7 +318,7 @@ export function QuizzesLight() {
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent className="bg-white/90 backdrop-blur-xl border-white/30">
-              <SelectItem value="All">All</SelectItem>
+              <SelectItem value="All">{t("All")}</SelectItem>
               <SelectItem value="available">{t("Available")}</SelectItem>
               <SelectItem value="completed">{t("Completed")}</SelectItem>
               <SelectItem value="overdue">{t("Overdue")}</SelectItem>

@@ -35,15 +35,15 @@ import { registerIsiPython } from "../../languages/isiPython";
 import { useUser } from "../../useUser";
 import { useUserChallenges } from "../../useUserChallenges";
 
-// Default starter code if none provided
-const defaultStarterCode = `# Write your code here`;
-
 export function ChallengeSolverLight() {
   const { id: challengeId } = useParams();
   const { userId } = useUser();
   const { getChallengeDetails } = useUserChallenges();
   const navigate = useNavigate();
   const { t } = useTranslation();
+
+  // Default starter code if none provided
+  const defaultStarterCode = `${t("# Write your code here")}`;
 
   // Challenge data state
   const [challenge, setChallenge] = useState(null);
@@ -403,7 +403,7 @@ export function ChallengeSolverLight() {
         const totalPassedTests = result.tests_passed || passedCount;
         const totalTests = result.tests_total || totalCount;
 
-        let outputSummary = `✨ Iziphumo zowavano:\n\n`;
+        let outputSummary = `✨ Iziphumo zovavanyo:\n\n`;
 
         // Display visible test results
         transformedResults.forEach((test, index) => {
@@ -427,7 +427,7 @@ export function ChallengeSolverLight() {
         });
 
         outputSummary += `📊 Isishwankathelo:\n`;
-        outputSummary += `${totalPassedTests}/${totalTests} izivivinyo ziphumelele\n`;
+        outputSummary += `${totalPassedTests}/${totalTests} izivavanyo ziphumelele\n`;
 
         // Add hidden test statistics
         if (hiddenStats.total > 0) {
@@ -827,8 +827,7 @@ export function ChallengeSolverLight() {
                           </h3>
                           <div className="flex items-center gap-3">
                             <Badge className="bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-800">
-                              {submissions.length} {t("submission")}
-                              {submissions.length !== 1 ? "s" : ""}
+                              {submissions.length} {t("submission(s)")}
                             </Badge>
                             <Button
                               onClick={fetchSubmissions}
@@ -904,7 +903,7 @@ export function ChallengeSolverLight() {
                                   </span>
                                   <p className="font-medium">
                                     {submission.passedTests}/
-                                    {submission.totalTests} {t("passed")}
+                                    {submission.totalTests} {t("tests passed")}
                                   </p>
                                 </div>
                                 <div>
@@ -1133,14 +1132,14 @@ export function ChallengeSolverLight() {
                             <>
                               <CheckCircle className="w-5 h-5 text-green-600" />
                               <span className="text-xs font-medium text-green-700 bg-green-100/70 px-2 py-1 rounded-full">
-                                SSEDPA
+                                {t("PASSED")}
                               </span>
                             </>
                           ) : (
                             <>
                               <AlertCircle className="w-5 h-5 text-red-600" />
                               <span className="text-xs font-medium text-red-700 bg-red-100/70 px-2 py-1 rounded-full">
-                                FAILED
+                                {t("FAILED")}
                               </span>
                             </>
                           )}
@@ -1170,7 +1169,7 @@ export function ChallengeSolverLight() {
                         {result.input && (
                           <div>
                             <div className="text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wide">
-                              Input
+                              {t("Input")}
                             </div>
                             <div className="bg-white/80 backdrop-blur-sm rounded-lg border border-gray-200/50 shadow-sm">
                               <code className="block text-cyan-700 font-mono text-xs p-3 whitespace-pre-line leading-relaxed">
@@ -1186,7 +1185,7 @@ export function ChallengeSolverLight() {
                             {/* Expected Output */}
                             <div className="space-y-2">
                               <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                                Expected Output
+                                {t("Expected Output")}
                               </div>
                               <div className="bg-white/80 backdrop-blur-sm rounded-lg border border-green-200/50 shadow-sm min-h-[60px] flex items-start">
                                 <code className="block text-green-700 font-mono text-xs p-3 whitespace-pre-line leading-relaxed w-full">
@@ -1198,7 +1197,7 @@ export function ChallengeSolverLight() {
                             {/* Your Output */}
                             <div className="space-y-2">
                               <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
-                                Your Output
+                                {t("Your Output")}
                               </div>
                               <div
                                 className={`bg-white/80 backdrop-blur-sm rounded-lg border shadow-sm min-h-[60px] flex items-start ${
@@ -1214,7 +1213,7 @@ export function ChallengeSolverLight() {
                                       : "text-red-700"
                                   }`}
                                 >
-                                  {result.actualOutput || "No output"}
+                                  {result.actualOutput || t("No output")}
                                 </code>
                               </div>
                             </div>
@@ -1225,7 +1224,7 @@ export function ChallengeSolverLight() {
                         {result.explanation && (
                           <div className="mt-4 pt-3 border-t border-gray-200/50">
                             <div className="text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wide">
-                              Explanation
+                              {t("Explanation")}
                             </div>
                             <div className="bg-gray-50/80 backdrop-blur-sm rounded-lg border border-gray-200/50 shadow-sm">
                               <p className="text-gray-700 text-xs p-3 leading-relaxed">
@@ -1242,10 +1241,9 @@ export function ChallengeSolverLight() {
                               <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
                               <p className="text-xs text-red-700 leading-relaxed">
                                 <span className="font-semibold">
-                                  Test Failed:
+                                  {t("Test Failed")}:
                                 </span>{" "}
-                                Your output doesn't match the expected result.
-                                Check your logic and try again.
+                                {t("Your output doesn't match the expected result. Check your logic and try again.")}
                               </p>
                             </div>
                           </div>
