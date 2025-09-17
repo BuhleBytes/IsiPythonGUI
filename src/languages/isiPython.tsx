@@ -6,10 +6,13 @@ export const registerIsiPython = (monaco) => {
   monaco.languages.setMonarchTokensProvider("isipython", {
     tokenizer: {
       root: [
+        // Multiline comments (triple quotes) - must come before regular strings
+        [/"""/, "comment", "@comment_triple_double"],
+        [/'''/, "comment", "@comment_triple_single"],
+
         // Keywords - these will be highlighted
         [
           /\b(Ubuxoki|Inyaniso|Akukho|kwaye|njenge|qinisekisa|ngemva|linda|yekisa|iklasi|qhubeka|chaza|cima|okanye|enye|ngaphandle|ekugqibeleni|jikelele|ukuba|ngenisa|ngaphakathi|umsebenzi|ingaphandle|hayi|dlula|phakamisa|buyisela|zama|ngelixa|nge|velisa|ngokulandelelana|ukusuka|ngu|okanye_ukuba|print|eval|input|len)\b/,
-
           "keyword",
         ],
 
@@ -17,13 +20,13 @@ export const registerIsiPython = (monaco) => {
         [/\d*\.\d+([eE][\-+]?\d+)?/, "number.float"],
         [/\d+/, "number"],
 
-        // Strings
+        // Strings (regular strings)
         [/"([^"\\]|\\.)*$/, "string.invalid"], // non-terminated string
         [/'([^'\\]|\\.)*$/, "string.invalid"], // non-terminated string
         [/"/, "string", "@string_double"],
         [/'/, "string", "@string_single"],
 
-        // Comments (using # like Python)
+        // Single-line comments (using # like Python)
         [/#.*$/, "comment"],
 
         // Operators
@@ -38,6 +41,20 @@ export const registerIsiPython = (monaco) => {
         [/[a-zA-Z_]\w*/, "identifier"],
       ],
 
+      // Multiline comment states
+      comment_triple_double: [
+        [/[^"]+/, "comment"],
+        [/"""/, "comment", "@pop"],
+        [/"/, "comment"],
+      ],
+
+      comment_triple_single: [
+        [/[^']+/, "comment"],
+        [/'''/, "comment", "@pop"],
+        [/'/, "comment"],
+      ],
+
+      // Regular string states
       string_double: [
         [/[^\\"]+/, "string"],
         [/\\./, "string.escape.invalid"],
@@ -65,7 +82,7 @@ export const registerIsiPython = (monaco) => {
     inherit: true,
     rules: [
       { token: "keyword", foreground: "0000ff", fontStyle: "bold" }, // Blue keywords
-      { token: "comment", foreground: "008000", fontStyle: "italic" }, // Green comments
+      { token: "comment", foreground: "008000", fontStyle: "italic" }, // Green comments (both single and multiline)
       { token: "string", foreground: "a31515" }, // Red strings
       { token: "number", foreground: "098658" }, // Dark green numbers
       { token: "operator", foreground: "000000" }, // Black operators
@@ -81,6 +98,7 @@ export const registerIsiPython = (monaco) => {
   monaco.languages.setLanguageConfiguration("isipython", {
     comments: {
       lineComment: "#",
+      blockComment: ['"""', '"""'], // Add block comment support
     },
     brackets: [
       ["{", "}"],
@@ -93,6 +111,8 @@ export const registerIsiPython = (monaco) => {
       { open: "(", close: ")" },
       { open: '"', close: '"', notIn: ["string"] },
       { open: "'", close: "'", notIn: ["string", "comment"] },
+      { open: '"""', close: '"""', notIn: ["string"] }, // Auto-close triple quotes
+      { open: "'''", close: "'''", notIn: ["string"] },
     ],
     surroundingPairs: [
       { open: "{", close: "}" },
@@ -100,6 +120,8 @@ export const registerIsiPython = (monaco) => {
       { open: "(", close: ")" },
       { open: '"', close: '"' },
       { open: "'", close: "'" },
+      { open: '"""', close: '"""' },
+      { open: "'''", close: "'''" },
     ],
     indentationRules: {
       increaseIndentPattern: /^((?!#).)*:[\s]*$/,
@@ -124,7 +146,6 @@ export const registerIsiPython = (monaco) => {
       const userDefinedItems = extractUserDefinitions(allText);
 
       // Your static keyword suggestions
-
       const staticSuggestions = [
         // Boolean values
         {
@@ -430,6 +451,42 @@ export const registerIsiPython = (monaco) => {
             monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
           detail: "input - input prompt",
         },
+
+        // Multiline comment snippets
+        {
+          label: '"""',
+          kind: monaco.languages.CompletionItemKind.Snippet,
+          insertText: '"""\n${1:Multi-line comment}\n"""',
+          insertTextRules:
+            monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          detail: "Triple-quoted multiline comment (double quotes)",
+        },
+        {
+          label: "'''",
+          kind: monaco.languages.CompletionItemKind.Snippet,
+          insertText: "'''\n${1:Multi-line comment}\n'''",
+          insertTextRules:
+            monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          detail: "Triple-quoted multiline comment (single quotes)",
+        },
+
+        // Multiline comment snippets
+        {
+          label: '"""',
+          kind: monaco.languages.CompletionItemKind.Snippet,
+          insertText: '"""\n${1:Multi-line comment}\n"""',
+          insertTextRules:
+            monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          detail: "Triple-quoted multiline comment (double quotes)",
+        },
+        {
+          label: "'''",
+          kind: monaco.languages.CompletionItemKind.Snippet,
+          insertText: "'''\n${1:Multi-line comment}\n'''",
+          insertTextRules:
+            monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+          detail: "Triple-quoted multiline comment (single quotes)",
+        },
       ];
 
       // Combine static and dynamic suggestions
@@ -698,7 +755,7 @@ function getPythonToIsiXhosaMapping(pythonKeyword) {
     else: "enye",
     while: "ngexesha",
     def: "chaza",
-    for: "—", // You'll need to add IsiXhosa equivalent
+    for: "ngokulandelelana",
     try: "zama",
     except: "ngaphandle",
     finally: "ekugqibeleni",
@@ -708,3 +765,4 @@ function getPythonToIsiXhosaMapping(pythonKeyword) {
   };
   return mapping[pythonKeyword] || pythonKeyword;
 }
+export { checkIsiPythonSyntax, getPythonToIsiXhosaMapping };

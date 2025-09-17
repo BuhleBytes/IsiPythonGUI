@@ -4,6 +4,7 @@ import DashboardLightPage from "@/pages/dashboardController";
 import { HomepageLight } from "@/pages/homepage-light";
 import { SignUpLight } from "@/pages/signup-light";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+import AdminDashboardController from "./admin/adminDashboardController";
 import { ChallengeSolverLight } from "./pages/Dashboard Light Mode/challenge-solver-light";
 import { CodeEditorLight } from "./pages/Dashboard Light Mode/code-editor-light";
 import { QuizReviewLight } from "./pages/Dashboard Light Mode/quiz-review-light";
@@ -22,6 +23,7 @@ function App() {
           <Route path="/" element={<HomepageLight />} />
           <Route path="/signup" element={<SignUpLight />} />
           <Route path="/login" element={<LoginLight />} />
+          <Route path="/admin" element={<AdminDashboardController />} />
           <Route
             path="/dash"
             element={

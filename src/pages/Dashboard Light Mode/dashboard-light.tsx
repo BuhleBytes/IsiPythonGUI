@@ -187,7 +187,7 @@ export function DashboardLight({
             </div>
           </div>
           <div className="flex items-center justify-between text-xs text-gray-700 mb-4">
-            <Badge className="bg-white/80 text-gray-700 border-gray-300">
+            <Badge className="bg-white/80 text-gray-700 border-gray-300 hover:bg-gray-100 hover:text-gray-800 transition-colors">
               {file.language}
             </Badge>
             <span className="font-medium">{file.size}</span>

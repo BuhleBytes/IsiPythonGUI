@@ -22,11 +22,11 @@ import {
   ChevronDown,
   ChevronRight,
   ChevronUp,
-  Circle,
   Clock,
   Copy,
   Download,
   FileText,
+  Globe,
   Languages,
   Play,
   RotateCcw,
@@ -56,6 +56,11 @@ interface Variable {
   value: string;
   type: string;
 }
+
+interface ErrorCache {
+  english: string[];
+  isixhosa: string[];
+}
 // #endregion
 
 // #region Defining Interface Props
@@ -82,7 +87,7 @@ const isWaitingForInput = (response: any) =>
   response?.waiting_for_input === true;
 const isCompleted = (response: any) => response?.completed === true;
 
-// ðŸŽ¯ TRANSLATION IS HANDLED BY THE IMPORTED isiPythonTranslator.ts FILE
+// TRANSLATION IS HANDLED BY THE IMPORTED isiPythonTranslator.ts FILE
 
 export function CodeEditorLight({
   initialCode,
@@ -103,6 +108,7 @@ export function CodeEditorLight({
   // Add ref for Monaco editor instance
   const editorRef = useRef(null);
   const currentLineDecorationRef = useRef([]);
+  const breakpointDecorationRef = useRef([]);
   // #endregion
 
   // #region Basic Editor States
@@ -127,6 +133,16 @@ export function CodeEditorLight({
   const [liveTranslationEnabled, setLiveTranslationEnabled] = useState(false);
   const [translationPanelWidth, setTranslationPanelWidth] = useState(400);
   const [isResizingTranslation, setIsResizingTranslation] = useState(false);
+
+  // Error Language State
+  const [errorLanguage, setErrorLanguage] = useState<"isixhosa" | "english">(
+    "isixhosa"
+  );
+
+  // Error Caching States
+  const [lastErrors, setLastErrors] = useState<ErrorCache | null>(null);
+  const [cleanOutput, setCleanOutput] = useState<string>("");
+  const [hasStoredErrors, setHasStoredErrors] = useState<boolean>(false);
   // #endregion
 
   // #region Debug States
@@ -157,12 +173,50 @@ export function CodeEditorLight({
   // #region Monaco Editor Handler
   const handleEditorDidMount = (editor, monaco) => {
     editorRef.current = editor;
+
+    // Set up breakpoint click handler on glyph margin
+    editor.onMouseDown((e) => {
+      const { target, position } = e;
+      if (target.type === monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) {
+        const lineNumber = position.lineNumber;
+        toggleBreakpoint(lineNumber);
+      }
+    });
   };
+
+  // Update breakpoint decorations when breakpoints change
+  const updateBreakpointDecorations = useCallback(() => {
+    if (!editorRef.current) return;
+
+    const editor = editorRef.current;
+    const monaco = window.monaco;
+
+    // Create decorations for breakpoints
+    const decorations = breakpoints.map((bp) => ({
+      range: new monaco.Range(bp.line, 1, bp.line, 1),
+      options: {
+        isWholeLine: false,
+        glyphMarginClassName: "breakpoint-glyph",
+        glyphMarginHoverMessage: { value: "Click to toggle breakpoint" },
+      },
+    }));
+
+    // Update decorations
+    breakpointDecorationRef.current = editor.deltaDecorations(
+      breakpointDecorationRef.current,
+      decorations
+    );
+  }, [breakpoints]);
+
+  useEffect(() => {
+    updateBreakpointDecorations();
+  }, [breakpoints, updateBreakpointDecorations]);
 
   // #region Update current line decoration when debugging
   useEffect(() => {
     if (editorRef.current && currentLine && isDebugging) {
       const editor = editorRef.current;
+      const monaco = window.monaco;
 
       // Clear previous decorations
       currentLineDecorationRef.current = editor.deltaDecorations(
@@ -175,7 +229,7 @@ export function CodeEditorLight({
         [],
         [
           {
-            range: new window.monaco.Range(currentLine, 1, currentLine, 1),
+            range: new monaco.Range(currentLine, 1, currentLine, 1),
             options: {
               isWholeLine: true,
               className: "current-debug-line",
@@ -194,13 +248,13 @@ export function CodeEditorLight({
     }
   }, [currentLine, isDebugging]);
 
-  // Add CSS styles for the debug line highlighting
+  // Add CSS styles for the debug line highlighting and breakpoints
   useEffect(() => {
     // Create or update the style element
-    let styleElement = document.getElementById("debug-line-styles");
+    let styleElement = document.getElementById("editor-custom-styles");
     if (!styleElement) {
       styleElement = document.createElement("style");
-      styleElement.id = "debug-line-styles";
+      styleElement.id = "editor-custom-styles";
       document.head.appendChild(styleElement);
     }
 
@@ -216,11 +270,22 @@ export function CodeEditorLight({
         background-color: rgba(255, 235, 59, 0.7) !important;
         width: 4px !important;
       }
+      .breakpoint-glyph {
+        background-color: #dc2626 !important;
+        border-radius: 50% !important;
+        width: 12px !important;
+        height: 12px !important;
+        margin-left: 2px !important;
+        margin-top: 5px !important;
+      }
+      .breakpoint-glyph:hover {
+        background-color: #b91c1c !important;
+      }
     `;
 
     return () => {
       // Cleanup on unmount
-      const element = document.getElementById("debug-line-styles");
+      const element = document.getElementById("editor-custom-styles");
       if (element) {
         element.remove();
       }
@@ -242,7 +307,7 @@ export function CodeEditorLight({
 
     // Debounce translation to avoid excessive updates
     translationTimerRef.current = setTimeout(() => {
-      // ðŸ"¥ USING THE IMPORTED TRANSLATION FUNCTION FROM isiPythonTranslator.ts
+      // USING THE IMPORTED TRANSLATION FUNCTION FROM isiPythonTranslator.ts
       const translated = translateIsiPythonToPython(code);
       setTranslatedCode(translated);
     }, 200); // 200ms delay for more responsive feel
@@ -268,13 +333,53 @@ export function CodeEditorLight({
     setLiveTranslationEnabled(newState);
 
     if (newState) {
-      // ðŸ"¥ USING THE IMPORTED TRANSLATION FUNCTION FROM isiPythonTranslator.ts
+      // USING THE IMPORTED TRANSLATION FUNCTION FROM isiPythonTranslator.ts
       const translated = translateIsiPythonToPython(code);
       setTranslatedCode(translated);
     } else {
       // When disabling, clear translation
       setTranslatedCode("");
     }
+  };
+
+  const toggleErrorLanguage = () => {
+    const newLanguage = errorLanguage === "isixhosa" ? "english" : "isixhosa";
+    setErrorLanguage(newLanguage);
+
+    // If we have stored errors, regenerate the output with the new language
+    if (hasStoredErrors && lastErrors) {
+      regenerateOutputWithNewLanguage(newLanguage);
+    }
+  };
+
+  const regenerateOutputWithNewLanguage = (
+    language: "english" | "isixhosa"
+  ) => {
+    if (!lastErrors) return;
+
+    const errorsToShow =
+      language === "english" ? lastErrors.english : lastErrors.isixhosa;
+
+    if (errorsToShow.length > 0) {
+      const errorTitle =
+        language === "english" ? "Execution Error" : "Impazamo Yesicelo";
+      const tryAgainText =
+        language === "english"
+          ? "Check your code and try again!"
+          : "Khangela ikhowudi yakho uzame kwakhona!";
+
+      const errorOutput = `\n❌ ${errorTitle}:\n${errorsToShow.join(
+        "\n"
+      )}\n\n🔧 ${tryAgainText}`;
+      setOutput(cleanOutput + errorOutput);
+    }
+  };
+
+  const getErrorMessage = (result: any) => {
+    if (errorLanguage === "english" && result.english_error) {
+      return result.english_error;
+    }
+    return result.error || result.english_error || "Unknown error";
   };
   // #endregion
 
@@ -330,8 +435,6 @@ export function CodeEditorLight({
   // #endregion
 
   // #region Breakpoint Functions
-  const lines = code.split("\n");
-
   const toggleBreakpoint = (lineNumber: number) => {
     setBreakpoints((prev) => {
       const existing = prev.find((bp) => bp.line === lineNumber);
@@ -356,11 +459,14 @@ export function CodeEditorLight({
       const response = await debugHelper.startDebugSession(code);
 
       if (isDebugError(response)) {
-        const msg = (response.error && String(response.error).trim()) || "";
+        const msg =
+          (getErrorMessage(response) &&
+            String(getErrorMessage(response)).trim()) ||
+          "";
         if (msg) {
           setOutput(`❌ Debug error: ${msg}`);
         } else {
-          // no message â†' don't print a â€œnullâ€ error line
+          // no message – don't print a "null" error line
           setOutput("");
         }
         setIsDebugging(false);
@@ -416,10 +522,12 @@ export function CodeEditorLight({
       const response = await debugHelper.stepOnly(debugSessionId);
 
       if (isDebugError(response)) {
+        // Use response.error directly like the original code, not getErrorMessage
         const msg = (response.error && String(response.error).trim()) || "";
         if (msg) {
           setOutput((prev) => prev + `\n❌ Debug error: ${msg}\n`);
         }
+        // If there's no error message, just stop debugging gracefully without showing anything
         stopDebugging();
         return;
       }
@@ -501,7 +609,10 @@ export function CodeEditorLight({
       );
 
       if (isDebugError(response)) {
-        const msg = (response.error && String(response.error).trim()) || "";
+        const msg =
+          (getErrorMessage(response) &&
+            String(getErrorMessage(response)).trim()) ||
+          "";
         if (msg) {
           setOutput((prev) => prev + `\n❌ Debug error: ${msg}\n`);
         }
@@ -571,7 +682,7 @@ export function CodeEditorLight({
       }
     } catch (error: any) {
       setOutput(
-        (prev) => prev + `\n❌  Failed to provide input: ${error.message}\n`
+        (prev) => prev + `\n❌ Failed to provide input: ${error.message}\n`
       );
     } finally {
       setIsStepInProgress(false);
@@ -840,7 +951,7 @@ export function CodeEditorLight({
           onSave(code, newFileName);
         }
         console.log(
-          `📝 File renamed to: ${newFileName}\n✨¨ Save the file to persist the name!\n`
+          `📝 File renamed to: ${newFileName}\n⚡⚡ Save the file to persist the name!\n`
         );
       }
     }
@@ -893,10 +1004,16 @@ export function CodeEditorLight({
   };
   // #endregion
 
-  // #region Run Code (keeping original logic)
+  // #region Run Code with Error Caching
+  // Replace the existing handleRunCode function with this fixed version
   const handleRunCode = async () => {
     setIsRunning(true);
     setWaitingForInput(false);
+
+    // Clear any stored errors when starting a new run
+    setLastErrors(null);
+    setCleanOutput("");
+    setHasStoredErrors(false);
 
     let allOutput = [];
     let allErrors = [];
@@ -1000,15 +1117,19 @@ export function CodeEditorLight({
         } else {
           break;
         }
-
-        if (result.error) {
-          allErrors.push(result.error);
-        }
-      }
-      if (result.error) {
-        allErrors.push(result.error);
       }
 
+      // Check for errors after loop completion
+      if (result.error || result.english_error) {
+        // Store both language versions for language switching
+        const englishError =
+          result.english_error || result.error || "Unknown error";
+        const isixhosaError =
+          result.error || result.english_error || "Unknown error";
+        allErrors.push({ english: englishError, isixhosa: isixhosaError });
+      }
+
+      // Handle final output
       if (result.output) {
         const currentOutput = result.output;
         if (
@@ -1031,15 +1152,64 @@ export function CodeEditorLight({
         }
       }
 
+      // NEW LOGIC: Only add frontend error formatting if the backend output doesn't already contain error messages
       if (allErrors.length > 0) {
-        setOutput(
-          (prev) =>
-            prev +
-            `\n❌ Execution Error:\n${allErrors.join(
-              "\n"
-            )}\n\n🔧 Check your code and try again!`
-        );
+        const currentOutput = output;
+
+        // Check if the output already contains error indicators (common error patterns)
+        const hasErrorInOutput =
+          currentOutput.includes("SyntaxError:") ||
+          currentOutput.includes("NameError:") ||
+          currentOutput.includes("TypeError:") ||
+          currentOutput.includes("ValueError:") ||
+          currentOutput.includes("IndentationError:") ||
+          currentOutput.includes("Execution Error:") ||
+          currentOutput.includes("Impazamo Yesicelo:");
+
+        if (!hasErrorInOutput) {
+          // Only add our error formatting if the backend hasn't already formatted the error
+          setCleanOutput(currentOutput);
+
+          const englishErrors = allErrors.map((err) => err.english);
+          const isixhosaErrors = allErrors.map((err) => err.isixhosa);
+
+          setLastErrors({
+            english: englishErrors,
+            isixhosa: isixhosaErrors,
+          });
+          setHasStoredErrors(true);
+
+          const errorsToShow =
+            errorLanguage === "english" ? englishErrors : isixhosaErrors;
+          const errorTitle =
+            errorLanguage === "english"
+              ? "Execution Error"
+              : "Impazamo Yesicelo";
+          const tryAgainText =
+            errorLanguage === "english"
+              ? "Check your code and try again!"
+              : "Khangela ikhowudi yakho uzame kwakhona!";
+
+          const errorOutput = `\n❌ ${errorTitle}:\n${errorsToShow.join(
+            "\n"
+          )}\n\n🔧 ${tryAgainText}`;
+          setOutput((prev) => prev + errorOutput);
+        } else {
+          // If error is already in output, just store it for language switching
+          setCleanOutput(currentOutput);
+          const englishErrors = allErrors.map((err) => err.english);
+          const isixhosaErrors = allErrors.map((err) => err.isixhosa);
+          setLastErrors({
+            english: englishErrors,
+            isixhosa: isixhosaErrors,
+          });
+          setHasStoredErrors(true);
+        }
       } else if (result.completed) {
+        // Clear stored errors on successful completion
+        setLastErrors(null);
+        setCleanOutput("");
+        setHasStoredErrors(false);
         setOutput((prev) => prev + `\n`);
       }
     } catch (error) {
@@ -1270,24 +1440,42 @@ export function CodeEditorLight({
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Live Translation Toggle - Better Design */}
+            {/* Live Translation Toggle */}
             <Button
+              variant="ghost"
+              size="icon"
               onClick={toggleLiveTranslation}
-              variant={liveTranslationEnabled ? "default" : "outline"}
-              size="sm"
-              className={`font-medium transition-all duration-300 ${
+              className={`transition-all duration-200 ${
                 liveTranslationEnabled
-                  ? "bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-600 hover:to-green-700 text-white border-0 shadow-md"
-                  : "border-cyan-300 text-cyan-700 hover:bg-cyan-50 hover:border-cyan-400"
-              } hover:scale-105`}
+                  ? "text-emerald-600 bg-emerald-50"
+                  : "text-gray-600 hover:text-emerald-600 hover:bg-emerald-50"
+              }`}
               title={
                 liveTranslationEnabled
                   ? "Disable Live Translation"
                   : "Enable Live Translation"
               }
             >
-              <Languages className="w-4 h-4 mr-2" />
-              {liveTranslationEnabled ? t("Live ON") : t("Live Translation")}
+              <Languages className="w-4 h-4" />
+            </Button>
+
+            {/* Error Language Toggle */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleErrorLanguage}
+              className={`transition-all duration-200 ${
+                errorLanguage === "english"
+                  ? "text-blue-600 bg-blue-50"
+                  : "text-gray-600 hover:text-blue-600 hover:bg-blue-50"
+              }`}
+              title={
+                errorLanguage === "english"
+                  ? "Switch to IsiXhosa Errors"
+                  : "Switch to English Errors"
+              }
+            >
+              <Globe className="w-4 h-4" />
             </Button>
 
             <Separator orientation="vertical" className="h-6" />
@@ -1295,12 +1483,13 @@ export function CodeEditorLight({
             {/* Debug Controls */}
             {!isDebugging ? (
               <Button
+                variant="ghost"
+                size="icon"
                 onClick={startDebugging}
-                className="bg-green-600 hover:bg-green-700 text-white"
-                size="sm"
+                className="text-gray-600 hover:text-green-600 hover:bg-green-50 transition-all duration-200"
+                title="Start Debug Session"
               >
-                <Bug className="h-4 w-4 mr-2" />
-                {t("Debug")}
+                <Bug className="h-4 w-4" />
               </Button>
             ) : (
               <>
@@ -1412,81 +1601,32 @@ export function CodeEditorLight({
       <div className="flex-1 flex flex-col relative z-10 min-h-0">
         {/* Editor Container */}
         <div className="flex flex-1 min-h-0">
-          {/* Left Side - IsiPython Code Editor with Breakpoints */}
+          {/* Left Side - IsiPython Code Editor */}
           <div className="flex-1 flex flex-col border-r border-gray-200/50 min-w-0 editor-left-column">
-            <div className="flex flex-1 min-h-0">
-              {/* Breakpoint gutter and line numbers */}
-              <div className="flex bg-white border-r">
-                {/* Breakpoint gutter */}
-                <div className="w-8 bg-gray-50 border-r">
-                  {lines.map((_, index) => {
-                    const lineNumber = index + 1;
-                    const hasBreakpoint = breakpoints.some(
-                      (bp) => bp.line === lineNumber
-                    );
-                    return (
-                      <div
-                        key={lineNumber}
-                        className="flex items-center justify-center cursor-pointer hover:bg-gray-200 transition-colors duration-150"
-                        onClick={() => toggleBreakpoint(lineNumber)}
-                        style={{
-                          height: "22px",
-                          lineHeight: "22px",
-                          fontSize: "14px",
-                        }}
-                      >
-                        {hasBreakpoint && (
-                          <Circle className="h-3 w-3 fill-red-500 text-red-500 drop-shadow-sm" />
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Line numbers */}
-                <div className="w-12 bg-gray-50 text-gray-500 text-sm font-mono border-r">
-                  {lines.map((_, index) => (
-                    <div
-                      key={index + 1}
-                      className="flex items-center justify-end pr-2 text-gray-500"
-                      style={{
-                        height: "22px",
-                        lineHeight: "22px",
-                        fontSize: "12px",
-                      }}
-                    >
-                      {index + 1}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* IsiPython Code Area */}
-              <div className="flex-1 relative min-w-0 monaco-editor-container">
-                <Editor
-                  height="100%"
-                  language="isipython"
-                  value={code}
-                  onChange={(value) => handleCodeChange(value || "")}
-                  theme="isipython-theme"
-                  beforeMount={handleEditorWillMount}
-                  onMount={handleEditorDidMount}
-                  options={{
-                    minimap: { enabled: false },
-                    fontSize: 14,
-                    lineNumbers: "off",
-                    scrollBeyondLastLine: false,
-                    automaticLayout: true,
-                    wordWrap: "on",
-                    lineHeight: 22,
-                    glyphMargin: false,
-                    folding: false,
-                    lineDecorationsWidth: 0,
-                    lineNumbersMinChars: 0,
-                    padding: { top: 0, bottom: 0 },
-                  }}
-                />
-              </div>
+            <div className="flex-1 min-h-0 monaco-editor-container">
+              <Editor
+                height="100%"
+                language="isipython"
+                value={code}
+                onChange={(value) => handleCodeChange(value || "")}
+                theme="isipython-theme"
+                beforeMount={handleEditorWillMount}
+                onMount={handleEditorDidMount}
+                options={{
+                  minimap: { enabled: false },
+                  fontSize: 14,
+                  lineNumbers: "on",
+                  scrollBeyondLastLine: false,
+                  automaticLayout: true,
+                  wordWrap: "on",
+                  lineHeight: 22,
+                  glyphMargin: true,
+                  folding: true,
+                  lineDecorationsWidth: 10,
+                  lineNumbersMinChars: 4,
+                  padding: { top: 8, bottom: 8 },
+                }}
+              />
             </div>
 
             {/* Debug Panel */}
@@ -1495,7 +1635,6 @@ export function CodeEditorLight({
                 className="border-t border-gray-200/50 bg-white/95 backdrop-blur-xl relative flex-shrink-0 flex flex-col"
                 style={{
                   height: `${debugPanelHeight}px`,
-                  marginLeft: "81px", // 32px (w-8 breakpoint) + 48px (w-12 line numbers) + 1px border
                 }}
               >
                 {/* Resize handle for debug panel */}
@@ -1559,7 +1698,7 @@ export function CodeEditorLight({
                     lineHeight: 22,
                     glyphMargin: false,
                     folding: false,
-                    padding: { top: 0, bottom: 0 },
+                    padding: { top: 8, bottom: 8 },
                   }}
                 />
 
@@ -1659,7 +1798,7 @@ export function CodeEditorLight({
                   >
                     {debugWaitingForInput
                       ? t(
-                          "🐛 The debugger is waiting for your input! Write it above and press enter to continue debugging..."
+                          "🛠 The debugger is waiting for your input! Write it above and press enter to continue debugging..."
                         )
                       : waitingForInput
                       ? t(
@@ -1687,7 +1826,12 @@ export function CodeEditorLight({
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => setOutput("")}
+                    onClick={() => {
+                      setOutput("");
+                      setLastErrors(null);
+                      setCleanOutput("");
+                      setHasStoredErrors(false);
+                    }}
                     className="text-gray-600 hover:text-red-600 hover:bg-red-50 h-6 w-6 transition-all duration-200"
                   >
                     <RotateCcw className="w-3 h-3" />
@@ -1733,6 +1877,13 @@ export function CodeEditorLight({
                 {t("Live Translation Active")}
               </span>
             )}
+            {/* Error Language Status */}
+            <span className="flex items-center gap-1 text-blue-600">
+              <Globe className="w-3 h-3" />
+              {errorLanguage === "english"
+                ? "Errors: English"
+                : "Amaphutha: IsiXhosa"}
+            </span>
             {/* Debug Panel Toggle */}
             <Button
               variant="ghost"
