@@ -1,5 +1,25 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  BookOpen,
+  Search,
+  Crown,
+  RefreshCw,
+  Loader2,
+  Flame,
+  Sparkles,
+  Star,
+  Target,
+  Medal,
+  TrendingUp,
+  Trophy,
+  Users,
+  Zap,
+  Calendar,
+  BarChart3,
+} from "lucide-react";
 
 // API Hooks
 const BASE_URL = "https://isipython-dev.onrender.com";
@@ -101,11 +121,11 @@ export default function LeaderboardScreen() {
   const getRankIcon = (rank) => {
     switch (rank) {
       case 1:
-        return "👑";
+        return <Crown color="gold" />;
       case 2:
-        return "🥈";
+        return  <Medal color="silver" />;
       case 3:
-        return "🥉";
+        return <Medal color="#CD7F32" />;
       default:
         return `#${rank}`;
     }
@@ -166,11 +186,11 @@ export default function LeaderboardScreen() {
       <div className="flex-shrink-0 bg-white/80 backdrop-blur-xl border-b border-gray-200/50 px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl shadow-lg">
-              <span className="text-white text-2xl">🏆</span>
-            </div>
             <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-gray-900 via-blue-800 to-purple-800 bg-clip-text text-transparent">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-2 flex items-center gap-3">
+                <div className="w-8 h-8 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-lg flex items-center justify-center shadow-lg">
+                  <Medal className="w-5 h-5 text-white" />
+                </div>
                 {t("Leaderboard")}
               </h1>
               <p className="text-gray-600">
@@ -178,14 +198,21 @@ export default function LeaderboardScreen() {
               </p>
             </div>
           </div>
+          
           <div className="flex items-center gap-3">
-            <button
+            <Button
+              variant="ghost"
               onClick={handleRefresh}
+              className="text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50 font-medium transition-all duration-300 hover:scale-105"
               disabled={loading}
-              className="p-2 text-gray-600 hover:text-cyan-600 hover:bg-cyan-50 transition-all duration-200 rounded-lg disabled:opacity-50"
             >
-              <span className={loading ? "animate-spin" : ""}>🔄</span>
-            </button>
+              {loading ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <RefreshCw className="w-4 h-4 mr-2" />
+              )}
+              {t("Refresh")}
+            </Button>
           </div>
         </div>
       </div>
@@ -205,7 +232,7 @@ export default function LeaderboardScreen() {
                   }`}
                   onClick={() => setActiveTab("challenges")}
                 >
-                  <span>⚡</span>
+                  <Trophy className="w-4 h-4 text-gray" />
                   {t("Challenges")}
                 </button>
                 <button
@@ -216,21 +243,19 @@ export default function LeaderboardScreen() {
                   }`}
                   onClick={() => setActiveTab("quizzes")}
                 >
-                  <span>🎯</span>
+                  <BookOpen className="w-4 h-4 text-gray" />
                   {t("Quizzes")}
                 </button>
               </div>
 
               <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                    🔍
-                  </span>
-                  <input
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-4 h-4" />
+                  <Input
                     placeholder={t("Search learners...")}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 pr-4 py-2 w-full sm:w-64 bg-white/70 border border-gray-300/50 rounded-lg focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30 outline-none transition-all"
+                    className="pl-10 bg-white/70 border-gray-300/50 text-gray-900 placeholder-gray-500 focus:border-cyan-400 focus:ring-cyan-400/30 focus:ring-2 backdrop-blur-sm shadow-sm"
                   />
                 </div>
                 <select
@@ -238,9 +263,9 @@ export default function LeaderboardScreen() {
                   onChange={(e) => setTimeFilter(e.target.value)}
                   className="w-full sm:w-40 bg-white/70 border border-gray-300/50 rounded-lg px-3 py-2 focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/30 outline-none"
                 >
-                  <option value="all-time">All Time</option>
-                  <option value="this-month">This Month</option>
-                  <option value="this-week">This Week</option>
+                  <option value="all-time">{t("All")}</option>
+                  <option value="this-month">{t("This Month")}</option>
+                  <option value="this-week">{t("This Week")}</option>
                 </select>
               </div>
             </div>
@@ -255,16 +280,16 @@ export default function LeaderboardScreen() {
               <h3 className="text-sm font-medium text-gray-700">
                 {t("Total Participants")}
               </h3>
-              <div className="p-2 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-lg shadow-md">
-                <span className="text-white text-xl">👥</span>
-              </div>
+                <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-600 rounded-lg flex items-center justify-center shadow-md">
+                  <Users className="w-6 h-6 text-white" />
+                </div>
             </div>
             <div className="px-6 pb-6 relative z-10">
               <div className="text-3xl font-bold bg-gradient-to-r from-cyan-600 to-blue-700 bg-clip-text text-transparent">
                 {currentData.data.length}
               </div>
               <p className="text-sm text-gray-600 flex items-center gap-1 mt-1">
-                <span className="text-green-500">📈</span>
+                <TrendingUp className="w-3 h-3 text-cyan-500" />
                 {t("Active learners")}
               </p>
             </div>
@@ -279,7 +304,7 @@ export default function LeaderboardScreen() {
                   : t("Avg Performance")}
               </h3>
               <div className="p-2 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg shadow-md">
-                <span className="text-white text-xl">📊</span>
+                <BarChart3 className="w-6 h-6 text-white" />
               </div>
             </div>
             <div className="px-6 pb-6 relative z-10">
@@ -299,7 +324,7 @@ export default function LeaderboardScreen() {
                     ) + "%"}
               </div>
               <p className="text-sm text-gray-600 flex items-center gap-1 mt-1">
-                <span className="text-orange-500">🔥</span>
+                <Flame className="w-3 h-3 text-orange-500" />
                 {t("Community average")}
               </p>
             </div>
@@ -312,7 +337,7 @@ export default function LeaderboardScreen() {
                 {t("Top Performer")}
               </h3>
               <div className="p-2 bg-gradient-to-r from-purple-500 to-pink-600 rounded-lg shadow-md">
-                <span className="text-white text-xl">⭐</span>
+                <Star className="w-6 h-6 text-white" />
               </div>
             </div>
             <div className="px-6 pb-6 relative z-10">
@@ -320,7 +345,7 @@ export default function LeaderboardScreen() {
                 {filteredData[0]?.full_name || "No data"}
               </div>
               <p className="text-sm text-gray-600 flex items-center gap-1 mt-1">
-                <span className="text-yellow-500">👑</span>
+                <Sparkles className="w-3 h-3 text-yellow-500" />
                 {t("Leading the pack")}
               </p>
             </div>
@@ -331,7 +356,11 @@ export default function LeaderboardScreen() {
         <div className="bg-white/90 backdrop-blur-xl border-0 shadow-xl rounded-lg">
           <div className="p-6 border-b border-gray-200/50">
             <h2 className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent flex items-center gap-2">
-              <span className="text-yellow-500 text-2xl">🏆</span>
+              {activeTab === "challenges" ? (
+                  <Trophy className="w-7 h-7 text-yellow-500" />
+                ) : (
+                  <BookOpen className="w-7 h-7 text-yellow-500" />
+              )}
               {activeTab === "challenges" ? t("Challenge Leaderboard") : t("Quiz Leaderboard")}{" "}
             </h2>
           </div>
@@ -387,29 +416,29 @@ export default function LeaderboardScreen() {
                         <div className="flex flex-wrap gap-4 mt-1">
                           {activeTab === "challenges" ? (
                             <>
-                              <div className="flex items-center gap-1 text-sm text-gray-600">
-                                <span className="text-cyan-500">⚡</span>
+                              <div className="flex items-center gap-1 text-sm text-gray-600"> 
+                                <Trophy className="w-3 h-3 text-green" />
                                 {user.challenges_completed} {t("challenges")}
                               </div>
                               <div className="flex items-center gap-1 text-sm text-gray-600">
-                                <span className="text-yellow-500">⭐</span>
+                                <Star className="w-3 h-3 text-green" />
                                 {user.total_score} {t("points")}
                               </div>
                             </>
                           ) : (
                             <>
                               <div className="flex items-center gap-1 text-sm text-gray-600">
-                                <span className="text-green-500">🎯</span>
+                                <Target className="w-3 h-3 text-green" />
                                 {user.quizzes_completed} {t("quizzes")}
                               </div>
                               <div className="flex items-center gap-1 text-sm text-gray-600">
-                                <span className="text-blue-500">📈</span>
+                                <TrendingUp className="w-3 h-3 text-green" />
                                 {user.average_percentage.toFixed(1)}% avg
                               </div>
                             </>
                           )}
                           <div className="flex items-center gap-1 text-sm text-gray-500">
-                            <span>📅</span>
+                            <Calendar className="w-3 h-3 text-green" />
                             {formatDate(user.last_completion)}
                           </div>
                         </div>
@@ -456,7 +485,7 @@ export default function LeaderboardScreen() {
           <div className="bg-gradient-to-br from-yellow-400 via-yellow-500 to-amber-600 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 rounded-lg">
             <div className="p-6 border-b border-white/20">
               <h3 className="text-white flex items-center gap-2 text-lg font-bold">
-                <span>👑</span>
+                <Crown className="w-8 h-8 text-white-500" />
                 {t("Top Performer")}
               </h3>
             </div>
@@ -483,7 +512,7 @@ export default function LeaderboardScreen() {
           <div className="bg-gradient-to-br from-green-500 to-emerald-600 text-white border-0 shadow-xl hover:shadow-2xl transition-all duration-500 hover:scale-105 rounded-lg">
             <div className="p-6 border-b border-white/20">
               <h3 className="text-white flex items-center gap-2 text-lg font-bold">
-                <span>📈</span>
+                <TrendingUp className="w-8 h-8 text-white-500" />
                 {t("Most Active")}
               </h3>
             </div>
