@@ -69,6 +69,13 @@ export function QuizzesLight() {
     }
   };
 
+  const getPassRateColor = (passRate: number) => {
+    console.log("pass-rate = "+passRate)
+    if (passRate >= 70) return "from-green-400 to-emerald-500";
+    if (passRate >= 40) return "from-yellow-400 to-orange-500";
+    return "from-red-400 to-pink-500";
+  };
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "completed":
@@ -512,9 +519,11 @@ export function QuizzesLight() {
                       </div>
                       <div className="w-full bg-white/30 rounded-full h-2 backdrop-blur-xl shadow-inner">
                         <div
-                          className="h-full bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full transition-all duration-500 shadow-lg"
-                          style={{ width: `${quiz.classProgress}%` }}
-                        />
+                          className={`h-full rounded-full bg-gradient-to-r ${getPassRateColor(
+                            quiz.passRate
+                          )} transition-all duration-500 shadow-lg`}
+                          style={{ width: `${quiz.passRate}%` }}
+                        ></div>
                       </div>
                     </div>
 
