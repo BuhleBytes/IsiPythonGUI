@@ -392,7 +392,7 @@ export function LoginLight() {
                     <UserCheck className="w-5 h-5 text-cyan-600" />
                   </div>
                   <div>
-                    <h3 className="text-gray-900 font-medium">Your Progress</h3>
+                    <h3 className="text-gray-900 font-medium">{t("Your Progress")}</h3>
                     <p className="text-gray-600 text-sm">
                       {t("Track learning milestones")}
                     </p>
@@ -422,7 +422,7 @@ export function LoginLight() {
                       {t("Native Language")}
                     </h3>
                     <p className="text-gray-600 text-sm">
-                      {t("Learn in IsiXhosa & more")}
+                      {t("Learn in IsiXhosa")}
                     </p>
                   </div>
                 </div>
@@ -436,7 +436,7 @@ export function LoginLight() {
                       {t("Community")}
                     </h3>
                     <p className="text-gray-600 text-sm">
-                      {t("Nxibelelana nabalingani")}
+                      {t("Connect with peers")}
                     </p>
                   </div>
                 </div>
@@ -467,25 +467,13 @@ export function LoginLight() {
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                   {/* Social Login Options */}
-                  <div className="space-y-3">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full border-gray-300 text-gray-700 hover:bg-gray-50 bg-white shadow-sm"
-                      onClick={() => handleSocialLogin("google")}
-                    >
-                      <Chrome className="w-4 h-4 mr-2" />
-                      {t("Continue with Google")}
-                    </Button>
-                  </div>
-
                   <div className="relative">
                     <div className="absolute inset-0 flex items-center">
                       <div className="w-full border-t border-gray-300"></div>
                     </div>
                     <div className="relative flex justify-center text-sm">
                       <span className="bg-white px-2 text-gray-600">
-                        or sign in with email
+                        {t("Sign in with email")}
                       </span>
                     </div>
                   </div>
@@ -626,18 +614,6 @@ export function LoginLight() {
         <div className="container mx-auto px-6">
           <div className="flex items-center justify-center gap-6 text-sm text-gray-500">
             <span>© 2025 IsiPython</span>
-            <span>•</span>
-            <a href="#" className="hover:text-cyan-600 transition-colors">
-              Privacy Policy
-            </a>
-            <span>•</span>
-            <a href="#" className="hover:text-cyan-600 transition-colors">
-              Terms of Service
-            </a>
-            <span>•</span>
-            <a href="#" className="hover:text-cyan-600 transition-colors">
-              Help & Support
-            </a>
           </div>
         </div>
       </footer>

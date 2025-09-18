@@ -177,14 +177,14 @@ export function SignUpLight() {
                 </div>
                 <div>
                   <h1 className="text-lg font-bold text-gray-900">IsiPython</h1>
-                  <p className="text-xs text-gray-600">Join the Community</p>
+                  <p className="text-xs text-gray-600">{t("Join the Community")}</p>
                 </div>
               </div>
             </div>
 
             <div className="flex items-center gap-4">
               <span className="text-sm text-gray-600">
-                Already have an account?
+                {t("Already have an account")}?
               </span>
               <Button
                 variant="outline"
@@ -242,7 +242,7 @@ export function SignUpLight() {
                     <CheckCircle className="w-4 h-4 text-green-600" />
                   </div>
                   <span className="text-gray-700">
-                    {t("Access to interactive coding exercises and projects")}i
+                    {t("Access to coding challenges and quizzes")}
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
@@ -288,17 +288,6 @@ export function SignUpLight() {
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                   {/* Social Sign Up */}
-                  <div className="space-y-3">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full border-gray-300 text-gray-700 hover:bg-gray-50 bg-white shadow-sm"
-                      onClick={() => handleSocialSignUp("google")}
-                    >
-                      <Chrome className="w-4 h-4 mr-2" />
-                      {t("Continue with Google")}
-                    </Button>
-                  </div>
 
                   <div className="relative">
                     <div className="absolute inset-0 flex items-center">
@@ -306,7 +295,7 @@ export function SignUpLight() {
                     </div>
                     <div className="relative flex justify-center text-sm">
                       <span className="bg-white px-2 text-gray-600">
-                        {t("or continue with email")}
+                        {t("Sign up with email")}
                       </span>
                     </div>
                   </div>
@@ -497,18 +486,6 @@ export function SignUpLight() {
         <div className="container mx-auto px-6">
           <div className="flex items-center justify-center gap-6 text-sm text-gray-500">
             <span>© 2025 IsiPython</span>
-            <span>•</span>
-            <a href="#" className="hover:text-cyan-600 transition-colors">
-              Privacy Policy
-            </a>
-            <span>•</span>
-            <a href="#" className="hover:text-cyan-600 transition-colors">
-              Terms of Service
-            </a>
-            <span>•</span>
-            <a href="#" className="hover:text-cyan-600 transition-colors">
-              Support
-            </a>
           </div>
         </div>
       </footer>

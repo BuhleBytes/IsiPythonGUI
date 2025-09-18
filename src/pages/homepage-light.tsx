@@ -30,7 +30,7 @@ export function HomepageLight() {
     { name: t("Errors") },
     { name: t("Variables") },
     { name: t("Mini Quizzes") },
-    { name: t("Explore IDE") },
+    { name: t("IsiPython Coding Challenges") },
     { name: t("Documentation") },
   ];
 
@@ -79,18 +79,6 @@ export function HomepageLight() {
             </div>
 
             <nav className="hidden md:flex items-center gap-6">
-              <a
-                href="#about"
-                className="text-gray-700 hover:text-cyan-600 transition-colors font-medium"
-              >
-                About
-              </a>
-              <a
-                href="#downloads"
-                className="text-gray-700 hover:text-cyan-600 transition-colors font-medium"
-              >
-                Downloads
-              </a>
               <a
                 href="#docs"
                 className="text-gray-700 hover:text-cyan-600 transition-colors font-medium"
@@ -186,12 +174,15 @@ export function HomepageLight() {
                         <span className="text-cyan-400">==</span>{" "}
                         <span className="text-green-400">5</span>:{"\n"}
                         {"    "}
-                        <span className="text-yellow-400">print(</span>(
-                        <span className="text-green-400">"x is 5")</span>){"\n"}
+                        <span className="text-yellow-400">print(</span >
+                        <span className="text-green-400">"x is 5"</span>
+                        <span className="text-yellow-400">)</span >
+                        {"\n"}
                         <span className="text-cyan-400">okanye_ukuba:</span>:{"\n"}
                         {"    "}
-                        <span className="text-yellow-400">print(</span>(
-                        <span className="text-green-400">"x is not 5")</span>)
+                        <span className="text-yellow-400">print(</span>
+                        <span className="text-green-400">"x is not 5"</span>
+                        <span className="text-yellow-400">)</span >
                       </code>
                     </pre>
                   </div>
@@ -345,6 +336,7 @@ export function HomepageLight() {
               <div className="flex flex-wrap gap-4">
                 <Button
                   size="lg"
+                  onClick={() => navigate("/signup")}
                   className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-700 hover:to-blue-700 text-white px-8 shadow-lg"
                 >
                   <Rocket className="w-5 h-5 mr-2" />
@@ -386,8 +378,9 @@ export function HomepageLight() {
                         <span className="text-green-400"></span>
                       </div>
                       <div>
-                        <span className="text-yellow-400">print</span>(
-                        <span className="text-green-400">(sentence)</span>)
+                        <span className="text-yellow-400">print(</span>
+                        <span className="text-green-400">sentence</span>
+                        <span className="text-yellow-400">)</span>
                       </div>
                     </div>
                   </div>
@@ -420,18 +413,6 @@ export function HomepageLight() {
             </p>
             <div className="flex items-center justify-center gap-6 text-sm text-gray-500">
               <span>© 2025 IsiPython</span>
-              <span>•</span>
-              <a href="#" className="hover:text-cyan-600 transition-colors">
-                Privacy Policy
-              </a>
-              <span>•</span>
-              <a href="#" className="hover:text-cyan-600 transition-colors">
-                Terms of Service
-              </a>
-              <span>•</span>
-              <a href="#" className="hover:text-cyan-600 transition-colors">
-                Contact
-              </a>
             </div>
           </div>
         </div>
