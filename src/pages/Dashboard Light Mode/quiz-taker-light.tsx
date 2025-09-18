@@ -861,7 +861,7 @@ export function QuizTakerLight() {
                 {quiz.title}
               </h1>
               <p className="text-sm text-gray-600">
-                Question {currentQuestionIndex + 1} of {totalQuestions}
+                {t("Question")} {currentQuestionIndex + 1} of {totalQuestions}
               </p>
             </div>
           </div>
