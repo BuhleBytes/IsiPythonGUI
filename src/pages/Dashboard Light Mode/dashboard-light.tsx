@@ -183,7 +183,18 @@ export function DashboardLight({
               <h3 className="font-semibold text-gray-900 truncate">
                 {file.name}
               </h3>
-              <p className="text-xs text-gray-600">{file.time}</p>
+              <p className="text-xs text-gray-600">
+                {file.time === "Just now" 
+                  ? t(file.time)
+                  : (() => {
+                      const spaceIndex = file.time.indexOf(" ");
+                      if (spaceIndex === -1) return file.time; // No space found, return as-is
+                      const number = file.time.slice(0, spaceIndex);
+                      const unit = file.time.slice(spaceIndex + 1);
+                      return `${number} ${t(unit)}`;
+                    })()
+                }
+              </p>
             </div>
           </div>
           <div className="flex items-center justify-between text-xs text-gray-700 mb-4">
@@ -844,7 +855,7 @@ export function DashboardLight({
                             <div className="w-full bg-white/60 rounded-full h-2 overflow-hidden">
                               <div
                                 className={`h-2 rounded-full transition-all duration-500 ${
-                                  item.status === "Gqityiwe"
+                                  item.status === "In progress"
                                     ? "bg-gradient-to-r from-green-500 to-emerald-600"
                                     : "bg-gradient-to-r from-cyan-500 to-blue-600"
                                 }`}
@@ -855,14 +866,14 @@ export function DashboardLight({
                         )}
                         <Badge
                           className={
-                            item.status === "Gqityiwe"
+                            item.status === "Completed"
                               ? "bg-green-500 text-white border-0 shadow-sm"
-                              : item.status === "Iyaqhubeka"
+                              : item.status === "In progress"
                               ? "bg-cyan-500 text-white border-0 shadow-sm"
                               : "bg-gray-400 text-white border-0 shadow-sm"
                           }
                         >
-                          {item.originalStatus === "not_started"
+                          {item.status === "Not started"
                             ? t("Start")
                             : t(item.status)}
                         </Badge>
