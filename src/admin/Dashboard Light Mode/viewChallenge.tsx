@@ -182,20 +182,6 @@ export default function ViewChallenge({
             <Badge className="bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200 hover:text-gray-800 hover:border-gray-300 font-medium transition-all duration-200">
               {t("Last Modified")}: {challenge.lastModified}
             </Badge>
-
-            {/* Statistics Badges */}
-            {challenge.statistics && (
-              <>
-                <Badge className="bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-200 hover:text-purple-800 hover:border-purple-300 font-medium transition-all duration-200">
-                  <Users className="w-3 h-3 mr-1" />
-                  {challenge.statistics.usersAttempted} {t("attempts")}
-                </Badge>
-                <Badge className="bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200 hover:text-blue-800 hover:border-blue-300 font-medium transition-all duration-200">
-                  <TrendingUp className="w-3 h-3 mr-1" />
-                  {challenge.statistics.passRate.toFixed(0)}% {t("pass rate")}
-                </Badge>
-              </>
-            )}
           </div>
         </div>
 
