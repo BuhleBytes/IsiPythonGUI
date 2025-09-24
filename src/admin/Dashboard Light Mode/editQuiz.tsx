@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useTranslation } from "react-i18next";
 import {
   Select,
   SelectContent,
@@ -66,6 +67,7 @@ export default function EditQuiz({
   } = useQuizAPI();
 
   const [title, setTitle] = useState("");
+  const {t} = useTranslation();
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [timeLimit, setTimeLimit] = useState("");
@@ -460,7 +462,7 @@ export default function EditQuiz({
           <div className="text-sm text-gray-500">No quiz ID was provided.</div>
           <Button onClick={handleBackToList} variant="outline" className="mt-4">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Drafts
+            {t("Back to Drafts")}
           </Button>
         </div>
       </div>
@@ -474,10 +476,10 @@ export default function EditQuiz({
         <div className="text-center space-y-4">
           <RefreshCw className="w-12 h-12 text-cyan-500 animate-spin mx-auto" />
           <div className="text-xl font-semibold text-gray-700">
-            Loading Quiz Details...
+            {t("Loading Quiz Details...")}
           </div>
           <div className="text-sm text-gray-500">
-            Fetching quiz information and questions
+            {t("Fetching quiz information and questions")}
           </div>
         </div>
       </div>
@@ -491,13 +493,13 @@ export default function EditQuiz({
         <div className="text-center space-y-4 max-w-md">
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
           <div className="text-xl font-semibold text-gray-700">
-            Failed to Load Quiz Details
+            {t("Failed to Load Quiz Details")}
           </div>
           <div className="text-sm text-gray-500">{error}</div>
           <div className="flex gap-3 justify-center">
             <Button onClick={refetch} className="mt-4">
               <RefreshCw className="w-4 h-4 mr-2" />
-              Try Again
+              {t("Try Again")}
             </Button>
             <Button
               onClick={handleBackToList}
@@ -505,7 +507,7 @@ export default function EditQuiz({
               className="mt-4"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Drafts
+              {t("Back to Drafts")}
             </Button>
           </div>
         </div>
@@ -520,14 +522,14 @@ export default function EditQuiz({
         <div className="text-center space-y-4 max-w-md">
           <AlertCircle className="w-12 h-12 text-gray-500 mx-auto" />
           <div className="text-xl font-semibold text-gray-700">
-            Quiz Not Found
+            {t("Quiz Not Found")}
           </div>
           <div className="text-sm text-gray-500">
-            The quiz you're looking for doesn't exist or has been deleted.
+            {t("The quiz you're looking for doesn't exist or has been deleted.")}
           </div>
           <Button onClick={handleBackToList} variant="outline" className="mt-4">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Drafts
+            {t("Back to Drafts")}
           </Button>
         </div>
       </div>
@@ -554,23 +556,23 @@ export default function EditQuiz({
               className="border-gray-300 text-gray-700 hover:bg-gray-50 bg-white/80 rounded-lg font-medium hover:scale-105 transition-all duration-300 shadow-sm"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Drafts
+              {t("Back to Drafts")}
             </Button>
           </div>
           <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 via-cyan-600 to-emerald-600 bg-clip-text text-transparent flex items-center gap-3">
-            Edit Quiz
+            {t("Edit Quiz")}
             <Edit3 className="w-8 h-8 text-cyan-500 animate-pulse" />
           </h1>
           <p className="text-lg text-gray-600">
-            Update and refine your quiz before publishing
+            {t("Update and refine your quiz before publishing")}
           </p>
           <div className="flex items-center gap-4 mt-4">
             <Badge className="bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-200 hover:text-amber-800 hover:border-amber-300 font-medium transition-all duration-200">
-              {quiz.status === "draft" ? "Draft Quiz" : "Published Quiz"}
+              {quiz.status === "draft" ? t("Draft Quiz") : t("Published Quiz")}
             </Badge>
 
             <Badge className="bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200 hover:text-gray-800 hover:border-gray-300 font-medium transition-all duration-200">
-              Last Modified: {quiz.lastModified}
+              {t("Last Modified")}: {quiz.lastModified}
             </Badge>
           </div>
         </div>
@@ -585,7 +587,7 @@ export default function EditQuiz({
                 <div className="w-10 h-10 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md">
                   <BookOpen className="w-5 h-5 text-white" />
                 </div>
-                Quiz Details
+                {t("Quiz Details")}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6 space-y-6 relative z-10">
@@ -596,7 +598,7 @@ export default function EditQuiz({
                     className="text-gray-700 font-semibold flex items-center gap-2"
                   >
                     <Target className="w-4 h-4 text-cyan-500" />
-                    Quiz Title
+                    {t("Quiz Title")}
                   </Label>
                   <Input
                     id="title"
@@ -612,7 +614,7 @@ export default function EditQuiz({
                     className="text-gray-700 font-semibold flex items-center gap-2"
                   >
                     <Timer className="w-4 h-4 text-purple-500" />
-                    Time Limit (minutes)
+                    {t("Time Limit")} ({t("minutes")})
                   </Label>
                   <Input
                     id="timeLimit"
@@ -630,7 +632,7 @@ export default function EditQuiz({
                   htmlFor="description"
                   className="text-gray-700 font-semibold"
                 >
-                  Description
+                  {t("Description")}
                 </Label>
                 <Textarea
                   id="description"
@@ -648,7 +650,7 @@ export default function EditQuiz({
                   className="text-gray-700 font-semibold flex items-center gap-2"
                 >
                   <Clock className="w-4 h-4 text-blue-500" />
-                  Due Date
+                  {t("Due Date")}
                 </Label>
                 <Input
                   id="dueDate"
@@ -669,7 +671,7 @@ export default function EditQuiz({
                 <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl flex items-center justify-center shadow-md">
                   <Settings className="w-5 h-5 text-white" />
                 </div>
-                Quiz Settings
+                {t("Quiz Settings")}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6 space-y-4 relative z-10">
@@ -701,7 +703,7 @@ export default function EditQuiz({
                       className="text-sm text-gray-700 flex items-center gap-2"
                     >
                       <Zap className="w-4 h-4 text-orange-500" />
-                      Randomize question order
+                      {t("Randomize question order")}
                     </Label>
                   </div>
                 </div>
@@ -718,7 +720,7 @@ export default function EditQuiz({
                       className="text-sm text-gray-700 flex items-center gap-2"
                     >
                       <Eye className="w-4 h-4 text-blue-500" />
-                      Show results immediately
+                      {t("Show results immediately")}
                     </Label>
                   </div>
 
@@ -733,7 +735,7 @@ export default function EditQuiz({
                       className="text-sm text-gray-700 flex items-center gap-2"
                     >
                       <Trophy className="w-4 h-4 text-yellow-500" />
-                      Allow multiple attempts
+                      t{("Allow multiple attempts")}
                     </Label>
                   </div>
                 </div>
@@ -750,7 +752,7 @@ export default function EditQuiz({
                   <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-md">
                     <FileText className="w-5 h-5 text-white" />
                   </div>
-                  Quiz Instructions
+                  {t("Quiz Instructions")}
                 </CardTitle>
                 <Button
                   onClick={addInstruction}
@@ -759,7 +761,7 @@ export default function EditQuiz({
                   className="border-green-200 text-green-700 hover:bg-green-50 bg-white/80 rounded-lg font-medium hover:scale-105 transition-all duration-300 shadow-sm"
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  Add Instruction
+                  {t("Add Instruction")}
                 </Button>
               </div>
             </CardHeader>
@@ -769,7 +771,7 @@ export default function EditQuiz({
                   <Input
                     value={instruction}
                     onChange={(e) => updateInstruction(index, e.target.value)}
-                    placeholder="Enter instruction..."
+                    placeholder={t("Enter instruction...")}
                     className="flex-1 bg-white/70 border-gray-300/50 text-gray-900 placeholder-gray-500 focus:border-cyan-400 focus:ring-cyan-400/30 focus:ring-2 backdrop-blur-sm shadow-sm"
                   />
                   {instructions.length > 1 && (
@@ -796,7 +798,7 @@ export default function EditQuiz({
                   <div className="w-10 h-10 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-md">
                     <HelpCircle className="w-5 h-5 text-white" />
                   </div>
-                  Quiz Questions ({questions.length})
+                  {t("Quiz Questions")} ({questions.length})
                 </CardTitle>
                 <Button
                   onClick={addQuestion}
@@ -805,7 +807,7 @@ export default function EditQuiz({
                   className="border-purple-200 text-purple-700 hover:bg-purple-50 bg-white/80 rounded-lg font-medium hover:scale-105 transition-all duration-300 shadow-sm"
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  Add Question
+                  {t("Add Question")}
                 </Button>
               </div>
             </CardHeader>
@@ -819,7 +821,7 @@ export default function EditQuiz({
                     <CardContent className="p-5">
                       <div className="flex items-center justify-between mb-4">
                         <Badge className="bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-200 font-medium transition-colors duration-200">
-                          Question {index + 1}
+                          {t("Question")} {index + 1}
                         </Badge>
                         {questions.length > 1 && (
                           <Button
@@ -836,7 +838,7 @@ export default function EditQuiz({
                       <div className="space-y-4">
                         <div className="space-y-2">
                           <Label className="text-gray-700 font-semibold">
-                            Question Text
+                            {t("Question Text")}
                           </Label>
                           <Textarea
                             value={question.question_text}
@@ -856,7 +858,7 @@ export default function EditQuiz({
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="space-y-2">
                             <Label className="text-gray-700 font-semibold">
-                              Option A
+                              {t("Option")} A
                             </Label>
                             <Input
                               value={question.option_a}
@@ -873,7 +875,7 @@ export default function EditQuiz({
                           </div>
                           <div className="space-y-2">
                             <Label className="text-gray-700 font-semibold">
-                              Option B
+                              {t("Option")} B
                             </Label>
                             <Input
                               value={question.option_b}
@@ -890,7 +892,7 @@ export default function EditQuiz({
                           </div>
                           <div className="space-y-2">
                             <Label className="text-gray-700 font-semibold">
-                              Option C
+                              {t("Option")} C
                             </Label>
                             <Input
                               value={question.option_c}
@@ -907,7 +909,7 @@ export default function EditQuiz({
                           </div>
                           <div className="space-y-2">
                             <Label className="text-gray-700 font-semibold">
-                              Option D
+                              {t("Option")} D
                             </Label>
                             <Input
                               value={question.option_d}
@@ -927,7 +929,7 @@ export default function EditQuiz({
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div className="space-y-2">
                             <Label className="text-gray-700 font-semibold">
-                              Correct Answer
+                              {t("Correct Answer")}
                             </Label>
                             <Select
                               value={question.correct_answer}
@@ -947,25 +949,25 @@ export default function EditQuiz({
                                   value="A"
                                   className="text-gray-900 hover:bg-green-50"
                                 >
-                                  Option A
+                                  {t("Option")} A
                                 </SelectItem>
                                 <SelectItem
                                   value="B"
                                   className="text-gray-900 hover:bg-green-50"
                                 >
-                                  Option B
+                                  {t("Option")} B
                                 </SelectItem>
                                 <SelectItem
                                   value="C"
                                   className="text-gray-900 hover:bg-green-50"
                                 >
-                                  Option C
+                                  {t("Option")} C
                                 </SelectItem>
                                 <SelectItem
                                   value="D"
                                   className="text-gray-900 hover:bg-green-50"
                                 >
-                                  Option D
+                                  {t("Option")} D
                                 </SelectItem>
                               </SelectContent>
                             </Select>
@@ -973,7 +975,7 @@ export default function EditQuiz({
 
                           <div className="space-y-2">
                             <Label className="text-gray-700 font-semibold">
-                              Points Weight
+                              {t("Points Weight")}
                             </Label>
                             <Input
                               type="number"
@@ -993,7 +995,7 @@ export default function EditQuiz({
 
                         <div className="space-y-2">
                           <Label className="text-gray-700 font-semibold">
-                            Explanation
+                            {t("Explanation")}
                           </Label>
                           <Input
                             value={question.explanation}
@@ -1025,7 +1027,7 @@ export default function EditQuiz({
               disabled={isSubmitting}
             >
               <Save className="w-4 h-4 mr-2" />
-              {isSubmitting ? "Updating..." : "Update Draft"}
+              {isSubmitting ? t("Updating...") : t("Update Draft")}
             </Button>
 
             <Button
@@ -1035,10 +1037,10 @@ export default function EditQuiz({
             >
               <Send className="w-4 h-4 mr-2" />
               {isSubmitting
-                ? "Publishing..."
+                ? t("Publishing...")
                 : quiz?.status === "draft"
-                ? "Publish Draft"
-                : "Publish Update"}
+                ? t("Publish Draft")
+                : t("Publish Update")}
             </Button>
           </div>
         </div>

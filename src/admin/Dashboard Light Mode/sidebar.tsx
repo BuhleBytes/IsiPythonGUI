@@ -11,6 +11,7 @@ import {
   Sparkles,
   X,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const menuItems = [
   {
@@ -66,6 +67,8 @@ export function AdminSidebar({
     // Simple view change - no navigation, keeps SPA behavior
     onViewChange(key);
   };
+  
+  const { t } = useTranslation();
 
   return (
     <div
@@ -86,7 +89,7 @@ export function AdminSidebar({
                 Admin Panel
                 <Sparkles className="w-3 h-3 text-cyan-500 animate-pulse" />
               </h2>
-              <p className="text-xs text-gray-500">Coding Challenges</p>
+              <p className="text-xs text-gray-500">{t("Create and Manage")}</p>
             </div>
           )}
         </div>
@@ -127,7 +130,7 @@ export function AdminSidebar({
                 <item.icon className="w-4 h-4 flex-shrink-0" />
                 {!isCollapsed && (
                   <span className="truncate ml-3 font-medium">
-                    {item.title}
+                    {t(item.title)}
                   </span>
                 )}
               </Button>
@@ -145,7 +148,7 @@ export function AdminSidebar({
                 <Code2 className="w-2 h-2 text-white" />
               </div>
               <span className="font-medium text-gray-600">
-                Admin Dashboard v2.0
+                Admin Dashboard
               </span>
             </div>
           </div>

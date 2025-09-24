@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import {
@@ -38,6 +39,7 @@ export default function AdminDashboard({
   const [activeTab, setActiveTab] = useState<"challenges" | "quizzes">(
     "challenges"
   );
+  const {t} = useTranslation();
 
   const handleCreateChallenge = () => {
     if (onViewChange) {
@@ -64,9 +66,9 @@ export default function AdminDashboard({
         <div className="text-center space-y-4">
           <RefreshCw className="w-12 h-12 text-cyan-500 animate-spin mx-auto" />
           <div className="text-xl font-semibold text-gray-700">
-            Loading Dashboard...
+            {t("Loading Dashboard...")} 
           </div>
-          <div className="text-sm text-gray-500">Fetching your latest data</div>
+          <div className="text-sm text-gray-500">{t("Fetching your latest data")}</div>
         </div>
       </div>
     );
@@ -79,12 +81,12 @@ export default function AdminDashboard({
         <div className="text-center space-y-4 max-w-md">
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
           <div className="text-xl font-semibold text-gray-700">
-            Failed to Load Dashboard
+            {t("Failed to Load Dashboard")}
           </div>
           <div className="text-sm text-gray-500">{error}</div>
           <Button onClick={refetch} className="mt-4">
             <RefreshCw className="w-4 h-4 mr-2" />
-            Try Again
+            {t("Try Again")}
           </Button>
         </div>
       </div>
@@ -110,7 +112,7 @@ export default function AdminDashboard({
         data.overview.total_students.growth_percentage >= 0
           ? "text-emerald-600"
           : "text-red-600",
-      thisWeek: `+${data.overview.total_students.new_this_week} this week`,
+      thisWeek: `+${data.overview.total_students.new_this_week} ${t("this week")}`,
     },
     {
       title: "Active Challenges",
@@ -125,7 +127,7 @@ export default function AdminDashboard({
         data.overview.active_challenges.growth_percentage >= 0
           ? "text-emerald-600"
           : "text-red-600",
-      thisWeek: `+${data.overview.active_challenges.new_this_week} this week`,
+      thisWeek: `+${data.overview.active_challenges.new_this_week} ${t("this week")}`,
     },
     {
       title: "Active Quizzes",
@@ -140,7 +142,7 @@ export default function AdminDashboard({
         data.overview.active_quizzes.growth_percentage >= 0
           ? "text-emerald-600"
           : "text-red-600",
-      thisWeek: `+${data.overview.active_quizzes.new_this_week} this week`,
+      thisWeek: `+${data.overview.active_quizzes.new_this_week} ${t("this week")}`,
     },
     {
       title: "Total Submissions",
@@ -155,7 +157,7 @@ export default function AdminDashboard({
         data.overview.total_submissions.growth_percentage >= 0
           ? "text-emerald-600"
           : "text-red-600",
-      thisWeek: `+${data.overview.total_submissions.new_this_week} this week`,
+      thisWeek: `+${data.overview.total_submissions.new_this_week} ${t("this week")}`,
     },
   ];
 
@@ -248,7 +250,7 @@ export default function AdminDashboard({
             <Sparkles className="w-8 h-8 text-cyan-500 animate-pulse" />
           </h1>
           <p className="text-lg text-gray-600">
-            Manage your coding challenges and track student progress with style
+           {t("Manage coding challenges, quizzes and track student progress with style")}
           </p>
         </div>
 
@@ -268,16 +270,16 @@ export default function AdminDashboard({
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-white mb-1">
-                    Create New Challenge
+                    {t("Create New Challenge")}
                   </h2>
                   <p className="text-white/80 text-base">
-                    Design and publish coding challenges for students
+                    {t("Design and publish coding challenges for students")}
                   </p>
                 </div>
               </div>
               <div className="text-right group-hover:translate-x-2 transition-transform duration-300">
                 <div className="text-4xl font-bold mb-1">+</div>
-                <div className="text-sm opacity-80">Click to start</div>
+                <div className="text-sm opacity-80">{t("Click to start")}</div>
               </div>
             </div>
           </CardContent>
@@ -295,7 +297,7 @@ export default function AdminDashboard({
               ></div>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative z-10">
                 <CardTitle className="text-sm font-medium text-gray-700">
-                  {stat.title}
+                  {t(stat.title)}
                 </CardTitle>
                 <div
                   className={`p-2 bg-gradient-to-r ${stat.gradient} rounded-lg shadow-md group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300`}
@@ -346,14 +348,14 @@ export default function AdminDashboard({
                 </div>
                 <div>
                   <div>
-                    Recent{" "}
-                    {activeTab === "challenges" ? "Challenges" : "Quizzes"}
+                    {t("Recent")}{" "}
+                    {activeTab === "challenges" ? t("Challenges") : t("Quizzes")}
                   </div>
                   <div className="text-sm font-normal text-gray-600">
-                    Manage your latest{" "}
+                    {t("Manage your latest")}{" "}
                     {activeTab === "challenges"
-                      ? "coding challenges"
-                      : "quizzes"}
+                      ? t("coding challenges")
+                      : t("quizzes")}
                   </div>
                 </div>
               </CardTitle>
@@ -365,7 +367,7 @@ export default function AdminDashboard({
                   className="border-orange-200 text-orange-700 hover:bg-orange-50 bg-white/80 rounded-lg font-medium hover:scale-105 transition-all duration-300 shadow-sm hover:shadow-md"
                 >
                   <FileText className="w-4 h-4 mr-2" />
-                  View Drafts
+                  {t("View Drafts")}
                 </Button>
                 <Button
                   variant="outline"
@@ -374,7 +376,7 @@ export default function AdminDashboard({
                   className="border-emerald-200 text-emerald-700 hover:bg-emerald-50 bg-white/80 rounded-lg font-medium hover:scale-105 transition-all duration-300 shadow-sm hover:shadow-md"
                 >
                   <Globe className="w-4 h-4 mr-2" />
-                  View Published
+                  {t("View Published")}
                 </Button>
               </div>
             </div>
@@ -392,7 +394,7 @@ export default function AdminDashboard({
                 }`}
               >
                 <Trophy className="w-4 h-4 mr-2" />
-                Challenges ({data.recent_challenges.length})
+                {t("Challenges")} ({data.recent_challenges.length})
               </Button>
               <Button
                 variant={activeTab === "quizzes" ? "default" : "ghost"}
@@ -405,7 +407,7 @@ export default function AdminDashboard({
                 }`}
               >
                 <BookOpen className="w-4 h-4 mr-2" />
-                Quizzes ({data.recent_quizzes.length})
+                {t("Quizzes")} ({data.recent_quizzes.length})
               </Button>
             </div>
           </CardHeader>
@@ -458,7 +460,7 @@ export default function AdminDashboard({
                                       : "bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200 hover:text-gray-800"
                                   }`}
                                 >
-                                  {challenge.status}
+                                  {t(challenge.status)}
                                 </Badge>
                               </div>
                             </div>
@@ -505,7 +507,7 @@ export default function AdminDashboard({
                             </h3>
                             <div className="flex items-center gap-3">
                               <Badge className="font-medium text-xs bg-indigo-100 text-indigo-700 border-indigo-200">
-                                {quiz.total_questions} Questions
+                                {quiz.total_questions} {t("Questions")}
                               </Badge>
                               <Badge
                                 className={`font-medium text-xs ${
@@ -514,7 +516,7 @@ export default function AdminDashboard({
                                     : "bg-gray-100 text-gray-700 border-gray-200"
                                 }`}
                               >
-                                {quiz.status}
+                                {t(quiz.status)}
                               </Badge>
                             </div>
                           </div>

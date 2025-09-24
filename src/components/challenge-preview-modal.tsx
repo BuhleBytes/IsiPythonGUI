@@ -3,6 +3,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { useTranslation } from "react-i18next"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Trophy, Clock, Users, Target, Code, TestTube, X } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -27,6 +28,7 @@ interface ChallengePreviewModalProps {
 }
 
 export function ChallengePreviewModal({ isOpen, onClose, challengeData }: ChallengePreviewModalProps) {
+  const {t} = useTranslation();
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty.toLowerCase()) {
       case "easy":
@@ -49,7 +51,7 @@ export function ChallengePreviewModal({ isOpen, onClose, challengeData }: Challe
               <div className="w-8 h-8 theme-cyan rounded-lg flex items-center justify-center">
                 <Target className="w-5 h-5 text-white" />
               </div>
-              Challenge Preview
+              {t("Challenge Preview")}
             </DialogTitle>
             <Button variant="ghost" size="sm" onClick={onClose} className="rounded-lg">
               <X className="w-5 h-5" />
@@ -77,18 +79,18 @@ export function ChallengePreviewModal({ isOpen, onClose, challengeData }: Challe
                   <div className="w-6 h-6 theme-orange rounded-lg flex items-center justify-center">
                     <Trophy className="w-4 h-4 text-white" />
                   </div>
-                  <span className="font-bold">{challengeData.rewardPoints} points</span>
+                  <span className="font-bold">{challengeData.rewardPoints} {t("points")}</span>
                 </div>
               )}
 
               <div className="flex items-center gap-2 text-gray-500">
                 <Clock className="w-5 h-5" />
-                <span>Estimated: 30-45 min</span>
+                <span>{t("Estimated Time")}: 30-45 {t("min")}</span>
               </div>
 
               <div className="flex items-center gap-2 text-gray-500">
                 <Users className="w-5 h-5" />
-                <span>0 submissions</span>
+                <span>0 {t("submissions")}</span>
               </div>
             </div>
           </div>
@@ -100,7 +102,7 @@ export function ChallengePreviewModal({ isOpen, onClose, challengeData }: Challe
                 <div className="w-6 h-6 theme-green rounded-lg flex items-center justify-center">
                   <Code className="w-4 h-4 text-white" />
                 </div>
-                Problem Description
+                {t("Problem Description")}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
@@ -110,7 +112,7 @@ export function ChallengePreviewModal({ isOpen, onClose, challengeData }: Challe
                     {challengeData.problemDescription}
                   </div>
                 ) : (
-                  <p className="text-gray-500 italic">No problem description provided</p>
+                  <p className="text-gray-500 italic">{t("No problem description provided")}</p>
                 )}
               </div>
             </CardContent>
@@ -123,7 +125,7 @@ export function ChallengePreviewModal({ isOpen, onClose, challengeData }: Challe
                 <div className="w-6 h-6 theme-purple rounded-lg flex items-center justify-center">
                   <TestTube className="w-4 h-4 text-white" />
                 </div>
-                Test Cases ({challengeData.testCases.length})
+                {t("Test Cases")} ({challengeData.testCases.length})
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
@@ -136,21 +138,21 @@ export function ChallengePreviewModal({ isOpen, onClose, challengeData }: Challe
                     >
                       <div className="mb-3">
                         <Badge className="bg-purple-100 text-purple-700 border-purple-200 font-medium">
-                          Test Case {index + 1}
+                          {t("Test Case")} {index + 1}
                         </Badge>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                          <h4 className="font-semibold text-gray-700 mb-2">Input:</h4>
+                          <h4 className="font-semibold text-gray-700 mb-2">{t("Input")}:</h4>
                           <div className="bg-gray-100 rounded-lg p-3 font-mono text-sm">
-                            {testCase.input || <span className="text-gray-500 italic">No input provided</span>}
+                            {testCase.input || <span className="text-gray-500 italic">{t("No input provided")}</span>}
                           </div>
                         </div>
                         <div>
-                          <h4 className="font-semibold text-gray-700 mb-2">Expected Output:</h4>
+                          <h4 className="font-semibold text-gray-700 mb-2">{t("Expected Output")}:</h4>
                           <div className="bg-gray-100 rounded-lg p-3 font-mono text-sm">
                             {testCase.expectedOutput || (
-                              <span className="text-gray-500 italic">No output provided</span>
+                              <span className="text-gray-500 italic">{("No output provided")}</span>
                             )}
                           </div>
                         </div>
@@ -159,27 +161,8 @@ export function ChallengePreviewModal({ isOpen, onClose, challengeData }: Challe
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500 italic">No test cases provided</p>
+                <p className="text-gray-500 italic">{t("No test cases provided")}</p>
               )}
-            </CardContent>
-          </Card>
-
-          {/* Code Editor Placeholder */}
-          <Card className="futuristic-card">
-            <CardHeader className="bg-gradient-to-r from-cyan-50/50 to-blue-50/50 rounded-t-xl">
-              <CardTitle className="flex items-center gap-3 text-gray-900">
-                <div className="w-6 h-6 theme-cyan rounded-lg flex items-center justify-center">
-                  <Code className="w-4 h-4 text-white" />
-                </div>
-                Code Editor
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="bg-gray-900 rounded-lg p-4 font-mono text-sm text-green-400">
-                <div className="text-gray-500 mb-2"># Write your solution here</div>
-                <div className="text-white">def solution():</div>
-                <div className="text-white ml-4">pass</div>
-              </div>
             </CardContent>
           </Card>
         </div>
