@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { UserAuth } from "@/context/AuthContext";
 import {
   ChevronLeft,
   Code,
@@ -8,6 +9,7 @@ import {
   GraduationCap,
   HelpCircle,
   Home,
+  LogOut,
   Medal,
   Settings,
   Trophy,
@@ -15,6 +17,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { FileImport } from "../file-import";
 
 interface SidebarLightProps {
@@ -39,7 +42,13 @@ export function SidebarLight({
   onViewChange,
 }: SidebarLightProps) {
   const [showFileImport, setShowFileImport] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const { t } = useTranslation();
+  const { signOut, getCurrentUser } = UserAuth();
+  const navigate = useNavigate();
+
+  // Get current user info for display
+  const currentUser = getCurrentUser();
 
   const mainItems = [
     { title: t("Home"), url: "/dashboard-light", icon: Home, key: "home" },
@@ -77,6 +86,7 @@ export function SidebarLight({
       key: "documentation",
     },
   ];
+
   const isActive = (key: string) => {
     return activeView === key;
   };
@@ -107,6 +117,33 @@ export function SidebarLight({
     });
     console.log(file.content);
     setShowFileImport(false);
+  };
+
+  /**
+   * Handler function for sign out button click
+   * Manages the sign out process with loading states and error handling
+   */
+  const handleSignOut = async () => {
+    setIsSigningOut(true);
+
+    try {
+      const result = await signOut();
+
+      if (result.success) {
+        console.log("Student sign out successful");
+        // Navigate to login page after successful sign out
+        navigate("/login", { replace: true });
+      } else {
+        console.error("Student sign out failed:", result.error);
+        // You can replace this with a toast notification if available
+        alert("Failed to sign out. Please try again.");
+      }
+    } catch (error) {
+      console.error("Student sign out error:", error);
+      alert("An error occurred while signing out. Please try again.");
+    } finally {
+      setIsSigningOut(false);
+    }
   };
 
   return (
@@ -234,17 +271,64 @@ export function SidebarLight({
         </div>
 
         {/* Footer */}
-        <div className="border-t border-gray-200/50 p-4">
-          <Button
-            variant="ghost"
-            onClick={() => handleNavClick("settings")}
-            className={`w-full text-gray-700 hover:text-cyan-600 hover:bg-gray-100/50 ${
-              isOpen ? "justify-start px-3" : "justify-center px-0"
-            }`}
-          >
-            <Settings className="w-4 h-4 flex-shrink-0" />
-            {isOpen && <span className="truncate">{t("Settings")}</span>}
-          </Button>
+        <div className="border-t border-gray-200/50 p-2 space-y-2">
+          {/* User info - only shown when sidebar is expanded */}
+          {isOpen && currentUser && (
+            <div className="px-2">
+              <div className="text-xs text-gray-500 bg-gradient-to-r from-gray-50/80 to-gray-100/80 rounded-lg py-2 px-3 border border-gray-200/50">
+                <div className="truncate">
+                  <span className="font-medium text-gray-600">
+                    {currentUser.firstName} {currentUser.lastName}
+                  </span>
+                </div>
+                <div className="truncate text-gray-500">
+                  {currentUser.email}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Settings Button */}
+          <div className="px-2">
+            <Button
+              variant="ghost"
+              onClick={() => handleNavClick("settings")}
+              className={`w-full text-gray-700 hover:text-cyan-600 hover:bg-gray-100/50 ${
+                isOpen ? "justify-start px-3" : "justify-center px-0"
+              }`}
+            >
+              <Settings className="w-4 h-4 flex-shrink-0" />
+              {isOpen && <span className="truncate ml-3">{t("Settings")}</span>}
+            </Button>
+          </div>
+
+          {/* Sign Out Button */}
+          <div className="px-2">
+            <Button
+              variant="ghost"
+              onClick={handleSignOut}
+              disabled={isSigningOut}
+              className={`w-full text-red-600 hover:text-red-700 hover:bg-red-50 transition-all duration-200 border border-red-200/50 hover:border-red-300 ${
+                isOpen ? "justify-start px-3" : "justify-center px-0"
+              }`}
+            >
+              {isSigningOut ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin flex-shrink-0" />
+                  {isOpen && (
+                    <span className="truncate ml-3">{t("Signing out...")}</span>
+                  )}
+                </>
+              ) : (
+                <>
+                  <LogOut className="w-4 h-4 flex-shrink-0" />
+                  {isOpen && (
+                    <span className="truncate ml-3">{t("Sign Out")}</span>
+                  )}
+                </>
+              )}
+            </Button>
+          </div>
         </div>
       </div>
 

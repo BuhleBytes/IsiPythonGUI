@@ -12,11 +12,12 @@
  * - Responsive design with backdrop blur effects
  * - Icon-based navigation with labels (hidden when collapsed)
  * - Branded header with gradient styling
- * - Footer with version information
+ * - Footer with version information and sign out functionality
  */
 
 "use client";
 import { Button } from "@/components/ui/button";
+import { UserAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
 import {
   BarChart3,
@@ -24,13 +25,16 @@ import {
   FileText,
   Globe,
   LayoutDashboard,
+  LogOut,
   Medal,
   Menu,
   Plus,
   Sparkles,
   X,
 } from "lucide-react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 
 // Configuration array for sidebar navigation items
 // Each item represents a different admin panel view with its display properties
@@ -96,6 +100,14 @@ export function AdminSidebar({
   activeView,
   onViewChange,
 }: AdminSidebarProps) {
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  const { signOut, getCurrentUser } = UserAuth();
+  const navigate = useNavigate();
+  const { t } = useTranslation();
+
+  // Get current user info for display
+  const currentUser = getCurrentUser();
+
   /**
    * Helper function to determine if a navigation item is currently active
    * @param key - The key identifier of the navigation item to check
@@ -116,7 +128,32 @@ export function AdminSidebar({
     onViewChange(key);
   };
 
-  const { t } = useTranslation();
+  /**
+   * Handler function for sign out button click
+   * Manages the sign out process with loading states and error handling
+   */
+  const handleSignOut = async () => {
+    setIsSigningOut(true);
+
+    try {
+      const result = await signOut();
+
+      if (result.success) {
+        console.log("Admin sign out successful");
+        // Navigate to login page after successful sign out
+        navigate("/login", { replace: true });
+      } else {
+        console.error("Admin sign out failed:", result.error);
+        // You can replace this with a toast notification if available
+        alert("Failed to sign out. Please try again.");
+      }
+    } catch (error) {
+      console.error("Admin sign out error:", error);
+      alert("An error occurred while signing out. Please try again.");
+    } finally {
+      setIsSigningOut(false);
+    }
+  };
 
   return (
     <div
@@ -205,22 +242,75 @@ export function AdminSidebar({
         </div>
       </nav>
 
-      {/* Footer Section - Version information, only shown when sidebar is expanded */}
-      {!isCollapsed && (
-        <div className="border-t border-gray-200/50 p-4">
-          {/* Version display card with subtle styling */}
-          <div className="text-center text-sm text-gray-500 bg-gradient-to-r from-gray-50/80 to-gray-100/80 rounded-lg py-2 px-3 border border-gray-200/50">
-            <div className="flex items-center justify-center gap-2">
-              {/* Mini logo for branding consistency */}
-              <div className="w-4 h-4 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-sm flex items-center justify-center">
-                <Code2 className="w-2 h-2 text-white" />
+      {/* Footer Section - User info, version information and sign out button */}
+      <div className="border-t border-gray-200/50 p-2 space-y-3">
+        {/* User info - only shown when sidebar is expanded */}
+        {!isCollapsed && currentUser && (
+          <div className="px-2">
+            <div className="text-xs text-gray-500 bg-gradient-to-r from-gray-50/80 to-gray-100/80 rounded-lg py-2 px-3 border border-gray-200/50">
+              <div className="truncate">
+                <span className="font-medium text-gray-600">
+                  {currentUser.firstName} {currentUser.lastName}
+                </span>
               </div>
-              {/* Version text */}
-              <span className="font-medium text-gray-600">Admin Dashboard</span>
+              <div className="truncate text-gray-500">{currentUser.email}</div>
             </div>
           </div>
+        )}
+
+        {/* Sign Out Button */}
+        <div className="px-2">
+          <Button
+            variant="ghost"
+            onClick={handleSignOut}
+            disabled={isSigningOut}
+            className={cn(
+              "w-full text-red-600 hover:text-red-700 hover:bg-red-50 transition-all duration-200 border border-red-200/50 hover:border-red-300",
+              isCollapsed
+                ? "justify-center px-0 py-3"
+                : "justify-start px-3 py-3"
+            )}
+          >
+            {isSigningOut ? (
+              <>
+                <div className="w-4 h-4 border-2 border-red-600 border-t-transparent rounded-full animate-spin flex-shrink-0" />
+                {!isCollapsed && (
+                  <span className="truncate ml-3 font-medium">
+                    {t("Signing out...")}
+                  </span>
+                )}
+              </>
+            ) : (
+              <>
+                <LogOut className="w-4 h-4 flex-shrink-0" />
+                {!isCollapsed && (
+                  <span className="truncate ml-3 font-medium">
+                    {t("Sign Out")}
+                  </span>
+                )}
+              </>
+            )}
+          </Button>
         </div>
-      )}
+
+        {/* Version info - only shown when sidebar is expanded */}
+        {!isCollapsed && (
+          <div className="px-2">
+            <div className="text-center text-sm text-gray-500 bg-gradient-to-r from-gray-50/80 to-gray-100/80 rounded-lg py-2 px-3 border border-gray-200/50">
+              <div className="flex items-center justify-center gap-2">
+                {/* Mini logo for branding consistency */}
+                <div className="w-4 h-4 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-sm flex items-center justify-center">
+                  <Code2 className="w-2 h-2 text-white" />
+                </div>
+                {/* Version text */}
+                <span className="font-medium text-gray-600">
+                  Admin Dashboard
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
