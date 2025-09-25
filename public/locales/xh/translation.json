@@ -44,6 +44,7 @@
   "Active": "Iyasebenza",
   "ACTIVE": "IYASEBENZA",
   "weeks ago": "iiveki ezidlulileyo",
+  "week ago":"iveki edlulileyo",
   "days ago": "iimini ezidlulileyo",
   "day ago": "imini edlulileyo",
   "hours ago": "iiyure ezigqithileyo",
@@ -165,6 +166,7 @@
   "The program is waiting for input! Write it here and press enter to continue": "Iprogram ilinde igalelo lakho! Bhala apha ucofe u-Enter ukuze uqhubeke...",
   "⚡ The program is waiting for input! Write it above and press enter to continue...": "⚡ Iprogram ilinde igalelo lakho! Bhala ngentla ucofe u-Enter ukuze uqhubeke...",
   "💡 If your code requires input, enter it in the above box": "💡 Ukuba ikhowudi yakho ifuna igalelo, lifake ebhokisini engentla.",
+  "If your code requires input, enter it in the above box": "Ukuba ikhowudi yakho ifuna igalelo, lifake ebhokisini engentla.",
   "Enter input for your program...": "Faka igalelo leprogram yakho...",
   "Executing": "Iyaqhuba",
   "Ready": "Kukulungele",
@@ -651,5 +653,14 @@
   "Failed to Load Analytics Data":"Kusilele ukulayisha izibalo",
   "Enter the question...":"Ngenisa umbuzo...",
   "Not specified":"Ayinikezwanga",
-  "All Dates":"Yonke imihla"
+  "All Dates":"Yonke imihla",
+  "Monitor student performance and engagement":"Bona indlela abafundi abaqhuba ngayo",
+  "Sign Out":"Phuma",
+  "Signing out...":"Siyakukhupha...",
+  "Output will appear here":"Iziphumo zizovela apha",
+  "While Loop in IsiPython":"I-While Loop kwi-IsiPython",
+  "Comparing Number Inputs" :"Ukuthelekisa amagalelo amanani",
+  "This IsiPython code demonstrates conditional statements using Xhosa keywords":"Le khowudi ye-IsiPython ibonisa iistatements ezinezimo zisebenzisa amagama angundoqo esiXhosa",
+  "In IsiPython":"Kwi-IsiPython",
+  "is used to iterate through lists, strings, and other iterable objects. This example shows looping through a list of fruits.":"lisetyenziswa ukuphindaphinda imijikelo kuluhlu, kwamagama, nakwezinye izinto onokwenza imijikelo kuyo. Lo mzekelo ubonisa ukujikeleza kuluhlu lweziqhamo."
 }

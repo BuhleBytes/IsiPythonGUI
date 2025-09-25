@@ -1934,16 +1934,10 @@ export function CodeEditorLight({
                     }`}
                   >
                     {debugWaitingForInput
-                      ? t(
-                          "The debugger is waiting for your input! Write it above and press enter to continue debugging..."
-                        )
+                      ? t("The debugger is waiting for your input! Write it above and press enter to continue debugging...")
                       : waitingForInput
-                      ? t(
-                          "The program is waiting for input! Write it above and press enter to continue..."
-                        )
-                      : t(
-                          "If your code requires input, enter it in the above box"
-                        )}
+                      ? t("The program is waiting for input! Write it above and press enter to continue...")
+                      : t("If your code requires input, enter it in the above box")}
                   </p>
                 </div>
               </CardContent>
