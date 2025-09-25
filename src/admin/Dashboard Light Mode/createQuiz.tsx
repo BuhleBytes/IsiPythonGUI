@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { useTranslation } from "react-i18next";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -80,6 +81,8 @@ export default function CreateQuiz() {
     "You can flag questions for review and return to them later",
     "Make sure to submit your quiz before the due date",
   ]);
+  
+  const {t} = useTranslation();
 
   // Quiz questions array - starts with one empty question
   const [questions, setQuestions] = useState<QuizQuestion[]>([

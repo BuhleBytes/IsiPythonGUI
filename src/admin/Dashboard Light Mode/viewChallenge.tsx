@@ -35,12 +35,11 @@ import {
   Tag,
   Target,
   TestTube,
-  TrendingUp,
   Trophy,
-  Users,
   Zap,
 } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useChallengeDetails } from "../useChallengeDetails";
 
 // TypeScript interface defining the structure of a test case
@@ -69,8 +68,7 @@ export default function ViewChallenge({
   const { challenge, loading, error, refetch } = useChallengeDetails(
     challengeId || ""
   );
-
-  // Local state to control the visibility of the challenge preview modal
+  const { t } = useTranslation();
   const [showPreview, setShowPreview] = useState(false);
 
   // Handle case where no challengeId is provided in props
@@ -90,7 +88,7 @@ export default function ViewChallenge({
           {/* Navigation button back to challenge list */}
           <Button onClick={onBackToList} variant="outline" className="mt-4">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Published Challenges
+            {t("Back to Published Challenges")}
           </Button>
         </div>
       </div>
@@ -105,10 +103,10 @@ export default function ViewChallenge({
           {/* Animated loading spinner */}
           <RefreshCw className="w-12 h-12 text-cyan-500 animate-spin mx-auto" />
           <div className="text-xl font-semibold text-gray-700">
-            Loading Challenge Details...
+            {t("Loading Challenge Details...")}
           </div>
           <div className="text-sm text-gray-500">
-            Fetching challenge information and test cases
+            {t("Fetching challenge information and test cases")}
           </div>
         </div>
       </div>
@@ -123,18 +121,18 @@ export default function ViewChallenge({
           {/* Error icon and message */}
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
           <div className="text-xl font-semibold text-gray-700">
-            Failed to Load Challenge Details
+            {t("Failed to Load Challenge Details")}
           </div>
           <div className="text-sm text-gray-500">{error}</div>
           {/* Action buttons for retry and navigation */}
           <div className="flex gap-3 justify-center">
             <Button onClick={refetch} className="mt-4">
               <RefreshCw className="w-4 h-4 mr-2" />
-              Try Again
+              {t("Try Again")}
             </Button>
             <Button onClick={onBackToList} variant="outline" className="mt-4">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Published Challenges
+              {t("Back to Published Challenges")}
             </Button>
           </div>
         </div>
@@ -149,14 +147,16 @@ export default function ViewChallenge({
         <div className="text-center space-y-4 max-w-md">
           <AlertCircle className="w-12 h-12 text-gray-500 mx-auto" />
           <div className="text-xl font-semibold text-gray-700">
-            Challenge Not Found
+            {t("Challenge Not Found")}
           </div>
           <div className="text-sm text-gray-500">
-            The challenge you're looking for doesn't exist or has been deleted.
+            {t(
+              "The challenge you're looking for doesn't exist or has been deleted."
+            )}
           </div>
           <Button onClick={onBackToList} variant="outline" className="mt-4">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Published Challenges
+            {t("Back to Published Challenges")}
           </Button>
         </div>
       </div>
@@ -196,19 +196,19 @@ export default function ViewChallenge({
               className="border-gray-300 text-gray-700 hover:bg-gray-50 bg-white/80 rounded-lg font-medium hover:scale-105 transition-all duration-300 shadow-sm"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Published Challenges
+              {t("Back to Published Challenges")}
             </Button>
           </div>
 
           {/* Page Title with Icon */}
           <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 via-cyan-600 to-emerald-600 bg-clip-text text-transparent flex items-center gap-3">
-            View Challenge
+            {t("View Challenge")}
             <Eye className="w-8 h-8 text-cyan-500 animate-pulse" />
           </h1>
 
           {/* Page Description */}
           <p className="text-lg text-gray-600">
-            Review published challenge details and statistics
+            {t("Review published challenge details")}
           </p>
 
           {/* Status and Statistics Badges */}
@@ -216,29 +216,13 @@ export default function ViewChallenge({
             {/* Published Status Badge */}
             <Badge className="bg-green-100 text-green-700 border-green-200 hover:bg-green-200 hover:text-green-800 hover:border-green-300 font-medium transition-all duration-200">
               <CheckCircle className="w-3 h-3 mr-1" />
-              Published Challenge
+              {t("Published Challenge")}
             </Badge>
 
             {/* Last Modified Date Badge */}
             <Badge className="bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-200 hover:text-gray-800 hover:border-gray-300 font-medium transition-all duration-200">
-              Last Modified: {challenge.lastModified}
+              {t("Last Modified")}: {challenge.lastModified}
             </Badge>
-
-            {/* Statistics Badges - Only shown if statistics data is available */}
-            {challenge.statistics && (
-              <>
-                {/* Number of Users Who Attempted Badge */}
-                <Badge className="bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-200 hover:text-purple-800 hover:border-purple-300 font-medium transition-all duration-200">
-                  <Users className="w-3 h-3 mr-1" />
-                  {challenge.statistics.usersAttempted} attempts
-                </Badge>
-                {/* Pass Rate Badge */}
-                <Badge className="bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-200 hover:text-blue-800 hover:border-blue-300 font-medium transition-all duration-200">
-                  <TrendingUp className="w-3 h-3 mr-1" />
-                  {challenge.statistics.passRate.toFixed(0)}% pass rate
-                </Badge>
-              </>
-            )}
           </div>
         </div>
 
@@ -255,7 +239,7 @@ export default function ViewChallenge({
                 <div className="w-10 h-10 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md">
                   <Code className="w-5 h-5 text-white" />
                 </div>
-                Challenge Details
+                {t("Challenge Details")}
               </CardTitle>
             </CardHeader>
 
@@ -267,7 +251,7 @@ export default function ViewChallenge({
                 <div className="space-y-2">
                   <Label className="text-gray-700 font-semibold flex items-center gap-2">
                     <Target className="w-4 h-4 text-cyan-500" />
-                    Challenge Title
+                    {t("Challenge Title")}
                   </Label>
                   <div className="p-3 bg-gray-50/80 border border-gray-200/50 rounded-md text-gray-900 font-medium">
                     {challenge.title}
@@ -278,7 +262,7 @@ export default function ViewChallenge({
                 <div className="space-y-2">
                   <Label className="text-gray-700 font-semibold flex items-center gap-2">
                     <Zap className="w-4 h-4 text-purple-500" />
-                    Difficulty Level
+                    {t("Difficulty Level")}
                   </Label>
                   <div className="p-3 bg-gray-50/80 border border-gray-200/50 rounded-md">
                     <Badge
@@ -299,7 +283,7 @@ export default function ViewChallenge({
               {/* Short Description */}
               <div className="space-y-2">
                 <Label className="text-gray-700 font-semibold">
-                  Short Description
+                  {t("Short Description")}
                 </Label>
                 <div className="p-3 bg-gray-50/80 border border-gray-200/50 rounded-md text-gray-900">
                   {challenge.shortDescription}
@@ -314,7 +298,7 @@ export default function ViewChallenge({
                     <div className="w-5 h-5 bg-gradient-to-r from-orange-500 to-red-600 rounded-md flex items-center justify-center">
                       <Trophy className="w-3 h-3 text-white" />
                     </div>
-                    Reward Points
+                    {t("Reward Points")}
                   </Label>
                   <div className="p-3 bg-gray-50/80 border border-gray-200/50 rounded-md text-gray-900 font-medium">
                     {challenge.rewardPoints}
@@ -325,7 +309,7 @@ export default function ViewChallenge({
                 <div className="space-y-2">
                   <Label className="text-gray-700 font-semibold flex items-center gap-2">
                     <Clock className="w-4 h-4 text-blue-500" />
-                    Estimated Time (minutes)
+                    {t("Estimated Time")} ({t("minutes")})
                   </Label>
                   <div className="p-3 bg-gray-50/80 border border-gray-200/50 rounded-md text-gray-900 font-medium">
                     {challenge.estimatedTime}
@@ -337,7 +321,7 @@ export default function ViewChallenge({
               <div className="space-y-2">
                 <Label className="text-gray-700 font-semibold flex items-center gap-2">
                   <Tag className="w-4 h-4 text-indigo-500" />
-                  Tags
+                  {t("Tags")}
                 </Label>
                 <div className="p-3 bg-gray-50/80 border border-gray-200/50 rounded-md">
                   <div className="flex flex-wrap gap-2">
@@ -368,7 +352,7 @@ export default function ViewChallenge({
                 <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-md">
                   <FileText className="w-5 h-5 text-white" />
                 </div>
-                Problem Description
+                {t("Problem Description")}
               </CardTitle>
             </CardHeader>
 
@@ -376,7 +360,7 @@ export default function ViewChallenge({
             <CardContent className="p-6 relative z-10">
               <div className="space-y-2">
                 <Label className="text-gray-700 font-semibold">
-                  Detailed Problem Statement
+                  {t("Detailed Problem Statement")}
                 </Label>
                 {/* Pre-formatted text area to preserve formatting and line breaks */}
                 <div className="p-4 bg-gray-50/80 border border-gray-200/50 rounded-md text-gray-900 whitespace-pre-wrap min-h-[200px]">
@@ -397,7 +381,7 @@ export default function ViewChallenge({
                 <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl flex items-center justify-center shadow-md">
                   <TestTube className="w-5 h-5 text-white" />
                 </div>
-                Test Cases ({challenge.testCases.length})
+                {t("Test Cases")} ({challenge.testCases.length})
               </CardTitle>
             </CardHeader>
 
@@ -413,22 +397,21 @@ export default function ViewChallenge({
                     <CardContent className="p-5">
                       {/* Test Case Header with Badges */}
                       <div className="flex items-center gap-2 mb-4">
-                        {/* Test Case Number Badge */}
-                        <Badge className="bg-purple-100 text-purple-700 border-purple-200 font-medium hover:!bg-purple-200 hover:!text-purple-800 transition-colors duration-200">
-                          Test Case {index + 1}
+                        <Badge className="bg-purple-100 text-purple-700 border-purple-200 font-medium">
+                          {t("Test Case")} {index + 1}
                         </Badge>
 
                         {/* Example Badge - shown if this is an example test case */}
                         {testCase.isExample && (
-                          <Badge className="bg-blue-100 text-blue-700 border-blue-200 font-medium hover:!bg-blue-200 hover:!text-blue-800 transition-colors duration-200">
-                            Example
+                          <Badge className="bg-blue-100 text-blue-700 border-blue-200 font-medium">
+                            {t("Example test")}
                           </Badge>
                         )}
 
                         {/* Hidden Badge - shown if this test case is hidden from users */}
                         {testCase.isHidden && (
-                          <Badge className="bg-gray-100 text-gray-700 border-gray-200 font-medium hover:!bg-gray-200 hover:!text-gray-800 transition-colors duration-200">
-                            Hidden
+                          <Badge className="bg-gray-100 text-gray-700 border-gray-200 font-medium">
+                            {t("Hidden test")}
                           </Badge>
                         )}
                       </div>
@@ -438,7 +421,7 @@ export default function ViewChallenge({
                         {/* Test Case Input */}
                         <div className="space-y-2">
                           <Label className="text-gray-700 font-semibold">
-                            Input
+                            {t("Input")}
                           </Label>
                           {/* Monospace font for code formatting, preserve whitespace */}
                           <div className="p-3 bg-gray-50/80 border border-gray-200/50 rounded-md text-gray-900 font-mono text-sm min-h-[80px] whitespace-pre-wrap">
@@ -449,7 +432,7 @@ export default function ViewChallenge({
                         {/* Expected Output */}
                         <div className="space-y-2">
                           <Label className="text-gray-700 font-semibold">
-                            Expected Output
+                            {t("Expected Output")}
                           </Label>
                           {/* Monospace font for code formatting, preserve whitespace */}
                           <div className="p-3 bg-gray-50/80 border border-gray-200/50 rounded-md text-gray-900 font-mono text-sm min-h-[80px] whitespace-pre-wrap">
@@ -463,7 +446,7 @@ export default function ViewChallenge({
                         {/* Test Case Explanation */}
                         <div className="space-y-2">
                           <Label className="text-gray-700 font-semibold">
-                            Explanation
+                            {t("Explanation")}
                           </Label>
                           <div className="p-3 bg-gray-50/80 border border-gray-200/50 rounded-md text-gray-900">
                             {testCase.explanation}
@@ -475,7 +458,7 @@ export default function ViewChallenge({
                           {/* Points Weight */}
                           <div className="space-y-2">
                             <Label className="text-gray-700 font-semibold">
-                              Points Weight
+                              {t("Points Weight")}
                             </Label>
                             <div className="p-3 bg-gray-50/80 border border-gray-200/50 rounded-md text-gray-900 font-medium">
                               {testCase.pointsWeight}
@@ -485,7 +468,7 @@ export default function ViewChallenge({
                           {/* Visibility Settings - Example and Hidden Status */}
                           <div className="space-y-2">
                             <Label className="text-gray-700 font-semibold">
-                              Visibility
+                              {t("Visibility")}
                             </Label>
                             <div className="flex gap-4 p-3 bg-gray-50/80 border border-gray-200/50 rounded-md">
                               {/* Example Status Badge */}
@@ -496,7 +479,8 @@ export default function ViewChallenge({
                                     : "bg-purple-100 text-purple-700 border-purple-200 hover:!bg-purple-200 hover:!text-purple-800 transition-colors duration-200"
                                 }
                               >
-                                Example: {testCase.isExample ? "Yes" : "No"}
+                                {t("Example test")}:{" "}
+                                {testCase.isExample ? t("Yes") : t("No")}
                               </Badge>
                               {/* Hidden Status Badge */}
                               <Badge
@@ -506,7 +490,8 @@ export default function ViewChallenge({
                                     : "bg-green-100 text-green-700 border-green-200 hover:!bg-green-200 hover:!text-green-800 transition-colors duration-200"
                                 }
                               >
-                                Hidden: {testCase.isHidden ? "Yes" : "No"}
+                                {t("Hidden test")}:{" "}
+                                {testCase.isHidden ? t("Yes") : t("No")}
                               </Badge>
                             </div>
                           </div>
@@ -528,7 +513,7 @@ export default function ViewChallenge({
               className="border-cyan-200 text-cyan-700 hover:bg-cyan-50 bg-white/80 rounded-lg font-medium px-6 py-3 hover:scale-105 transition-all duration-300 shadow-sm hover:shadow-md"
             >
               <Eye className="w-4 h-4 mr-2" />
-              Preview Challenge
+              {t("Preview Challenge")}
             </Button>
 
             {/* Back Button - Returns to the published challenges list */}
@@ -537,7 +522,7 @@ export default function ViewChallenge({
               className="bg-gradient-to-r from-gray-500 to-slate-600 hover:from-gray-600 hover:to-slate-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg px-6 py-3 font-medium hover:scale-105"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Published Challenges
+              {t("Back to Published Challenges")}
             </Button>
           </div>
         </div>

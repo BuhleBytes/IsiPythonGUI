@@ -53,6 +53,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useDraftChallenges } from "../useDraftChallenges";
 
 /**
@@ -99,11 +100,8 @@ export default function DraftChallenges({
     refetch, // Function to refetch data from API
     deleteChallenge, // Function to delete a specific challenge
   } = useDraftChallenges();
-
-  /**
-   * Returns styling configuration based on challenge difficulty level
-   * Each difficulty has its own color scheme and icon for visual distinction
-   */
+  const { t } = useTranslation();
+  // Get challenge icon and styling based on difficulty
   const getChallengeStyle = (difficulty: string) => {
     switch (difficulty) {
       case "Easy":
@@ -240,8 +238,11 @@ export default function DraftChallenges({
     // Prevent event bubbling to avoid triggering card click events
     event.stopPropagation();
 
-    // Create detailed confirmation message
-    const confirmMessage = `Are you sure you want to delete "${challenge.title}"?\n\nThis action cannot be undone and will permanently remove the draft challenge from your account.`;
+    const confirmMessage = `${t("Are you sure you want to delete ")}"${
+      challenge.title
+    }"?\n\n${t(
+      "This action cannot be undone and will permanently remove the draft challenge from your account."
+    )}`;
 
     // Show confirmation dialog
     if (!window.confirm(confirmMessage)) {
@@ -262,10 +263,10 @@ export default function DraftChallenges({
         <div className="text-center space-y-4">
           <RefreshCw className="w-12 h-12 text-cyan-500 animate-spin mx-auto" />
           <div className="text-xl font-semibold text-gray-700">
-            Loading Draft Challenges...
+            {t("Loading Draft Challenges...")}
           </div>
           <div className="text-sm text-gray-500">
-            Fetching your latest drafts
+            {t("Fetching your latest drafts")}
           </div>
         </div>
       </div>
@@ -289,7 +290,7 @@ export default function DraftChallenges({
           <div className="text-sm text-gray-500">{error}</div>
           <Button onClick={refetch} className="mt-4">
             <RefreshCw className="w-4 h-4 mr-2" />
-            Try Again
+            {t("Try Again")}
           </Button>
         </div>
       </div>
@@ -310,11 +311,11 @@ export default function DraftChallenges({
         {/* Page header section */}
         <div className="space-y-3">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 via-cyan-600 to-emerald-600 bg-clip-text text-transparent flex items-center gap-3">
-            Draft Challenges
+            {t("Draft Challenges")}
             <FileText className="w-8 h-8 text-cyan-500 animate-pulse" />
           </h1>
           <p className="text-lg text-gray-600">
-            Manage and edit your challenge drafts before publishing
+            {t("Manage and edit your challenge drafts before publishing")}
           </p>
         </div>
 
@@ -335,17 +336,17 @@ export default function DraftChallenges({
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-white mb-1">
-                    Create New Challenge
+                    {t("Create New Challenge")}
                   </h2>
                   <p className="text-white/80 text-base">
-                    Start drafting a new coding challenge
+                    {t("Start drafting a new coding challenge")}
                   </p>
                 </div>
               </div>
               {/* Animated call-to-action indicator */}
               <div className="text-right group-hover:translate-x-2 transition-transform duration-300">
                 <div className="text-4xl font-bold mb-1">+</div>
-                <div className="text-sm opacity-80">Click to start</div>
+                <div className="text-sm opacity-80">{t("Click to start")}</div>
               </div>
             </div>
           </CardContent>
@@ -360,7 +361,7 @@ export default function DraftChallenges({
               <div className="w-10 h-10 bg-gradient-to-r from-gray-500 to-slate-600 rounded-xl flex items-center justify-center shadow-md">
                 <Search className="w-5 h-5 text-white" />
               </div>
-              Search & Filter
+              {t("Search & Filter")}
             </CardTitle>
           </CardHeader>
 
@@ -369,12 +370,12 @@ export default function DraftChallenges({
               {/* Search input field */}
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-gray-700">
-                  Search Challenges
+                  {t("Search Challenges")}
                 </label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <Input
-                    placeholder="Search by title, description, or tags..."
+                    placeholder={t("Search by title, description, or tags...")}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10 bg-white/70 border-gray-300/50 text-gray-900 placeholder-gray-500 focus:border-cyan-400 focus:ring-cyan-400/30 focus:ring-2 backdrop-blur-sm shadow-sm"
@@ -385,7 +386,7 @@ export default function DraftChallenges({
               {/* Difficulty filter dropdown */}
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-gray-700">
-                  Difficulty
+                  {t("Difficulty")}
                 </label>
                 <Select
                   value={difficultyFilter}
@@ -395,7 +396,7 @@ export default function DraftChallenges({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-white/95 backdrop-blur-xl border-gray-200/50 shadow-xl">
-                    <SelectItem value="all">All Difficulties</SelectItem>
+                    <SelectItem value="all">{t("All Difficulties")}</SelectItem>
                     <SelectItem value="easy">Easy</SelectItem>
                     <SelectItem value="medium">Medium</SelectItem>
                     <SelectItem value="hard">Hard</SelectItem>
@@ -406,17 +407,21 @@ export default function DraftChallenges({
               {/* Sort options dropdown */}
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-gray-700">
-                  Sort By
+                  {t("Sort By")}
                 </label>
                 <Select value={sortBy} onValueChange={setSortBy}>
                   <SelectTrigger className="bg-white/70 border-gray-300/50 text-gray-900 focus:border-cyan-400 focus:ring-cyan-400/30 backdrop-blur-sm shadow-sm">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-white/95 backdrop-blur-xl border-gray-200/50 shadow-xl">
-                    <SelectItem value="recent">Recently Modified</SelectItem>
-                    <SelectItem value="title">Title (A-Z)</SelectItem>
-                    <SelectItem value="difficulty">Difficulty</SelectItem>
-                    <SelectItem value="points">Reward Points</SelectItem>
+                    <SelectItem value="recent">
+                      {t("Recently Modified")}
+                    </SelectItem>
+                    <SelectItem value="title">{t("Title")} (A-Z)</SelectItem>
+                    <SelectItem value="difficulty">
+                      {t("Difficulty")}
+                    </SelectItem>
+                    <SelectItem value="points">{t("Reward Points")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -424,13 +429,15 @@ export default function DraftChallenges({
               {/* Results counter display */}
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-gray-700">
-                  Total Drafts
+                  {t("Total Drafts")}
                 </label>
                 <div className="h-10 px-3 py-2 bg-gradient-to-r from-cyan-50 to-purple-50 border border-cyan-200/50 rounded-md flex items-center">
                   <span className="text-lg font-bold bg-gradient-to-r from-cyan-600 to-purple-600 bg-clip-text text-transparent">
                     {filteredChallenges.length}
                   </span>
-                  <span className="text-sm text-gray-600 ml-2">challenges</span>
+                  <span className="text-sm text-gray-600 ml-2">
+                    {t("challenges")}
+                  </span>
                 </div>
               </div>
             </div>
@@ -462,7 +469,9 @@ export default function DraftChallenges({
                   <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-20">
                     <div className="flex items-center gap-3 text-gray-700">
                       <Loader2 className="w-6 h-6 animate-spin" />
-                      <span className="font-medium">Deleting challenge...</span>
+                      <span className="font-medium">
+                        {t("Deleting challenge...")}
+                      </span>
                     </div>
                   </div>
                 )}
@@ -491,8 +500,8 @@ export default function DraftChallenges({
                           >
                             {challenge.difficulty}
                           </Badge>
-                          <Badge className="bg-purple-100 text-purple-700 border-purple-200 hover:!bg-purple-200 hover:!text-purple-800 font-medium text-xs hover:scale-105 transition-all duration-200">
-                            Draft
+                          <Badge className="bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-200 hover:text-purple-800 font-medium text-xs hover:scale-105 transition-all duration-200">
+                            {t("Draft")}
                           </Badge>
                         </div>
                       </div>
@@ -515,14 +524,14 @@ export default function DraftChallenges({
                         <div className="flex items-center gap-2">
                           <Trophy className="w-4 h-4 text-orange-500" />
                           <span className="text-sm font-medium text-gray-700">
-                            {challenge.rewardPoints} points
+                            {challenge.rewardPoints} {t("points")}
                           </span>
                         </div>
                         {/* Estimated time display */}
                         <div className="flex items-center gap-2">
                           <Clock className="w-4 h-4 text-blue-500" />
                           <span className="text-sm font-medium text-gray-700">
-                            {challenge.estimatedTime} min
+                            {challenge.estimatedTime} {t("min")}
                           </span>
                         </div>
                       </div>
@@ -531,7 +540,7 @@ export default function DraftChallenges({
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4 text-green-500" />
                         <span className="text-sm font-medium text-gray-700">
-                          Modified:{" "}
+                          {t("Modified")}:{" "}
                           {new Date(
                             challenge.lastModified
                           ).toLocaleDateString()}
@@ -559,7 +568,7 @@ export default function DraftChallenges({
                           variant="outline"
                           className="text-xs bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 hover:text-gray-700 transition-all duration-200"
                         >
-                          +{challenge.tags.length - 3} more
+                          +{challenge.tags.length - 3} {t("more")}
                         </Badge>
                       )}
                     </div>
@@ -573,7 +582,7 @@ export default function DraftChallenges({
                         disabled={isDeleting}
                       >
                         <Edit3 className="w-4 h-4 mr-2" />
-                        Edit Challenge
+                        {t("Edit Challenge")}
                       </Button>
 
                       {/* Preview button */}
@@ -593,7 +602,7 @@ export default function DraftChallenges({
                         onClick={(e) => handleDeleteChallenge(challenge, e)}
                         className="border-red-200 text-red-700 hover:bg-red-50 bg-white/80 rounded-lg hover:scale-105 transition-all duration-300 shadow-sm disabled:opacity-50"
                         disabled={isDeleting}
-                        title="Delete this draft challenge"
+                        title={t("Delete this draft challenge")}
                       >
                         {isDeleting ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
@@ -621,12 +630,14 @@ export default function DraftChallenges({
 
               {/* Empty state message */}
               <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                No Draft Challenges Found
+                {t("No Draft Challenges Found")}
               </h3>
               <p className="text-gray-600 mb-6">
                 {searchQuery || difficultyFilter !== "all"
-                  ? "Try adjusting your search criteria or filters."
-                  : "You haven't created any draft challenges yet. Start by creating your first challenge!"}
+                  ? t("Try adjusting your search criteria or filters.")
+                  : t(
+                      "You haven't created any draft challenges yet. Start by creating your first challenge!"
+                    )}
               </p>
 
               {/* Call-to-action button */}
@@ -635,7 +646,7 @@ export default function DraftChallenges({
                 className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg px-6 py-3 font-medium hover:scale-105"
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Create New Challenge
+                {t("Create New Challenge")}
               </Button>
             </CardContent>
           </Card>

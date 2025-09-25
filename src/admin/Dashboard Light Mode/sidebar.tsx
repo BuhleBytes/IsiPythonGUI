@@ -30,6 +30,7 @@ import {
   Sparkles,
   X,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 // Configuration array for sidebar navigation items
 // Each item represents a different admin panel view with its display properties
@@ -115,6 +116,8 @@ export function AdminSidebar({
     onViewChange(key);
   };
 
+  const { t } = useTranslation();
+
   return (
     <div
       className={cn(
@@ -141,8 +144,7 @@ export function AdminSidebar({
                 Admin Panel
                 <Sparkles className="w-3 h-3 text-cyan-500 animate-pulse" />
               </h2>
-              {/* Subtitle describing the panel's purpose */}
-              <p className="text-xs text-gray-500">Coding Challenges</p>
+              <p className="text-xs text-gray-500">{t("Create and Manage")}</p>
             </div>
           )}
         </div>
@@ -194,7 +196,7 @@ export function AdminSidebar({
                 {/* Navigation item label - only shown when not collapsed */}
                 {!isCollapsed && (
                   <span className="truncate ml-3 font-medium">
-                    {item.title}
+                    {t(item.title)}
                   </span>
                 )}
               </Button>
@@ -214,9 +216,7 @@ export function AdminSidebar({
                 <Code2 className="w-2 h-2 text-white" />
               </div>
               {/* Version text */}
-              <span className="font-medium text-gray-600">
-                Admin Dashboard v2.0
-              </span>
+              <span className="font-medium text-gray-600">Admin Dashboard</span>
             </div>
           </div>
         </div>
