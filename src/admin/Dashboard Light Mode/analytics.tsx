@@ -54,6 +54,7 @@ import {
   Users,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 // API interfaces
 interface ApiQuiz {
@@ -124,6 +125,7 @@ export default function AnalyticsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [dateFilter, setDateFilter] = useState("all");
   const [difficultyFilter, setDifficultyFilter] = useState("all");
+  const {t} = useTranslation();
 
   // Data state
   const [quizzes, setQuizzes] = useState<AnalyticsQuiz[]>([]);
@@ -371,10 +373,10 @@ export default function AnalyticsPage() {
         <div className="text-center space-y-4">
           <RefreshCw className="w-12 h-12 text-cyan-500 animate-spin mx-auto" />
           <div className="text-xl font-semibold text-gray-700">
-            Loading Analytics Data...
+            {t("Loading Analytics Data...")}
           </div>
           <div className="text-sm text-gray-500">
-            Fetching quiz and challenge statistics from API
+            {t("Fetching quiz and challenge statistics from API")}
           </div>
         </div>
       </div>
@@ -388,7 +390,7 @@ export default function AnalyticsPage() {
         <div className="text-center space-y-4 max-w-md">
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto" />
           <div className="text-xl font-semibold text-gray-700">
-            Failed to Load Analytics Data
+            {t("Failed to Load Analytics Data")}
           </div>
           <div className="text-sm text-gray-500">{error}</div>
           <button
@@ -396,7 +398,7 @@ export default function AnalyticsPage() {
             className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white px-6 py-3 rounded-lg font-medium hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center gap-2 mx-auto"
           >
             <RefreshCw className="w-4 h-4" />
-            Try Again
+            {t("Try Again")}
           </button>
         </div>
       </div>
@@ -417,11 +419,11 @@ export default function AnalyticsPage() {
         {/* Page header section */}
         <div className="space-y-3">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 via-cyan-600 to-emerald-600 bg-clip-text text-transparent flex items-center gap-3">
-            Analytics Dashboard
+            {t("Analytics Dashboard")}
             <BarChart3 className="w-8 h-8 text-cyan-500 animate-pulse" />
           </h1>
           <p className="text-lg text-gray-600">
-            Track performance and engagement across all quizzes and challenges
+            {t("Track performance and engagement across all quizzes and challenges")}
           </p>
         </div>
 
@@ -434,7 +436,7 @@ export default function AnalyticsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600 mb-2 font-medium">
-                    Total Quizzes
+                    {t("Total Quizzes")}
                   </p>
                   <p className="text-3xl font-bold bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent">
                     {quizzes.length}
@@ -454,7 +456,7 @@ export default function AnalyticsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600 mb-2 font-medium">
-                    Total Challenges
+                    {t("Total Challenges")}
                   </p>
                   <p className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
                     {challenges.length}
@@ -474,7 +476,7 @@ export default function AnalyticsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600 mb-2 font-medium">
-                    Total Attempts
+                    {t("Total Attempts")}
                   </p>
                   <p className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
                     {quizzes.reduce(
@@ -501,7 +503,7 @@ export default function AnalyticsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600 mb-2 font-medium">
-                    Avg Success Rate
+                    Avg {t("Success Rate")}
                   </p>
                   <p className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-yellow-600 bg-clip-text text-transparent">
                     {quizzes.length + challenges.length > 0
@@ -537,14 +539,14 @@ export default function AnalyticsPage() {
               className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-cyan-500 data-[state=active]:to-blue-600 data-[state=active]:text-white rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-all duration-300"
             >
               <FileText className="w-4 h-4 mr-2" />
-              Quiz Analytics
+              {t("Quiz Analytics")}
             </TabsTrigger>
             <TabsTrigger
               value="challenges"
               className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-purple-500 data-[state=active]:to-pink-600 data-[state=active]:text-white rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-all duration-300"
             >
               <Target className="w-4 h-4 mr-2" />
-              Challenge Analytics
+              {t("Challenge Analytics")}
             </TabsTrigger>
           </TabsList>
 
@@ -557,7 +559,7 @@ export default function AnalyticsPage() {
                   <div className="w-10 h-10 bg-gradient-to-r from-gray-500 to-slate-600 rounded-xl flex items-center justify-center shadow-md">
                     <Search className="w-5 h-5 text-white" />
                   </div>
-                  Search & Filter Quizzes
+                  {t("Search & Filter Quizzes")}
                 </CardTitle>
               </CardHeader>
 
@@ -565,12 +567,12 @@ export default function AnalyticsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-gray-700">
-                      Search Quizzes
+                      {t("Search Quizzes")}
                     </label>
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                       <Input
-                        placeholder="Search by title..."
+                        placeholder={t("Search by title...")}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="pl-10 bg-white/70 border-gray-300/50 text-gray-900 placeholder-gray-500 focus:border-cyan-400 focus:ring-cyan-400/30 focus:ring-2 backdrop-blur-sm shadow-sm"
@@ -580,7 +582,7 @@ export default function AnalyticsPage() {
 
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-gray-700">
-                      Date Filter
+                      {t("Date Filter")}
                     </label>
                     <Select value={dateFilter} onValueChange={setDateFilter}>
                       <SelectTrigger className="bg-white/70 border-gray-300/50 text-gray-900 focus:border-cyan-400 focus:ring-cyan-400/30 backdrop-blur-sm shadow-sm">
@@ -588,17 +590,17 @@ export default function AnalyticsPage() {
                         <SelectValue placeholder="Filter by date" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All Dates</SelectItem>
-                        <SelectItem value="this-week">This Week</SelectItem>
-                        <SelectItem value="this-month">This Month</SelectItem>
-                        <SelectItem value="overdue">Overdue</SelectItem>
+                        <SelectItem value="all">{t("All Dates")}</SelectItem>
+                        <SelectItem value="this-week">{t("This Week")}</SelectItem>
+                        <SelectItem value="this-month">{t("This Month")}</SelectItem>
+                        <SelectItem value="overdue">{t("Overdue")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-gray-700">
-                      Difficulty
+                      {t("Difficulty")}
                     </label>
                     <Select
                       value={difficultyFilter}
@@ -606,10 +608,10 @@ export default function AnalyticsPage() {
                     >
                       <SelectTrigger className="bg-white/70 border-gray-300/50 text-gray-900 focus:border-cyan-400 focus:ring-cyan-400/30 backdrop-blur-sm shadow-sm">
                         <Filter className="w-4 h-4 mr-2" />
-                        <SelectValue placeholder="Filter by difficulty" />
+                        <SelectValue placeholder={t("Filter by difficulty")}/>
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All Difficulties</SelectItem>
+                        <SelectItem value="all">{t("All Difficulties")}</SelectItem>
                         <SelectItem value="easy">Easy</SelectItem>
                         <SelectItem value="medium">Medium</SelectItem>
                         <SelectItem value="hard">Hard</SelectItem>
@@ -645,12 +647,12 @@ export default function AnalyticsPage() {
                             </Badge>
                             <Badge className="bg-cyan-100 text-cyan-700 border-cyan-200 hover:!bg-cyan-200 hover:!text-cyan-800 transition-colors duration-200 font-medium text-xs">
                               <CheckCircle className="w-3 h-3 mr-1" />
-                              Active
+                              {t("Active")}
                             </Badge>
                             <div className="flex items-center gap-2 text-gray-600 text-sm">
                               <Calendar className="w-4 h-4" />
                               <span>
-                                Due:{" "}
+                                {t("Due")}:{" "}
                                 {new Date(quiz.dueDate).toLocaleDateString()}
                               </span>
                             </div>
@@ -662,7 +664,7 @@ export default function AnalyticsPage() {
                             getPassRateTextColor(quiz.passRate)
                           )}
                         >
-                          {quiz.passRate}% Pass Rate
+                          {quiz.passRate}% {t("Pass Rate")}
                         </Badge>
                       </div>
                     </CardHeader>
@@ -677,7 +679,7 @@ export default function AnalyticsPage() {
                                   <Trophy className="w-4 h-4 text-white" />
                                 </div>
                                 <span className="text-sm text-gray-600 font-medium">
-                                  Average Score
+                                  {t("Average Score ")}
                                 </span>
                               </div>
                               <p className="text-2xl font-bold text-gray-900">
@@ -691,7 +693,7 @@ export default function AnalyticsPage() {
                                   <Users className="w-4 h-4 text-white" />
                                 </div>
                                 <span className="text-sm text-gray-600 font-medium">
-                                  Total Attempts
+                                  {t("Total Attempts")}
                                 </span>
                               </div>
                               <p className="text-2xl font-bold text-gray-900">
@@ -705,7 +707,7 @@ export default function AnalyticsPage() {
                                   <CheckCircle className="w-4 h-4 text-white" />
                                 </div>
                                 <span className="text-sm text-gray-600 font-medium">
-                                  Users Passed
+                                  {t("Users Passed")}
                                 </span>
                               </div>
                               <p className="text-2xl font-bold text-gray-900">
@@ -718,7 +720,7 @@ export default function AnalyticsPage() {
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2 text-gray-600">
                                 <HelpCircle className="w-4 h-4" />
-                                <span className="font-medium">Questions</span>
+                                <span className="font-medium">{t("Questions")}</span>
                               </div>
                               <span className="font-bold text-gray-900">
                                 {quiz.totalQuestions}
@@ -727,17 +729,17 @@ export default function AnalyticsPage() {
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2 text-gray-600">
                                 <Timer className="w-4 h-4" />
-                                <span className="font-medium">Time Limit</span>
+                                <span className="font-medium">{t("Time Limit")}</span>
                               </div>
                               <span className="font-bold text-gray-900">
-                                {quiz.timeLimit} min
+                                {quiz.timeLimit} {t("min")}
                               </span>
                             </div>
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2 text-gray-600">
                                 <Target className="w-4 h-4" />
                                 <span className="font-medium">
-                                  Total Points
+                                  {t("Total Points")}
                                 </span>
                               </div>
                               <span className="font-bold text-gray-900">
@@ -750,7 +752,7 @@ export default function AnalyticsPage() {
                         <div className="space-y-4">
                           <div className="text-center">
                             <h4 className="text-lg font-semibold text-gray-900 mb-2">
-                              Success Rate
+                              {t("Success Rate")}
                             </h4>
                             <div className="relative">
                               <div className="w-24 h-24 mx-auto relative">
@@ -802,10 +804,10 @@ export default function AnalyticsPage() {
                               )}
                             >
                               {quiz.passRate >= 80
-                                ? "Excellent"
+                                ? t("Excellent")
                                 : quiz.passRate >= 60
-                                ? "Good"
-                                : "Needs Improvement"}
+                                ? t("Good")
+                                : t("Needs Improvement")}
                             </Badge>
                           </div>
                         </div>
@@ -820,14 +822,14 @@ export default function AnalyticsPage() {
                       <FileText className="w-8 h-8 text-white" />
                     </div>
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                      No Quizzes Found
+                      {t("No Quizzes Found")}
                     </h3>
                     <p className="text-gray-600">
                       {searchTerm ||
                       dateFilter !== "all" ||
                       difficultyFilter !== "all"
-                        ? "Try adjusting your search criteria or filters."
-                        : "No published quizzes with analytics data available."}
+                        ? t("Try adjusting your search criteria or filters.")
+                        : t("No published quizzes with analytics data available.")}
                     </p>
                   </CardContent>
                 </Card>
@@ -844,7 +846,7 @@ export default function AnalyticsPage() {
                   <div className="w-10 h-10 bg-gradient-to-r from-gray-500 to-slate-600 rounded-xl flex items-center justify-center shadow-md">
                     <Search className="w-5 h-5 text-white" />
                   </div>
-                  Search & Filter Challenges
+                  {t("Search & Filter Challenges")}
                 </CardTitle>
               </CardHeader>
 
@@ -852,12 +854,12 @@ export default function AnalyticsPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-gray-700">
-                      Search Challenges
+                      {t("Search Challenges")}
                     </label>
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                       <Input
-                        placeholder="Search by title..."
+                        placeholder={t("Search by title...")}
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="pl-10 bg-white/70 border-gray-300/50 text-gray-900 placeholder-gray-500 focus:border-purple-400 focus:ring-purple-400/30 focus:ring-2 backdrop-blur-sm shadow-sm"
@@ -867,7 +869,7 @@ export default function AnalyticsPage() {
 
                   <div className="space-y-2">
                     <label className="text-sm font-semibold text-gray-700">
-                      Difficulty
+                      {t("Difficulty")}
                     </label>
                     <Select
                       value={difficultyFilter}
@@ -875,10 +877,10 @@ export default function AnalyticsPage() {
                     >
                       <SelectTrigger className="bg-white/70 border-gray-300/50 text-gray-900 focus:border-purple-400 focus:ring-purple-400/30 backdrop-blur-sm shadow-sm">
                         <Filter className="w-4 h-4 mr-2" />
-                        <SelectValue placeholder="Filter by difficulty" />
+                        <SelectValue placeholder={t("Filter by difficulty")} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="all">All Difficulties</SelectItem>
+                        <SelectItem value="all">{t("All Difficulties")}</SelectItem>
                         <SelectItem value="easy">Easy</SelectItem>
                         <SelectItem value="medium">Medium</SelectItem>
                         <SelectItem value="hard">Hard</SelectItem>
@@ -914,7 +916,7 @@ export default function AnalyticsPage() {
                             </Badge>
                             <Badge className="bg-purple-100 text-purple-700 border-purple-200 hover:!bg-purple-200 hover:!text-purple-800 transition-colors duration-200 font-medium text-xs">
                               <Eye className="w-3 h-3 mr-1" />
-                              Published
+                              {t("Published ")}
                             </Badge>
                           </div>
                         </div>
@@ -924,7 +926,7 @@ export default function AnalyticsPage() {
                             getPassRateTextColor(challenge.passRate)
                           )}
                         >
-                          {challenge.passRate}% Pass Rate
+                          {challenge.passRate}% {t("Pass Rate")}
                         </Badge>
                       </div>
                     </CardHeader>
@@ -939,7 +941,7 @@ export default function AnalyticsPage() {
                                   <Target className="w-4 h-4 text-white" />
                                 </div>
                                 <span className="text-sm text-gray-600 font-medium">
-                                  Total Submissions
+                                  {t("Total Submissions")}
                                 </span>
                               </div>
                               <p className="text-2xl font-bold text-gray-900">
@@ -953,7 +955,7 @@ export default function AnalyticsPage() {
                                   <Users className="w-4 h-4 text-white" />
                                 </div>
                                 <span className="text-sm text-gray-600 font-medium">
-                                  Users Attempted
+                                  {t("Users Attempted")}
                                 </span>
                               </div>
                               <p className="text-2xl font-bold text-gray-900">
@@ -967,7 +969,7 @@ export default function AnalyticsPage() {
                                   <CheckCircle className="w-4 h-4 text-white" />
                                 </div>
                                 <span className="text-sm text-gray-600 font-medium">
-                                  Users Completed
+                                  {t("Users Completed")}
                                 </span>
                               </div>
                               <p className="text-2xl font-bold text-gray-900">
@@ -980,7 +982,7 @@ export default function AnalyticsPage() {
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2 text-gray-600">
                                 <Trophy className="w-4 h-4" />
-                                <span className="font-medium">Points</span>
+                                <span className="font-medium">{t("Points")}</span>
                               </div>
                               <span className="font-bold text-gray-900">
                                 {challenge.points}
@@ -989,7 +991,7 @@ export default function AnalyticsPage() {
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2 text-gray-600">
                                 <CheckCircle className="w-4 h-4" />
-                                <span className="font-medium">Test Cases</span>
+                                <span className="font-medium">{t("Test Cases")}</span>
                               </div>
                               <span className="font-bold text-gray-900">
                                 {challenge.testCases}
@@ -999,7 +1001,7 @@ export default function AnalyticsPage() {
                               <div className="flex items-center gap-2 text-gray-600">
                                 <Clock className="w-4 h-4" />
                                 <span className="font-medium">
-                                  Avg Attempts
+                                  Avg {t("Attempts")}
                                 </span>
                               </div>
                               <span className="font-bold text-gray-900">
@@ -1012,7 +1014,7 @@ export default function AnalyticsPage() {
                         <div className="space-y-4">
                           <div className="text-center">
                             <h4 className="text-lg font-semibold text-gray-900 mb-2">
-                              Success Rate
+                              {t("Success Rate")}
                             </h4>
                             <div className="relative">
                               <div className="w-24 h-24 mx-auto relative">
@@ -1064,10 +1066,10 @@ export default function AnalyticsPage() {
                               )}
                             >
                               {challenge.passRate >= 80
-                                ? "Excellent"
+                                ? t("Excellent")
                                 : challenge.passRate >= 60
-                                ? "Good"
-                                : "Needs Improvement"}
+                                ? t("Good")
+                                : t("Needs Improvement")}
                             </Badge>
                           </div>
                         </div>
@@ -1082,12 +1084,12 @@ export default function AnalyticsPage() {
                       <Target className="w-8 h-8 text-white" />
                     </div>
                     <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                      No Challenges Found
+                      {t("No Challenges Found")}
                     </h3>
                     <p className="text-gray-600">
                       {searchTerm || difficultyFilter !== "all"
-                        ? "Try adjusting your search criteria or filters."
-                        : "No published challenges with analytics data available."}
+                        ? t("Try adjusting your search criteria or filters.")
+                        : t("No published challenges with analytics data available.")}
                     </p>
                   </CardContent>
                 </Card>
