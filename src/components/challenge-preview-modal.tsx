@@ -54,7 +54,6 @@ export function ChallengePreviewModal({ isOpen, onClose, challengeData }: Challe
               {t("Challenge Preview")}
             </DialogTitle>
             <Button variant="ghost" size="sm" onClick={onClose} className="rounded-lg">
-              <X className="w-5 h-5" />
             </Button>
           </div>
         </DialogHeader>
@@ -71,7 +70,7 @@ export function ChallengePreviewModal({ isOpen, onClose, challengeData }: Challe
 
             <div className="flex items-center gap-4 flex-wrap">
               <Badge className={cn("font-medium", getDifficultyColor(challengeData.difficulty))}>
-                {challengeData.difficulty || "Not specified"}
+                {challengeData.difficulty || t("Not specified")}
               </Badge>
 
               {challengeData.rewardPoints && (
@@ -152,7 +151,7 @@ export function ChallengePreviewModal({ isOpen, onClose, challengeData }: Challe
                           <h4 className="font-semibold text-gray-700 mb-2">{t("Expected Output")}:</h4>
                           <div className="bg-gray-100 rounded-lg p-3 font-mono text-sm">
                             {testCase.expectedOutput || (
-                              <span className="text-gray-500 italic">{("No output provided")}</span>
+                              <span className="text-gray-500 italic">{t("No output provided")}</span>
                             )}
                           </div>
                         </div>
