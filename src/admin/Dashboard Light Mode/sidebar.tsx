@@ -307,24 +307,6 @@ export function AdminSidebar({
             )}
           </Button>
         </div>
-
-        {/* Version info - only shown when sidebar is expanded */}
-        {!isCollapsed && (
-          <div className="px-2">
-            <div className="text-center text-sm text-gray-500 bg-gradient-to-r from-gray-50/80 to-gray-100/80 rounded-lg py-2 px-3 border border-gray-200/50">
-              <div className="flex items-center justify-center gap-2">
-                {/* Mini logo for branding consistency */}
-                <div className="w-4 h-4 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-sm flex items-center justify-center">
-                  <Code2 className="w-2 h-2 text-white" />
-                </div>
-                {/* Version text */}
-                <span className="font-medium text-gray-600">
-                  Admin Dashboard
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

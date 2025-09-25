@@ -75,7 +75,7 @@ export default function Component() {
               {t("Glossary")}
             </h1>
             <p className="text-gray-500 text-sm">
-              {t("Basics")} • {t("Beginner")}
+              {t("Beginner")}
             </p>
           </div>
         </div>
@@ -85,17 +85,6 @@ export default function Component() {
             size="icon"
             className="text-gray-400 hover:text-gray-600"
           >
-            <Bookmark className="w-5 h-5" />
-          </Button>
-          <div className="bg-green-500 text-white text-sm px-3 py-1 rounded-full">
-            {t("Beginner")}
-          </div>
-          <Button
-            onClick={downloadPdf}
-            className="bg-green-500 hover:bg-green-600 text-white flex items-center gap-2"
-          >
-            <Download className="w-4 h-4" />
-            {t("Download")}
           </Button>
         </div>
       </header>
@@ -219,7 +208,7 @@ export default function Component() {
           <div className="space-y-6">
             <div className="flex items-center gap-2">
               <Code className="w-5 h-5 text-cyan-500" />
-              <h2 className="text-xl font-semibold text-gray-800">Examples</h2>
+              <h2 className="text-xl font-semibold text-gray-800">{t("Examples")}</h2>
             </div>
 
             {/* Variable Assignment Card */}
@@ -229,7 +218,7 @@ export default function Component() {
                 onClick={() => toggleSection("variableAssignment")}
               >
                 <h3 className="font-medium text-gray-800 text-lg">
-                  Comparing Number Inputs
+                  {t("Comparing Number Inputs")}
                 </h3>
                 <div className="flex items-center gap-2">
                   <Button
@@ -443,11 +432,10 @@ enye:
                     <div className="flex items-start gap-2">
                       <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
                       <p className="text-sm text-blue-800">
-                        This IsiPython code demonstrates conditional statements
-                        using Xhosa keywords:
+                        {t("This IsiPython code demonstrates conditional statements using Xhosa keywords")}:
                         <strong> ukuba</strong> (if),{" "}
                         <strong> okanye_ukuba</strong> (elif),
-                        <strong> enye</strong> (else), and{" "}
+                        <strong> enye</strong> (else),
                         <strong> kwaye</strong> (and).
                       </p>
                     </div>
@@ -463,7 +451,7 @@ enye:
                 onClick={() => toggleSection("typeConversion")}
               >
                 <h3 className="font-medium text-gray-800 text-lg">
-                  While Loop in IsiPython
+                  {t("While Loop in IsiPython")}
                 </h3>
                 <div className="flex items-center gap-2">
                   <Button
@@ -540,10 +528,8 @@ ngokulandelelana fruit ngaphakathi fruits:
                     <div className="flex items-start gap-2">
                       <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
                       <p className="text-sm text-blue-800">
-                        In IsiPython, <strong>ngokulandelelana</strong> (meaning
-                        &quot;for&quot; in Xhosa) is used to iterate through
-                        lists, strings, and other iterable objects. This example
-                        shows looping through a list of fruits.
+                        {t("In IsiPython")}, <strong>ngokulandelelana</strong> (meaning
+                        &quot;for&quot; in Xhosa) {t("is used to iterate through lists, strings, and other iterable objects. This example shows looping through a list of fruits.")}
                       </p>
                     </div>
                   </div>

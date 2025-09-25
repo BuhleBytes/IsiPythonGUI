@@ -190,10 +190,10 @@ export default function LeaderboardScreen() {
                 <div className="w-8 h-8 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-lg flex items-center justify-center shadow-lg">
                   <Medal className="w-5 h-5 text-white" />
                 </div>
-                {t("Leaderboard")}
+                {t("Student Leaderboard")}
               </h1>
               <p className="text-gray-600">
-                {t("See how you rank among fellow learners")}
+                {t("Monitor student performance and engagement")}
               </p>
             </div>
           </div>

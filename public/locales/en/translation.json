@@ -671,5 +671,16 @@
   "Enter the question...":"Enter the question...",
   "Not specified":"Not specified",
   "All Dates":"All Dates",
-  "Average Score ": "Average Score "
+  "Average Score ": "Average Score ",
+  "Monitor student performance and engagement":"Monitor student performance and engagement",
+  "Sign Out":"Sign Out",
+  "Signing out...":"Signing out...",
+  "Output will appear here":"Output will appear here",
+  "If your code requires input, enter it in the above box":"If your code requires input, enter it in the above box",
+  "week ago":"week ago",  
+  "While Loop in IsiPython":"While Loop in IsiPython",
+  "Comparing Number Inputs" :"Comparing Number Inputs",
+  "This IsiPython code demonstrates conditional statements using Xhosa keywords":"This IsiPython code demonstrates conditional statements using Xhosa keywords",
+  "In IsiPython":"In IsiPython",
+  "is used to iterate through lists, strings, and other iterable objects. This example shows looping through a list of fruits.":"is used to iterate through lists, strings, and other iterable objects. This example shows looping through a list of fruits."
 }
