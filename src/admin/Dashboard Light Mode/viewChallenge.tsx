@@ -534,17 +534,19 @@ export default function ViewChallenge({
         isOpen={showPreview}
         onClose={() => setShowPreview(false)}
         challengeData={{
-          // Map challenge data to the format expected by the preview modal
           title: challenge.title,
           shortDescription: challenge.shortDescription,
           difficulty: challenge.difficulty,
-          rewardPoints: challenge.rewardPoints,
+          rewardPoints: challenge.rewardPoints.toString(),
           problemDescription: challenge.problemDescription,
-          // Only include essential test case data for preview (no hidden metadata)
+          // ✅ FIXED: Use challenge.testCases instead of testCases
           testCases: challenge.testCases.map((tc) => ({
             id: tc.id,
             input: tc.input,
             expectedOutput: tc.expectedOutput,
+            explanation: tc.explanation,
+            isHidden: tc.isHidden,
+            isExample: tc.isExample,
           })),
         }}
       />

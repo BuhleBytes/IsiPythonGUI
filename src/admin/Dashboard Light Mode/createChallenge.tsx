@@ -25,7 +25,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { useTranslation } from "react-i18next";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -57,6 +56,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useChallengeAPI } from "../useChallengeAPI";
 
 /**
@@ -96,8 +96,8 @@ export default function CreateChallenge() {
       pointsWeight: 25.0,
     },
   ]);
-  
-  const {t} = useTranslation();
+
+  const { t } = useTranslation();
 
   // UI state for modals and notifications
   const [showPreview, setShowPreview] = useState(false);
@@ -852,10 +852,14 @@ export default function CreateChallenge() {
           difficulty,
           rewardPoints,
           problemDescription,
+
           testCases: testCases.map((tc) => ({
             id: tc.id,
             input: tc.input,
             expectedOutput: tc.expectedOutput,
+            explanation: tc.explanation,
+            isHidden: tc.isHidden,
+            isExample: tc.isExample,
           })),
         }}
       />

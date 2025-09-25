@@ -36,7 +36,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useTranslation } from "react-i18next";
 import {
   Select,
   SelectContent,
@@ -69,6 +68,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useChallengeAPI } from "../useChallengeAPI";
 import { useChallengeDetails } from "../useChallengeDetails";
 
@@ -119,7 +119,7 @@ export default function EditChallenge({
 
   // Form state - initialized empty and populated when challenge data loads
   const [title, setTitle] = useState("");
-  const {t} = useTranslation();
+  const { t } = useTranslation();
   const [shortDescription, setShortDescription] = useState("");
   const [rewardPoints, setRewardPoints] = useState("");
   const [difficulty, setDifficulty] = useState<"Easy" | "Medium" | "Hard">(
@@ -621,7 +621,9 @@ export default function EditChallenge({
             {t("Challenge Not Found")}
           </div>
           <div className="text-sm text-gray-500">
-            {t("The challenge you're looking for doesn't exist or has been deleted.")}
+            {t(
+              "The challenge you're looking for doesn't exist or has been deleted."
+            )}
           </div>
           <Button onClick={handleBackToList} variant="outline" className="mt-4">
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -1130,10 +1132,14 @@ export default function EditChallenge({
           difficulty,
           rewardPoints,
           problemDescription,
+          // ✅ MUST include all properties
           testCases: testCases.map((tc) => ({
             id: tc.id,
             input: tc.input,
             expectedOutput: tc.expectedOutput,
+            explanation: tc.explanation,
+            isHidden: tc.isHidden, // ⭐ This is required
+            isExample: tc.isExample, // ⭐ This is required
           })),
         }}
       />
