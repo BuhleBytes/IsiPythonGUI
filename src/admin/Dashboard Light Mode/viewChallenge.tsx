@@ -538,13 +538,16 @@ export default function ViewChallenge({
           title: challenge.title,
           shortDescription: challenge.shortDescription,
           difficulty: challenge.difficulty,
-          rewardPoints: challenge.rewardPoints,
+          rewardPoints: challenge.rewardPoints.toString(),
           problemDescription: challenge.problemDescription,
-          // Only include essential test case data for preview (no hidden metadata)
+          // Only include essential test case data for preview 
           testCases: challenge.testCases.map((tc) => ({
             id: tc.id,
             input: tc.input,
             expectedOutput: tc.expectedOutput,
+            explanation: tc.explanation,
+            isHidden: tc.isHidden,
+            isExample: tc.isExample,
           })),
         }}
       />

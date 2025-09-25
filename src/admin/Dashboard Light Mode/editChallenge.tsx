@@ -1134,6 +1134,9 @@ export default function EditChallenge({
             id: tc.id,
             input: tc.input,
             expectedOutput: tc.expectedOutput,
+            explanation: tc.explanation,
+            isHidden: tc.isHidden, 
+            isExample: tc.isExample, 
           })),
         }}
       />

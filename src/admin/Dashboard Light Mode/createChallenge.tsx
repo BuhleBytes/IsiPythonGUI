@@ -96,7 +96,7 @@ export default function CreateChallenge() {
       pointsWeight: 25.0,
     },
   ]);
-  
+
   const {t} = useTranslation();
 
   // UI state for modals and notifications
@@ -855,6 +855,9 @@ export default function CreateChallenge() {
             id: tc.id,
             input: tc.input,
             expectedOutput: tc.expectedOutput,
+            explanation: tc.explanation,
+            isHidden: tc.isHidden,
+            isExample: tc.isExample,
           })),
         }}
       />
