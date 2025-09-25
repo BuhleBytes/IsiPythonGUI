@@ -165,9 +165,21 @@ export function AdminSidebar({
       )}
     >
       {/* Header Section - Contains logo, title, and toggle button */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200/50">
+      <div
+        className={cn(
+          "flex items-center border-b border-gray-200/50",
+          isCollapsed
+            ? "flex-col gap-2 p-2" // Stack vertically when collapsed with minimal padding
+            : "justify-between p-4" // Keep original layout when expanded
+        )}
+      >
         {/* Logo and Title Container */}
-        <div className="flex items-center gap-3">
+        <div
+          className={cn(
+            "flex items-center gap-3",
+            isCollapsed ? "flex-col gap-2" : "" // Stack logo and title vertically when collapsed
+          )}
+        >
           {/* Brand Logo - Gradient background with Code2 icon */}
           <div className="w-8 h-8 bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-600 rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
             <Code2 className="w-4 h-4 text-white" />
@@ -191,7 +203,10 @@ export function AdminSidebar({
           variant="ghost"
           size="icon"
           onClick={onToggle}
-          className="text-gray-600 hover:text-cyan-600 hover:bg-cyan-50 rounded-lg transition-all duration-200"
+          className={cn(
+            "text-gray-600 hover:text-cyan-600 hover:bg-cyan-50 rounded-lg transition-all duration-200",
+            isCollapsed ? "w-8 h-8" : "" // Make button smaller when collapsed
+          )}
         >
           {isCollapsed ? (
             <Menu className="w-4 h-4" />
