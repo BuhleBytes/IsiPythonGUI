@@ -14,6 +14,7 @@
  * - Visual status indicators (draft vs published)
  * - Difficulty-based color coding for challenges
  * - Navigation to draft and published content views
+ * - Clickable challenge cards that navigate to edit/view screens based on status
  * - Responsive design with animated background elements
  * - Loading and error states with retry functionality
  * - Integration with sidebar toggle for mobile responsiveness
@@ -115,6 +116,45 @@ export default function AdminDashboard({
   const handleViewPublished = () => {
     if (onViewChange) {
       onViewChange("published");
+    }
+  };
+
+  /**
+   * Handles navigation when a challenge card is clicked
+   * Navigates to edit screen for drafts or view screen for published challenges
+   */
+  const handleChallengeClick = (challenge: any) => {
+    if (onViewChange) {
+      if (challenge.status === "draft") {
+        // Navigate to edit challenge screen with challenge ID
+        onViewChange("edit", { challengeId: challenge.id });
+      } else if (challenge.status === "published") {
+        // Navigate to view challenge screen with challenge ID
+        onViewChange("view", { challengeId: challenge.id });
+      }
+    }
+  };
+
+  /**
+   * Handles navigation when a quiz card is clicked
+   * Navigates to edit-quiz screen for drafts or view-quiz screen for published quizzes
+   */
+  const handleQuizClick = (quiz: any) => {
+    console.log("Quiz clicked:", quiz); // Debug log
+    console.log("onViewChange available:", !!onViewChange); // Debug log
+
+    if (onViewChange) {
+      if (quiz.status === "draft") {
+        console.log("Navigating to edit-quiz with ID:", quiz.id); // Debug log
+        // Navigate to edit quiz screen with quiz ID (using correct view name)
+        onViewChange("edit-quiz", { quizId: quiz.id });
+      } else if (quiz.status === "published") {
+        console.log("Navigating to view-quiz with ID:", quiz.id); // Debug log
+        // Navigate to view quiz screen with quiz ID (using correct view name)
+        onViewChange("view-quiz", { quizId: quiz.id });
+      }
+    } else {
+      console.error("onViewChange not available"); // Debug log
     }
   };
 
@@ -542,6 +582,7 @@ export default function AdminDashboard({
                     <Card
                       key={challenge.id}
                       className={`bg-gradient-to-r ${challengeStyle.bgGradient} border ${challengeStyle.borderColor} shadow-md hover:shadow-xl transition-all duration-300 hover:scale-[1.01] cursor-pointer group relative overflow-hidden`}
+                      onClick={() => handleChallengeClick(challenge)}
                     >
                       {/* Hover effect overlay */}
                       <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -602,6 +643,7 @@ export default function AdminDashboard({
                   <Card
                     key={quiz.id}
                     className="bg-gradient-to-r from-indigo-50/50 to-purple-50/50 border border-indigo-200/50 shadow-md hover:shadow-xl transition-all duration-300 hover:scale-[1.01] cursor-pointer group relative overflow-hidden"
+                    onClick={() => handleQuizClick(quiz)}
                   >
                     {/* Hover effect overlay */}
                     <div className="absolute inset-0 bg-gradient-to-r from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
