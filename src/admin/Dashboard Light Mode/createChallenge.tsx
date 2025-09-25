@@ -1,3 +1,22 @@
+/**
+ * CreateChallenge Component
+ *
+ * This component provides a comprehensive interface for educators to create coding challenges.
+ * It allows users to define challenge details, write problem descriptions, create test cases,
+ * and manage draft states. The component integrates with an API to save drafts and publish
+ * challenges with proper error handling and user feedback.
+ *
+ * Features:
+ * - Challenge metadata (title, difficulty, points, tags, etc.)
+ * - Rich problem description input
+ * - Dynamic test case management with various options
+ * - Draft saving and publishing functionality
+ * - Preview modal for challenge review
+ * - Responsive design with modern UI elements
+ *
+ * @component
+ */
+
 "use client";
 
 import { ChallengePreviewModal } from "@/components/challenge-preview-modal";
@@ -39,17 +58,22 @@ import {
 import { useEffect, useState } from "react";
 import { useChallengeAPI } from "../useChallengeAPI";
 
+/**
+ * Interface defining the structure of a test case
+ * Each test case represents a single validation scenario for the coding challenge
+ */
 interface TestCase {
-  id: string;
-  input: string;
-  expectedOutput: string;
-  explanation: string;
-  isHidden: boolean;
-  isExample: boolean;
-  pointsWeight: number;
+  id: string; // Unique identifier for the test case
+  input: string; // Input data for the test
+  expectedOutput: string; // Expected output from the test
+  explanation: string; // Human-readable explanation of the test case
+  isHidden: boolean; // Whether the test case is hidden from students
+  isExample: boolean; // Whether this is an example test case shown to students
+  pointsWeight: number; // Point value assigned to this test case
 }
 
 export default function CreateChallenge() {
+  // Form state for challenge basic information
   const [title, setTitle] = useState("");
   const [shortDescription, setShortDescription] = useState("");
   const [rewardPoints, setRewardPoints] = useState("");
@@ -59,6 +83,7 @@ export default function CreateChallenge() {
   const [tags, setTags] = useState("");
   const [sendNotifications, setSendNotifications] = useState(true);
 
+  // Test cases state - starts with one default example test case
   const [testCases, setTestCases] = useState<TestCase[]>([
     {
       id: "1",
@@ -71,6 +96,7 @@ export default function CreateChallenge() {
     },
   ]);
 
+  // UI state for modals and notifications
   const [showPreview, setShowPreview] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState("");
@@ -78,7 +104,7 @@ export default function CreateChallenge() {
     "success" | "draft" | "error"
   >("success");
 
-  // Use the enhanced custom hook for API interactions
+  // Custom hook for API operations (save draft, publish, error handling)
   const {
     isSubmitting,
     error,
@@ -90,7 +116,10 @@ export default function CreateChallenge() {
     draftChallengeId,
   } = useChallengeAPI();
 
-  // Handle API errors using notification instead of alert
+  /**
+   * Effect to handle API errors and display them as notifications
+   * Automatically clears errors and hides error notifications after 6 seconds
+   */
   useEffect(() => {
     if (error) {
       setNotificationMessage(error);
@@ -105,10 +134,15 @@ export default function CreateChallenge() {
     }
   }, [error, clearError]);
 
-  // Inline Notification Component
+  /**
+   * Notification Component
+   * Displays contextual notifications for success, error, and draft operations
+   * Positioned as a fixed overlay in the top-right corner
+   */
   const Notification = () => {
     if (!showNotification) return null;
 
+    // Configuration for different notification types
     const getNotificationConfig = () => {
       switch (notificationType) {
         case "success":
@@ -169,25 +203,37 @@ export default function CreateChallenge() {
     );
   };
 
+  /**
+   * Adds a new test case to the test cases array
+   * Creates a default test case with empty values and standard settings
+   */
   const addTestCase = () => {
     const newTestCase: TestCase = {
-      id: Date.now().toString(),
+      id: Date.now().toString(), // Use timestamp as unique ID
       input: "",
       expectedOutput: "",
       explanation: "",
       isHidden: false,
-      isExample: false,
+      isExample: false, // New test cases default to non-example
       pointsWeight: 25.0,
     };
     setTestCases([...testCases, newTestCase]);
   };
 
+  /**
+   * Removes a test case from the array
+   * Prevents removal if only one test case remains (minimum requirement)
+   */
   const removeTestCase = (id: string) => {
     if (testCases.length > 1) {
       setTestCases(testCases.filter((tc) => tc.id !== id));
     }
   };
 
+  /**
+   * Updates a specific field of a test case
+   * Uses the test case ID to identify which case to update
+   */
   const updateTestCase = (
     id: string,
     field: keyof Omit<TestCase, "id">,
@@ -198,6 +244,10 @@ export default function CreateChallenge() {
     );
   };
 
+  /**
+   * Resets the entire form to initial state
+   * Also clears any draft state in the API hook
+   */
   const resetForm = () => {
     setTitle("");
     setShortDescription("");
@@ -222,6 +272,10 @@ export default function CreateChallenge() {
     resetDraft();
   };
 
+  /**
+   * Collects all form data into a single object
+   * Used for API calls (save draft and publish)
+   */
   const getFormData = () => ({
     title,
     shortDescription,
@@ -234,15 +288,19 @@ export default function CreateChallenge() {
     testCases,
   });
 
+  /**
+   * Handles saving the challenge as a draft
+   * Shows success notification and maintains form state
+   */
   const handleSaveDraft = async () => {
     const formData = getFormData();
     const result = await saveDraft(formData);
 
     if (result.success) {
-      // Clear any previous notifications first
+      // Clear any previous notifications first to avoid overlap
       setShowNotification(false);
 
-      // Set new notification with proper type
+      // Set new notification with slight delay for smooth transition
       setTimeout(() => {
         setNotificationMessage(
           result.message || "Challenge saved as draft successfully!"
@@ -251,9 +309,13 @@ export default function CreateChallenge() {
         setShowNotification(true);
       }, 100);
     }
-    // Error handling is now automatic via the enhanced hook
+    // Error handling is automatic via the useChallengeAPI hook
   };
 
+  /**
+   * Handles publishing the challenge
+   * Shows success notification and resets form on successful publish
+   */
   const handlePublish = async () => {
     const formData = getFormData();
     const result = await publishChallenge(formData);
@@ -262,19 +324,23 @@ export default function CreateChallenge() {
       // Clear any previous notifications first
       setShowNotification(false);
 
-      // Set new notification with proper type
+      // Set success notification and reset form
       setTimeout(() => {
         setNotificationMessage(
           result.message || "Challenge published successfully!"
         );
         setNotificationType("success");
         setShowNotification(true);
-        resetForm();
+        resetForm(); // Clear form after successful publish
       }, 100);
     }
-    // Error handling is now automatic via the enhanced hook
+    // Error handling is automatic via the useChallengeAPI hook
   };
 
+  /**
+   * Handles clearing the current draft
+   * Shows confirmation dialog before proceeding
+   */
   const handleClearDraft = () => {
     if (
       confirm(
@@ -295,22 +361,23 @@ export default function CreateChallenge() {
 
   return (
     <div className="flex-1 bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30 min-h-screen flex flex-col overflow-hidden">
-      {/* Fixed Animated Background Elements */}
+      {/* Animated background elements for visual appeal */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <div className="absolute top-20 left-20 w-72 h-72 bg-gradient-to-r from-cyan-200/15 to-blue-300/15 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute top-40 right-32 w-96 h-96 bg-gradient-to-r from-purple-200/15 to-pink-300/15 rounded-full blur-3xl animate-pulse delay-1000"></div>
         <div className="absolute bottom-32 left-1/3 w-80 h-80 bg-gradient-to-r from-green-200/15 to-emerald-300/15 rounded-full blur-3xl animate-pulse delay-2000"></div>
       </div>
 
-      {/* Main Content */}
+      {/* Main scrollable content area */}
       <main className="flex-1 overflow-y-auto p-6 space-y-8 relative z-10">
-        {/* Header Section with modern styling and draft indicator */}
+        {/* Page header with title and draft status indicator */}
         <div className="space-y-3">
           <div className="flex items-center gap-3">
             <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 via-cyan-600 to-emerald-600 bg-clip-text text-transparent flex items-center gap-3">
               Create New Challenge
               <Sparkles className="w-8 h-8 text-cyan-500 animate-pulse" />
             </h1>
+            {/* Show draft badge when user has saved draft */}
             {hasDraft && (
               <Badge className="bg-amber-100 text-amber-800 border-amber-300 px-3 py-1 text-sm font-medium">
                 Draft Saved
@@ -319,6 +386,7 @@ export default function CreateChallenge() {
           </div>
           <p className="text-lg text-gray-600">
             Design engaging coding challenges to inspire and educate students
+            {/* Additional guidance when draft exists */}
             {hasDraft && (
               <span className="block text-sm text-amber-600 mt-1">
                 You have an unsaved draft. Click "Publish Draft" to make it live
@@ -328,11 +396,13 @@ export default function CreateChallenge() {
           </p>
         </div>
 
-        {/* Content */}
+        {/* Main form content */}
         <div className="space-y-6">
-          {/* Challenge Details */}
+          {/* Challenge Details Section */}
           <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-xl hover:shadow-2xl transition-all duration-500 relative overflow-hidden group">
+            {/* Hover effect overlay */}
             <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-blue-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
             <CardHeader className="border-b border-gray-200/50 bg-gradient-to-r from-cyan-50/50 to-blue-50/50 rounded-t-xl relative z-10">
               <CardTitle className="text-xl font-bold text-gray-900 flex items-center gap-3">
                 <div className="w-10 h-10 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md">
@@ -341,7 +411,9 @@ export default function CreateChallenge() {
                 Challenge Details
               </CardTitle>
             </CardHeader>
+
             <CardContent className="p-6 space-y-6 relative z-10">
+              {/* Title and Difficulty row */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label
@@ -359,6 +431,7 @@ export default function CreateChallenge() {
                     className="bg-white/70 border-gray-300/50 text-gray-900 placeholder-gray-500 focus:border-cyan-400 focus:ring-cyan-400/30 focus:ring-2 backdrop-blur-sm shadow-sm"
                   />
                 </div>
+
                 <div className="space-y-2">
                   <Label
                     htmlFor="difficulty"
@@ -395,6 +468,7 @@ export default function CreateChallenge() {
                 </div>
               </div>
 
+              {/* Short description field */}
               <div className="space-y-2">
                 <Label
                   htmlFor="shortDesc"
@@ -411,6 +485,7 @@ export default function CreateChallenge() {
                 />
               </div>
 
+              {/* Points, Time, and Notifications row */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="space-y-2">
                   <Label
@@ -471,6 +546,7 @@ export default function CreateChallenge() {
                 </div>
               </div>
 
+              {/* Tags field */}
               <div className="space-y-2">
                 <Label
                   htmlFor="tags"
@@ -490,9 +566,10 @@ export default function CreateChallenge() {
             </CardContent>
           </Card>
 
-          {/* Problem Description */}
+          {/* Problem Description Section */}
           <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-xl hover:shadow-2xl transition-all duration-500 relative overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-emerald-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
             <CardHeader className="border-b border-gray-200/50 bg-gradient-to-r from-green-50/50 to-emerald-50/50 rounded-t-xl relative z-10">
               <CardTitle className="text-xl font-bold text-gray-900 flex items-center gap-3">
                 <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-md">
@@ -501,6 +578,7 @@ export default function CreateChallenge() {
                 Problem Description
               </CardTitle>
             </CardHeader>
+
             <CardContent className="p-6 relative z-10">
               <div className="space-y-2">
                 <Label
@@ -521,9 +599,10 @@ export default function CreateChallenge() {
             </CardContent>
           </Card>
 
-          {/* Test Cases */}
+          {/* Test Cases Section */}
           <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-xl hover:shadow-2xl transition-all duration-500 relative overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-pink-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
             <CardHeader className="border-b border-gray-200/50 bg-gradient-to-r from-purple-50/50 to-pink-50/50 rounded-t-xl relative z-10">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-xl font-bold text-gray-900 flex items-center gap-3">
@@ -543,18 +622,22 @@ export default function CreateChallenge() {
                 </Button>
               </div>
             </CardHeader>
+
             <CardContent className="p-6 relative z-10">
               <div className="space-y-6">
+                {/* Render each test case */}
                 {testCases.map((testCase, index) => (
                   <Card
                     key={testCase.id}
                     className="bg-gradient-to-r from-gray-50/50 to-white/50 border border-gray-200/50 shadow-sm hover:shadow-md transition-all duration-300"
                   >
                     <CardContent className="p-5">
+                      {/* Test case header with badge and delete button */}
                       <div className="flex items-center justify-between mb-4">
                         <Badge className="bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-200 font-medium transition-colors duration-200">
                           Test Case {index + 1}
                         </Badge>
+                        {/* Only show delete button if more than one test case exists */}
                         {testCases.length > 1 && (
                           <Button
                             onClick={() => removeTestCase(testCase.id)}
@@ -567,6 +650,7 @@ export default function CreateChallenge() {
                         )}
                       </div>
 
+                      {/* Input and Expected Output fields */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div className="space-y-2">
                           <Label className="text-gray-700 font-semibold">
@@ -586,6 +670,7 @@ export default function CreateChallenge() {
                             className="bg-white/70 border-gray-300/50 text-gray-900 placeholder-gray-500 focus:border-cyan-400 focus:ring-cyan-400/30 focus:ring-2 resize-none backdrop-blur-sm shadow-sm"
                           />
                         </div>
+
                         <div className="space-y-2">
                           <Label className="text-gray-700 font-semibold">
                             Expected Output
@@ -606,6 +691,7 @@ export default function CreateChallenge() {
                         </div>
                       </div>
 
+                      {/* Additional test case options */}
                       <div className="space-y-4">
                         <div className="space-y-2">
                           <Label className="text-gray-700 font-semibold">
@@ -625,6 +711,7 @@ export default function CreateChallenge() {
                           />
                         </div>
 
+                        {/* Points weight and checkboxes */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div className="space-y-2">
                             <Label className="text-gray-700 font-semibold">
@@ -650,6 +737,7 @@ export default function CreateChallenge() {
                               Options
                             </Label>
                             <div className="flex items-center space-x-4 h-10">
+                              {/* Example test case checkbox */}
                               <div className="flex items-center space-x-2">
                                 <Checkbox
                                   checked={testCase.isExample}
@@ -665,6 +753,8 @@ export default function CreateChallenge() {
                                   Example
                                 </Label>
                               </div>
+
+                              {/* Hidden test case checkbox */}
                               <div className="flex items-center space-x-2">
                                 <Checkbox
                                   checked={testCase.isHidden}
@@ -691,8 +781,9 @@ export default function CreateChallenge() {
             </CardContent>
           </Card>
 
-          {/* Action Buttons - Enhanced with draft state management */}
+          {/* Action Buttons Section */}
           <div className="flex items-center justify-end gap-4 pt-4">
+            {/* Preview button */}
             <Button
               onClick={() => setShowPreview(true)}
               variant="outline"
@@ -703,6 +794,7 @@ export default function CreateChallenge() {
               Preview Challenge
             </Button>
 
+            {/* Save Draft button */}
             <Button
               onClick={handleSaveDraft}
               variant="outline"
@@ -717,6 +809,7 @@ export default function CreateChallenge() {
                 : "Save as Draft"}
             </Button>
 
+            {/* Publish button */}
             <Button
               onClick={handlePublish}
               className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg px-6 py-3 font-medium hover:scale-105"
@@ -730,6 +823,7 @@ export default function CreateChallenge() {
                 : "Publish Challenge"}
             </Button>
 
+            {/* Clear Draft button - only shown when draft exists */}
             {hasDraft && (
               <Button
                 onClick={handleClearDraft}
@@ -763,7 +857,7 @@ export default function CreateChallenge() {
         }}
       />
 
-      {/* Enhanced Notification with better error display */}
+      {/* Notification overlay */}
       <Notification />
     </div>
   );

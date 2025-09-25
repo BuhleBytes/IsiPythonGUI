@@ -10,7 +10,6 @@ import {
   AlertCircle,
   ArrowLeft,
   CheckCircle,
-  Chrome,
   Code,
   Eye,
   EyeOff,
@@ -107,8 +106,20 @@ export function LoginLight() {
       const result = await signInUser(formData.email, formData.password);
 
       if (result.success) {
-        console.log("Login successful, navigating to dashboard...");
-        navigate("/dash", { replace: true });
+        console.log("Login successful, checking user role...");
+
+        // Get the user data from the result
+        const user = result.data?.user;
+
+        if (user?.user_metadata?.admin === true) {
+          console.log("Admin user detected, navigating to admin dashboard...");
+          navigate("/admin", { replace: true });
+        } else {
+          console.log(
+            "Student user detected, navigating to student dashboard..."
+          );
+          navigate("/dash", { replace: true });
+        }
       } else {
         setError(result.error || "Failed to sign in");
       }
@@ -392,7 +403,9 @@ export function LoginLight() {
                     <UserCheck className="w-5 h-5 text-cyan-600" />
                   </div>
                   <div>
-                    <h3 className="text-gray-900 font-medium">{t("Your Progress")}</h3>
+                    <h3 className="text-gray-900 font-medium">
+                      {t("Your Progress")}
+                    </h3>
                     <p className="text-gray-600 text-sm">
                       {t("Track learning milestones")}
                     </p>

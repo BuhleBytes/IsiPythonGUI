@@ -1,6 +1,33 @@
+/**
+ * CodeEditorLight Component
+ *
+ * This is a comprehensive code editor specifically designed for IsiPython, a Python-like programming language
+ * that can be translated to standard Python. The component provides:
+ *
+ * CORE FEATURES:
+ * - Monaco-based code editor with custom IsiPython language support
+ * - Live translation from IsiPython to Python with side-by-side view
+ * - Code execution with input/output handling
+ * - Interactive debugging with breakpoints, step-through, and variable inspection
+ * - Auto-save functionality for file persistence
+ * - Multi-language error messages (English/IsiXhosa)
+ * - File management (save, download, copy, rename)
+ * - Resizable panels for optimal workspace layout
+ *
+ * TECHNICAL ARCHITECTURE:
+ * - Built with React hooks for state management
+ * - Uses Monaco Editor for code editing capabilities
+ * - Integrates with external APIs for code execution and debugging
+ * - Implements real-time translation between IsiPython and Python
+ * - Supports drag-to-resize panels for flexible UI layout
+ *
+ * The component is designed for educational use, particularly for users learning programming
+ * concepts in IsiPython before transitioning to standard Python.
+ */
+
 "use client";
 
-// #region All of my imports
+// Import all necessary UI components and utilities
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +40,11 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+
+// Monaco Editor for code editing functionality
 import Editor from "@monaco-editor/react";
+
+// Lucide React icons for UI elements
 import {
   Activity,
   AlertCircle,
@@ -35,57 +66,73 @@ import {
   Terminal,
   Zap,
 } from "lucide-react";
+
+// React hooks and utilities
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+
+// Custom utilities and components
 import { debugHelper, isDebugError } from "../../debugHelper";
 import { registerIsiPython } from "../../languages/isiPython";
+import { translateIsiPythonToPython } from "../../languages/IsiPythonTranslator";
 import { useUserFiles } from "../../useUserFiles";
 import { DebugPanel } from "./DebugPanel.tsx";
 
-import { translateIsiPythonToPython } from "../../languages/IsiPythonTranslator";
-// #endregion
+// TypeScript interfaces for type safety
 
-// #region Debug Interfaces
+/**
+ * Represents a breakpoint in the debugger
+ */
 interface Breakpoint {
-  line: number;
-  enabled: boolean;
+  line: number; // Line number where breakpoint is set
+  enabled: boolean; // Whether the breakpoint is active
 }
 
+/**
+ * Represents a variable in the debug session
+ */
 interface Variable {
-  name: string;
-  value: string;
-  type: string;
+  name: string; // Variable name
+  value: string; // Variable value as string
+  type: string; // Variable type (string, number, etc.)
 }
 
+/**
+ * Cache for storing error messages in both languages
+ */
 interface ErrorCache {
-  english: string[];
-  isixhosa: string[];
+  english: string[]; // Error messages in English
+  isixhosa: string[]; // Error messages in IsiXhosa
 }
-// #endregion
 
-// #region Defining Interface Props
+/**
+ * Props interface for the CodeEditorLight component
+ */
 interface CodeEditorLightProps {
-  initialCode?: string;
-  fileName?: string;
-  fileId?: string | null;
-  onSave?: (code: string, fileName: string) => void;
+  initialCode?: string; // Initial code to display in editor
+  fileName?: string; // Name of the file being edited
+  fileId?: string | null; // Unique identifier for the file
+  onSave?: (code: string, fileName: string) => void; // Callback when file is saved
   onCodeChange?: (
     code: string,
     fileName: string,
     hasUnsavedChanges: boolean
-  ) => void;
-  sidebarOpen?: boolean;
-  onCloseSidebar?: () => void;
+  ) => void; // Callback when code changes
+  sidebarOpen?: boolean; // Whether sidebar is open
+  onCloseSidebar?: () => void; // Callback to close sidebar
 }
-// #endregion
 
-// Helper functions to check API response status
-const isWaitingForInput = (response: any) =>
+/**
+ * Helper functions to check API response status
+ */
+const isWaitingForInput = (response: any): boolean =>
   response?.waiting_for_input === true;
-const isCompleted = (response: any) => response?.completed === true;
 
-// TRANSLATION IS HANDLED BY THE IMPORTED isiPythonTranslator.ts FILE
+const isCompleted = (response: any): boolean => response?.completed === true;
 
+/**
+ * Main CodeEditorLight component
+ */
 export function CodeEditorLight({
   initialCode,
   fileName,
@@ -95,94 +142,101 @@ export function CodeEditorLight({
   sidebarOpen,
   onCloseSidebar,
 }: CodeEditorLightProps) {
-  // #region Editor Setup
+  // Initialize hooks and utilities
+  const { saveNewFile } = useUserFiles();
+  const { t } = useTranslation();
+
+  // Default code template for new files
+  const defaultCode = t("# Write code for your new file using IsiPython");
+
+  // References for Monaco editor and decorations
+  const editorRef = useRef(null); // Reference to Monaco editor instance
+  const currentLineDecorationRef = useRef([]); // Current line highlighting in debugger
+  const breakpointDecorationRef = useRef([]); // Breakpoint visual indicators
+  const outputRef = useRef<HTMLDivElement>(null); // Reference to output container
+  const debugAllOutputRef = useRef<string[]>([]); // Store all debug output for deduplication
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null); // Timer for auto-save functionality
+  const lastSavedCodeRef = useRef<string>(initialCode || defaultCode); // Track last saved code
+  const translationTimerRef = useRef<NodeJS.Timeout | null>(null); // Timer for debounced translation
+
+  // Core editor state management
+  const [code, setCode] = useState(initialCode || defaultCode); // Current code in editor
+  const [translatedCode, setTranslatedCode] = useState(""); // Python translation of IsiPython code
+  const [input, setInput] = useState(""); // User input for program execution
+  const [output, setOutput] = useState(""); // Program output display
+  const [isRunning, setIsRunning] = useState(false); // Whether code is currently executing
+  const [pythonVersion, setPythonVersion] = useState("1.0"); // IsiPython version selector
+  const [currentFileName, setCurrentFileName] = useState(
+    fileName || "untitled.isi"
+  ); // Current file name
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false); // Track if file has unsaved changes
+  const [waitingForInput, setWaitingForInput] = useState(false); // Whether execution is waiting for input
+  const [inputResolver, setInputResolver] = useState(null); // Promise resolver for input handling
+
+  // UI layout state management
+  const [rightPanelWidth, setRightPanelWidth] = useState(384); // Width of right panel (output/input)
+  const [isResizing, setIsResizing] = useState(false); // Whether user is resizing panels
+  const [isEditingFileName, setIsEditingFileName] = useState(false); // Whether user is editing file name
+  const [tempFileName, setTempFileName] = useState(currentFileName); // Temporary file name during editing
+
+  // Live translation feature state
+  const [liveTranslationEnabled, setLiveTranslationEnabled] = useState(false); // Enable/disable live translation
+  const [translationPanelWidth, setTranslationPanelWidth] = useState(400); // Width of translation panel
+  const [isResizingTranslation, setIsResizingTranslation] = useState(false); // Whether user is resizing translation panel
+
+  // Error handling and language state
+  const [errorLanguage, setErrorLanguage] = useState<"isixhosa" | "english">(
+    "isixhosa"
+  ); // Language for error messages
+  const [lastErrors, setLastErrors] = useState<ErrorCache | null>(null); // Cache of last errors in both languages
+  const [cleanOutput, setCleanOutput] = useState<string>(""); // Output without error formatting
+  const [hasStoredErrors, setHasStoredErrors] = useState<boolean>(false); // Whether we have cached errors
+
+  // Debugging feature state
+  const [breakpoints, setBreakpoints] = useState<Breakpoint[]>([]); // List of breakpoints
+  const [currentLine, setCurrentLine] = useState<number | null>(null); // Current line in debugger
+  const [showDebugPanel, setShowDebugPanel] = useState(false); // Whether debug panel is visible
+  const [debugPanelHeight, setDebugPanelHeight] = useState(250); // Height of debug panel
+  const [isResizingDebugPanel, setIsResizingDebugPanel] = useState(false); // Whether user is resizing debug panel
+  const [isDebugging, setIsDebugging] = useState(false); // Whether debug session is active
+  const [debugSessionId, setDebugSessionId] = useState<string | null>(null); // ID of current debug session
+  const [debugVariables, setDebugVariables] = useState<Variable[]>([]); // Variables visible in debugger
+  const [isStepInProgress, setIsStepInProgress] = useState(false); // Whether debug step is in progress
+  const [debugWaitingForInput, setDebugWaitingForInput] = useState(false); // Whether debugger is waiting for input
+
+  // Auto-save status tracking
+  const [autoSaveStatus, setAutoSaveStatus] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >("idle"); // Current auto-save status
+  const [lastAutoSaveTime, setLastAutoSaveTime] = useState<Date | null>(null); // Timestamp of last auto-save
+
+  /**
+   * Monaco Editor Setup and Configuration
+   */
+
+  // Register custom IsiPython language with Monaco
   const handleEditorWillMount = (monaco) => {
     registerIsiPython(monaco);
   };
-  const { saveNewFile } = useUserFiles();
-  const { t } = useTranslation();
-  // Default code in IsiPython to demonstrate translation
-  const defaultCode = t("# Write code for your new file using IsiPython");
 
-
-  // Add ref for Monaco editor instance
-  const editorRef = useRef(null);
-  const currentLineDecorationRef = useRef([]);
-  const breakpointDecorationRef = useRef([]);
-  // #endregion
-
-  // #region Basic Editor States
-  const [code, setCode] = useState(initialCode || defaultCode);
-  const [translatedCode, setTranslatedCode] = useState("");
-  const [input, setInput] = useState("");
-  const [output, setOutput] = useState("");
-  const [isRunning, setIsRunning] = useState(false);
-  const [pythonVersion, setPythonVersion] = useState("1.0");
-  const [currentFileName, setCurrentFileName] = useState(
-    fileName || "untitled.isi"
-  );
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [waitingForInput, setWaitingForInput] = useState(false);
-  const [inputResolver, setInputResolver] = useState(null);
-  const [rightPanelWidth, setRightPanelWidth] = useState(384);
-  const [isResizing, setIsResizing] = useState(false);
-  const [isEditingFileName, setIsEditingFileName] = useState(false);
-  const [tempFileName, setTempFileName] = useState(currentFileName);
-
-  // Live Translation States
-  const [liveTranslationEnabled, setLiveTranslationEnabled] = useState(false);
-  const [translationPanelWidth, setTranslationPanelWidth] = useState(400);
-  const [isResizingTranslation, setIsResizingTranslation] = useState(false);
-
-  // Error Language State
-  const [errorLanguage, setErrorLanguage] = useState<"isixhosa" | "english">(
-    "isixhosa"
-  );
-
-  // Error Caching States
-  const [lastErrors, setLastErrors] = useState<ErrorCache | null>(null);
-  const [cleanOutput, setCleanOutput] = useState<string>("");
-  const [hasStoredErrors, setHasStoredErrors] = useState<boolean>(false);
-  // #endregion
-
-  // #region Debug States
-  const [breakpoints, setBreakpoints] = useState<Breakpoint[]>([]);
-  const [currentLine, setCurrentLine] = useState<number | null>(null);
-  const [showDebugPanel, setShowDebugPanel] = useState(false);
-  const [debugPanelHeight, setDebugPanelHeight] = useState(250);
-  const [isResizingDebugPanel, setIsResizingDebugPanel] = useState(false);
-  const [isDebugging, setIsDebugging] = useState(false);
-  const [debugSessionId, setDebugSessionId] = useState<string | null>(null);
-  const [debugVariables, setDebugVariables] = useState<Variable[]>([]);
-  const [isStepInProgress, setIsStepInProgress] = useState(false);
-  const [debugWaitingForInput, setDebugWaitingForInput] = useState(false);
-  // #endregion
-
-  // #region Auto-save States
-  const outputRef = useRef<HTMLDivElement>(null);
-  const debugAllOutputRef = useRef<string[]>([]);
-  const [autoSaveStatus, setAutoSaveStatus] = useState<
-    "idle" | "saving" | "saved" | "error"
-  >("idle");
-  const [lastAutoSaveTime, setLastAutoSaveTime] = useState<Date | null>(null);
-  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const lastSavedCodeRef = useRef<string>(initialCode || defaultCode);
-  const translationTimerRef = useRef<NodeJS.Timeout | null>(null);
-  // #endregion
-
-  // #region Monaco Editor Handler
+  // Handle Monaco editor mounting and setup event handlers
   const handleEditorDidMount = (editor, monaco) => {
     editorRef.current = editor;
 
-    // Set up breakpoint click handler on glyph margin
+    // Set up breakpoint click handler on gutter margin
     editor.onMouseDown((e) => {
       const { target, position } = e;
+      // Check if user clicked on the gutter margin (where breakpoints are displayed)
       if (target.type === monaco.editor.MouseTargetType.GUTTER_GLYPH_MARGIN) {
         const lineNumber = position.lineNumber;
         toggleBreakpoint(lineNumber);
       }
     });
   };
+
+  /**
+   * Breakpoint Visual Management
+   */
 
   // Update breakpoint decorations when breakpoints change
   const updateBreakpointDecorations = useCallback(() => {
@@ -191,7 +245,7 @@ export function CodeEditorLight({
     const editor = editorRef.current;
     const monaco = window.monaco;
 
-    // Create decorations for breakpoints
+    // Create visual decorations for each breakpoint
     const decorations = breakpoints.map((bp) => ({
       range: new monaco.Range(bp.line, 1, bp.line, 1),
       options: {
@@ -201,30 +255,35 @@ export function CodeEditorLight({
       },
     }));
 
-    // Update decorations
+    // Apply decorations to editor
     breakpointDecorationRef.current = editor.deltaDecorations(
       breakpointDecorationRef.current,
       decorations
     );
   }, [breakpoints]);
 
+  // Apply breakpoint decorations when breakpoints change
   useEffect(() => {
     updateBreakpointDecorations();
   }, [breakpoints, updateBreakpointDecorations]);
 
-  // #region Update current line decoration when debugging
+  /**
+   * Debug Line Highlighting Management
+   */
+
+  // Update current line decoration when debugging
   useEffect(() => {
     if (editorRef.current && currentLine && isDebugging) {
       const editor = editorRef.current;
       const monaco = window.monaco;
 
-      // Clear previous decorations
+      // Clear previous current line decorations
       currentLineDecorationRef.current = editor.deltaDecorations(
         currentLineDecorationRef.current,
         []
       );
 
-      // Add new decoration for current line
+      // Add new decoration for current execution line
       currentLineDecorationRef.current = editor.deltaDecorations(
         [],
         [
@@ -248,9 +307,13 @@ export function CodeEditorLight({
     }
   }, [currentLine, isDebugging]);
 
-  // Add CSS styles for the debug line highlighting and breakpoints
+  /**
+   * CSS Styles for Editor Decorations
+   */
+
+  // Inject custom CSS styles for debug line highlighting and breakpoints
   useEffect(() => {
-    // Create or update the style element
+    // Create or update the style element for custom editor styles
     let styleElement = document.getElementById("editor-custom-styles");
     if (!styleElement) {
       styleElement = document.createElement("style");
@@ -258,6 +321,7 @@ export function CodeEditorLight({
       document.head.appendChild(styleElement);
     }
 
+    // Define CSS for debug line highlighting and breakpoint styling
     styleElement.textContent = `
       .current-debug-line {
         background-color: rgba(255, 235, 59, 0.3) !important;
@@ -283,35 +347,39 @@ export function CodeEditorLight({
       }
     `;
 
+    // Cleanup function to remove styles on component unmount
     return () => {
-      // Cleanup on unmount
       const element = document.getElementById("editor-custom-styles");
       if (element) {
         element.remove();
       }
     };
   }, []);
-  // #endregion
 
-  // #region Live Translation Logic
+  /**
+   * Live Translation Logic
+   */
+
+  // Handle live translation when enabled and code changes
   useEffect(() => {
     if (!liveTranslationEnabled) {
       setTranslatedCode("");
       return;
     }
 
-    // Clear existing timer
+    // Clear existing translation timer to debounce rapid changes
     if (translationTimerRef.current) {
       clearTimeout(translationTimerRef.current);
     }
 
-    // Debounce translation to avoid excessive updates
+    // Debounce translation to avoid excessive updates during typing
     translationTimerRef.current = setTimeout(() => {
-      // USING THE IMPORTED TRANSLATION FUNCTION FROM isiPythonTranslator.ts
+      // Translate IsiPython code to Python using imported translator
       const translated = translateIsiPythonToPython(code);
       setTranslatedCode(translated);
-    }, 200); // 200ms delay for more responsive feel
+    }, 200); // 200ms delay for responsive feel
 
+    // Cleanup timer on dependency change
     return () => {
       if (translationTimerRef.current) {
         clearTimeout(translationTimerRef.current);
@@ -319,7 +387,7 @@ export function CodeEditorLight({
     };
   }, [code, liveTranslationEnabled]);
 
-  // Cleanup translation timer on unmount
+  // Cleanup translation timer on component unmount
   useEffect(() => {
     return () => {
       if (translationTimerRef.current) {
@@ -328,30 +396,33 @@ export function CodeEditorLight({
     };
   }, []);
 
+  // Toggle live translation feature on/off
   const toggleLiveTranslation = () => {
     const newState = !liveTranslationEnabled;
     setLiveTranslationEnabled(newState);
 
     if (newState) {
-      // USING THE IMPORTED TRANSLATION FUNCTION FROM isiPythonTranslator.ts
+      // Immediately translate current code when enabling
       const translated = translateIsiPythonToPython(code);
       setTranslatedCode(translated);
     } else {
-      // When disabling, clear translation
+      // Clear translation when disabling
       setTranslatedCode("");
     }
   };
 
+  // Toggle between English and IsiXhosa error messages
   const toggleErrorLanguage = () => {
     const newLanguage = errorLanguage === "isixhosa" ? "english" : "isixhosa";
     setErrorLanguage(newLanguage);
 
-    // If we have stored errors, regenerate the output with the new language
+    // If we have stored errors, regenerate output with new language
     if (hasStoredErrors && lastErrors) {
       regenerateOutputWithNewLanguage(newLanguage);
     }
   };
 
+  // Regenerate output display with errors in the selected language
   const regenerateOutputWithNewLanguage = (
     language: "english" | "isixhosa"
   ) => {
@@ -368,27 +439,32 @@ export function CodeEditorLight({
           ? "Check your code and try again!"
           : "Khangela ikhowudi yakho uzame kwakhona!";
 
-      const errorOutput = `\n❌ ${errorTitle}:\n${errorsToShow.join(
+      const errorOutput = `\nExecution Error:\n${errorsToShow.join(
         "\n"
-      )}\n\n🔧 ${tryAgainText}`;
+      )}\n\n${tryAgainText}`;
       setOutput(cleanOutput + errorOutput);
     }
   };
 
+  // Get appropriate error message based on selected language
   const getErrorMessage = (result: any) => {
     if (errorLanguage === "english" && result.english_error) {
       return result.english_error;
     }
     return result.error || result.english_error || "Unknown error";
   };
-  // #endregion
 
-  // #region Translation Panel Resize Logic
+  /**
+   * Panel Resizing Logic
+   */
+
+  // Handle translation panel resize initiation
   const handleTranslationMouseDown = (e) => {
     setIsResizingTranslation(true);
     e.preventDefault();
   };
 
+  // Handle translation panel resizing
   useEffect(() => {
     const handleTranslationMouseMove = (e) => {
       if (!isResizingTranslation) return;
@@ -407,6 +483,7 @@ export function CodeEditorLight({
         (containerRect.width - rightPanelWidth) * 0.7
       );
 
+      // Apply width constraints and update if valid
       if (newWidth >= minWidth && newWidth <= maxWidth) {
         setTranslationPanelWidth(newWidth);
       }
@@ -416,6 +493,7 @@ export function CodeEditorLight({
       setIsResizingTranslation(false);
     };
 
+    // Add event listeners and set cursor when resizing
     if (isResizingTranslation) {
       document.addEventListener("mousemove", handleTranslationMouseMove);
       document.addEventListener("mouseup", handleTranslationMouseUp);
@@ -423,6 +501,7 @@ export function CodeEditorLight({
       document.body.style.userSelect = "none";
     }
 
+    // Cleanup event listeners
     return () => {
       document.removeEventListener("mousemove", handleTranslationMouseMove);
       document.removeEventListener("mouseup", handleTranslationMouseUp);
@@ -432,51 +511,63 @@ export function CodeEditorLight({
       }
     };
   }, [isResizingTranslation, rightPanelWidth, isResizing]);
-  // #endregion
 
-  // #region Breakpoint Functions
+  /**
+   * Breakpoint Management
+   */
+
+  // Toggle breakpoint at specified line number
   const toggleBreakpoint = (lineNumber: number) => {
     setBreakpoints((prev) => {
       const existing = prev.find((bp) => bp.line === lineNumber);
       if (existing) {
+        // Remove existing breakpoint
         return prev.filter((bp) => bp.line !== lineNumber);
       } else {
+        // Add new breakpoint
         return [...prev, { line: lineNumber, enabled: true }];
       }
     });
   };
-  // #endregion
 
-  // #region Debug Functions
+  /**
+   * Debug Session Management
+   */
+
+  // Start a new debugging session
   const startDebugging = async () => {
     try {
       setIsDebugging(true);
       setShowDebugPanel(true);
 
+      // Clear previous output and debug data
       setOutput("");
       debugAllOutputRef.current = [];
 
+      // Start debug session with current code
       const response = await debugHelper.startDebugSession(code);
 
+      // Handle debug errors
       if (isDebugError(response)) {
         const msg =
           (getErrorMessage(response) &&
             String(getErrorMessage(response)).trim()) ||
           "";
         if (msg) {
-          setOutput(`❌ ${t("Debug error")}: ${msg}`);
+          setOutput(`Debug error: ${msg}`);
         } else {
-          // no message – don't print a "null" error line
           setOutput("");
         }
         setIsDebugging(false);
         return;
       }
 
+      // Set up debug session state
       const newCurrentLine = response.current_line ?? 1;
       setCurrentLine(newCurrentLine);
       setDebugSessionId(response.session_id);
 
+      // Handle initial debug output
       let debugMessage = "";
       if (response.output) {
         debugMessage += `${response.output}\n`;
@@ -485,15 +576,16 @@ export function CodeEditorLight({
         setOutput("");
       }
 
+      // Handle input prompts
       if (isWaitingForInput(response)) {
         setDebugWaitingForInput(true);
-        // print prompt only if it's NOT already included in output
         const promptMessage = response.prompt || "Enter input";
         if (!response.output || !response.output.includes(promptMessage)) {
           debugMessage += `${promptMessage}\n`;
         }
       }
 
+      // Parse and set debug variables
       const apiVariables =
         response.variables && typeof response.variables === "object"
           ? Object.entries(response.variables).map(([name, value]) => ({
@@ -505,14 +597,17 @@ export function CodeEditorLight({
 
       setDebugVariables(apiVariables);
 
+      // Update output if there's debug message content
       if (debugMessage) {
         setOutput((prev) => prev + debugMessage);
       }
     } catch (error: any) {
-      setOutput(`❌ Failed to start debug session: ${error.message}`);
+      setOutput(`Failed to start debug session: ${error.message}`);
       setIsDebugging(false);
     }
   };
+
+  // Execute a single debug step
   const stepDebug = async () => {
     if (!debugSessionId || isStepInProgress) return;
 
@@ -521,31 +616,34 @@ export function CodeEditorLight({
 
       const response = await debugHelper.stepOnly(debugSessionId);
 
+      // Handle debug step errors
       if (isDebugError(response)) {
-        // Use response.error directly like the original code, not getErrorMessage
         const msg = (response.error && String(response.error).trim()) || "";
         if (msg) {
-          setOutput((prev) => prev + `\n❌ ${t("Debug error")}: ${msg}\n`);
+          setOutput((prev) => prev + `\nDebug error: ${msg}\n`);
         }
-        // If there's no error message, just stop debugging gracefully without showing anything
         stopDebugging();
         return;
       }
 
+      // Update current execution line
       const newCurrentLine = response.current_line;
       setCurrentLine(newCurrentLine);
 
       let debugMessage = "";
 
+      // Handle new output with deduplication
       if (response.output) {
         const currentOutput = response.output;
         const currentDebugOutput = debugAllOutputRef.current;
 
+        // Check if this output is new (not already displayed)
         if (!currentDebugOutput.includes(currentOutput)) {
           if (currentDebugOutput.length > 0) {
             const lastOutput =
               currentDebugOutput[currentDebugOutput.length - 1];
             if (currentOutput.startsWith(lastOutput)) {
+              // Extract only the new part of the output
               const newPart = currentOutput
                 .slice(lastOutput.length)
                 .replace(/^\n+/, "");
@@ -560,6 +658,7 @@ export function CodeEditorLight({
         }
       }
 
+      // Update debug variables
       if (response.variables && typeof response.variables === "object") {
         const apiVariables = Object.entries(response.variables).map(
           ([name, value]) => ({
@@ -571,10 +670,10 @@ export function CodeEditorLight({
         setDebugVariables(apiVariables);
       }
 
+      // Handle input requests
       if (isWaitingForInput(response)) {
         setDebugWaitingForInput(true);
         const promptMessage = response.prompt || "Enter input";
-        // avoid duplicate prompt when backend also echoes it in output
         if (!response.output || !response.output.includes(promptMessage)) {
           debugMessage += `${promptMessage}\n`;
         }
@@ -582,20 +681,24 @@ export function CodeEditorLight({
         setDebugWaitingForInput(false);
       }
 
+      // Handle program completion
       if (isCompleted(response)) {
-        debugMessage += `✅ Program execution completed\n`;
+        debugMessage += `Program execution completed\n`;
         stopDebugging();
       }
 
+      // Update output with debug message
       if (debugMessage) {
         setOutput((prev) => prev + debugMessage);
       }
     } catch (error: any) {
-      setOutput((prev) => prev + `\n❌ Failed to step: ${error.message}\n`);
+      setOutput((prev) => prev + `\nFailed to step: ${error.message}\n`);
     } finally {
       setIsStepInProgress(false);
     }
   };
+
+  // Provide input to debug session
   const provideDebugInput = async (inputValue: string) => {
     if (!debugSessionId) return;
 
@@ -608,24 +711,26 @@ export function CodeEditorLight({
         inputValue
       );
 
+      // Handle input provision errors
       if (isDebugError(response)) {
         const msg =
           (getErrorMessage(response) &&
             String(getErrorMessage(response)).trim()) ||
           "";
         if (msg) {
-          setOutput((prev) => prev + `\n❌ ${t("Debug error")}: ${msg}\n`);
+          setOutput((prev) => prev + `\nDebug error: ${msg}\n`);
         }
         stopDebugging();
         return;
       }
 
+      // Update current line and handle response similar to stepDebug
       const newCurrentLine = response.current_line;
       setCurrentLine(newCurrentLine);
 
       let debugMessage = "";
 
-      // Append any new output (with de-dup against previous frames)
+      // Handle output with deduplication
       if (response.output) {
         const currentOutput = response.output;
         const currentDebugOutput = debugAllOutputRef.current;
@@ -649,7 +754,7 @@ export function CodeEditorLight({
         }
       }
 
-      // Variables
+      // Update variables
       if (response.variables && typeof response.variables === "object") {
         const apiVariables = Object.entries(response.variables).map(
           ([name, value]) => ({
@@ -661,7 +766,7 @@ export function CodeEditorLight({
         setDebugVariables(apiVariables);
       }
 
-      // If still waiting for input, show prompt once (avoid duplicates)
+      // Handle continued input requests
       if (isWaitingForInput(response)) {
         setDebugWaitingForInput(true);
         const promptMessage = response.prompt || "Enter input";
@@ -672,8 +777,9 @@ export function CodeEditorLight({
         setDebugWaitingForInput(false);
       }
 
+      // Handle program completion
       if (isCompleted(response)) {
-        debugMessage += `✅ Program execution completed\n`;
+        debugMessage += `Program execution completed\n`;
         stopDebugging();
       }
 
@@ -682,13 +788,14 @@ export function CodeEditorLight({
       }
     } catch (error: any) {
       setOutput(
-        (prev) => prev + `\n❌ Failed to provide input: ${error.message}\n`
+        (prev) => prev + `\nFailed to provide input: ${error.message}\n`
       );
     } finally {
       setIsStepInProgress(false);
     }
   };
 
+  // Stop current debugging session and clean up state
   const stopDebugging = () => {
     setIsDebugging(false);
     setCurrentLine(null);
@@ -697,7 +804,7 @@ export function CodeEditorLight({
     debugAllOutputRef.current = [];
     setDebugWaitingForInput(false);
 
-    // Clear debug line decorations
+    // Clear debug line decorations from editor
     if (editorRef.current) {
       currentLineDecorationRef.current = editorRef.current.deltaDecorations(
         currentLineDecorationRef.current,
@@ -705,9 +812,11 @@ export function CodeEditorLight({
       );
     }
   };
-  // #endregion
 
-  // #region Debug Panel Handlers
+  /**
+   * Debug Panel Event Handlers
+   */
+
   const handleCurrentLineChange = (line: number | null) => {
     setCurrentLine(line);
   };
@@ -732,18 +841,21 @@ export function CodeEditorLight({
     setIsResizingDebugPanel(false);
   };
 
-  // Add effect for debug panel resizing
+  /**
+   * Debug Panel Resizing Logic
+   */
+
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isResizingDebugPanel) return;
 
       // Calculate new height from bottom of viewport
       const viewportHeight = window.innerHeight;
-      const statusBarHeight = 40; // Approximate status bar height
-      const toolbarHeight = 80; // Approximate toolbar height
+      const statusBarHeight = 40;
+      const toolbarHeight = 80;
       const availableHeight = viewportHeight - statusBarHeight - toolbarHeight;
 
-      // Calculate distance from bottom
+      // Calculate distance from bottom and apply constraints
       const distanceFromBottom = viewportHeight - e.clientY;
       const newHeight = Math.max(
         180,
@@ -757,6 +869,7 @@ export function CodeEditorLight({
       setIsResizingDebugPanel(false);
     };
 
+    // Add event listeners when resizing debug panel
     if (isResizingDebugPanel) {
       document.addEventListener("mousemove", handleMouseMove);
       document.addEventListener("mouseup", handleMouseUp);
@@ -773,9 +886,12 @@ export function CodeEditorLight({
       }
     };
   }, [isResizingDebugPanel, isResizing, isResizingTranslation]);
-  // #endregion
 
-  // #region Auto-save and other existing functionality (keeping original logic)
+  /**
+   * Auto-save and Code Change Management
+   */
+
+  // Debounced callback for code changes
   const debouncedCodeChange = useCallback(
     (newCode: string) => {
       if (onCodeChange) {
@@ -785,6 +901,7 @@ export function CodeEditorLight({
     [onCodeChange, currentFileName, hasUnsavedChanges]
   );
 
+  // Memoized save function to prevent unnecessary re-renders
   const memoizedSaveNewFile = useCallback(
     (fileName, code, fileId) => {
       return saveNewFile(fileName, code, fileId);
@@ -792,11 +909,14 @@ export function CodeEditorLight({
     [saveNewFile]
   );
 
+  // Auto-save logic when code changes
   useEffect(() => {
+    // Clear existing auto-save timer
     if (autoSaveTimerRef.current) {
       clearTimeout(autoSaveTimerRef.current);
     }
 
+    // Set up auto-save timer if there are unsaved changes and a file ID exists
     if (hasUnsavedChanges && fileId && code !== lastSavedCodeRef.current) {
       autoSaveTimerRef.current = setTimeout(async () => {
         setAutoSaveStatus("saving");
@@ -805,15 +925,18 @@ export function CodeEditorLight({
           const result = await saveNewFile(currentFileName, code, fileId);
 
           if (result && (result.data || result.message)) {
+            // Auto-save successful
             setAutoSaveStatus("saved");
             setHasUnsavedChanges(false);
             setLastAutoSaveTime(new Date());
             lastSavedCodeRef.current = code;
 
+            // Clear saved status after 2 seconds
             setTimeout(() => {
               setAutoSaveStatus("idle");
             }, 2000);
           } else {
+            // Auto-save failed
             setAutoSaveStatus("error");
             setTimeout(() => {
               setAutoSaveStatus("idle");
@@ -825,7 +948,7 @@ export function CodeEditorLight({
             setAutoSaveStatus("idle");
           }, 3000);
         }
-      }, 3000);
+      }, 3000); // 3 second delay for auto-save
     }
 
     return () => {
@@ -835,6 +958,7 @@ export function CodeEditorLight({
     };
   }, [code, hasUnsavedChanges, fileId, currentFileName, saveNewFile]);
 
+  // Debounced code change notification
   useEffect(() => {
     const timer = setTimeout(() => {
       debouncedCodeChange(code);
@@ -843,12 +967,14 @@ export function CodeEditorLight({
     return () => clearTimeout(timer);
   }, [code, debouncedCodeChange]);
 
+  // Auto-scroll output to bottom when new output is added
   useEffect(() => {
     if (outputRef.current) {
       outputRef.current.scrollTop = outputRef.current.scrollHeight;
     }
   }, [output]);
 
+  // Cleanup auto-save timer on component unmount
   useEffect(() => {
     return () => {
       if (autoSaveTimerRef.current) {
@@ -856,9 +982,11 @@ export function CodeEditorLight({
       }
     };
   }, []);
-  // #endregion
 
-  // #region Right Panel Resize (keeping original logic)
+  /**
+   * Right Panel Resizing Logic
+   */
+
   const handleMouseDown = (e) => {
     setIsResizing(true);
     e.preventDefault();
@@ -873,6 +1001,7 @@ export function CodeEditorLight({
         ?.getBoundingClientRect();
       if (!containerRect) return;
 
+      // Calculate new panel width
       const newWidth = containerRect.right - e.clientX;
       const minWidth = 300;
       const maxWidth = window.innerWidth * 0.7;
@@ -880,9 +1009,11 @@ export function CodeEditorLight({
       const editorWidth = window.innerWidth - newWidth;
       const autoCloseSidebarThreshold = window.innerWidth * 0.75;
 
+      // Apply width constraints
       if (newWidth >= minWidth && newWidth <= maxWidth) {
         setRightPanelWidth(newWidth);
 
+        // Auto-close sidebar if editor gets too wide
         if (
           editorWidth >= autoCloseSidebarThreshold &&
           sidebarOpen &&
@@ -913,9 +1044,11 @@ export function CodeEditorLight({
       }
     };
   }, [isResizing, sidebarOpen, onCloseSidebar, isResizingTranslation]);
-  // #endregion
 
-  // #region Filename editing (keeping original logic)
+  /**
+   * File Name Editing Logic
+   */
+
   const handleFileNameClick = () => {
     setIsEditingFileName(true);
     setTempFileName(currentFileName);
@@ -931,6 +1064,7 @@ export function CodeEditorLight({
     if (newFileName && newFileName !== currentFileName) {
       setCurrentFileName(newFileName);
 
+      // Save file with new name if file ID exists
       if (fileId) {
         try {
           const result = await saveNewFile(newFileName, code, fileId);
@@ -938,21 +1072,15 @@ export function CodeEditorLight({
           if (result && (result.data || result.message)) {
             setHasUnsavedChanges(false);
             lastSavedCodeRef.current = code;
-          } else {
-            console.log("");
           }
         } catch (error) {
-          console.log(
-            `❌ Network error while renaming file\n🔧 Please check your connection and try again!\n`
-          );
+          // Handle network error silently - user will see via auto-save status
         }
       } else {
+        // For new files, just update the name
         if (onSave) {
           onSave(code, newFileName);
         }
-        console.log(
-          `📝 File renamed to: ${newFileName}\n⚡⚡ Save the file to persist the name!\n`
-        );
       }
     }
 
@@ -975,9 +1103,12 @@ export function CodeEditorLight({
   const handleFileNameBlur = async () => {
     await handleFileNameSave();
   };
-  // #endregion
 
-  // #region Code change and file handling (keeping original logic)
+  /**
+   * Code and File Management
+   */
+
+  // Handle initial code changes from props
   useEffect(() => {
     if (initialCode !== undefined && initialCode !== code) {
       setCode(initialCode);
@@ -987,6 +1118,7 @@ export function CodeEditorLight({
     }
   }, [initialCode]);
 
+  // Handle file name changes from props
   useEffect(() => {
     if (fileName && fileName !== currentFileName) {
       setCurrentFileName(fileName);
@@ -995,6 +1127,7 @@ export function CodeEditorLight({
     }
   }, [fileName]);
 
+  // Handle code changes in editor
   const handleCodeChange = (newCode: string) => {
     setCode(newCode);
     setHasUnsavedChanges(true);
@@ -1002,15 +1135,17 @@ export function CodeEditorLight({
       setAutoSaveStatus("idle");
     }
   };
-  // #endregion
 
-  // #region Run Code with Error Caching
-  // Replace the existing handleRunCode function with this fixed version
+  /**
+   * Code Execution Logic
+   */
+
+  // Main function to run/execute the IsiPython code
   const handleRunCode = async () => {
     setIsRunning(true);
     setWaitingForInput(false);
 
-    // Clear any stored errors when starting a new run
+    // Clear error cache when starting new execution
     setLastErrors(null);
     setCleanOutput("");
     setHasStoredErrors(false);
@@ -1021,16 +1156,13 @@ export function CodeEditorLight({
     let sessionId = null;
 
     try {
+      // Initial API call to start code execution
       let response = await fetch(
         "https://isipython-dev.onrender.com/api/code",
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            code: code,
-          }),
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code: code }),
         }
       );
 
@@ -1041,13 +1173,16 @@ export function CodeEditorLight({
       let result = await response.json();
       sessionId = result.session_id;
 
+      // Main execution loop - continue until program completes
       while (!result.completed) {
+        // Handle program output with deduplication
         if (result.output) {
           const currentOutput = result.output;
           if (!allOutput.includes(currentOutput)) {
             if (allOutput.length > 0) {
               const lastOutput = allOutput[allOutput.length - 1];
               if (currentOutput.startsWith(lastOutput)) {
+                // Extract only new part of output
                 const newPart = currentOutput
                   .slice(lastOutput.length)
                   .replace(/^\n+/, "");
@@ -1062,6 +1197,7 @@ export function CodeEditorLight({
           }
         }
 
+        // Handle input requests
         if (result.waiting_for_input) {
           setWaitingForInput(true);
           const userInput = await waitForUserInput();
@@ -1070,13 +1206,12 @@ export function CodeEditorLight({
             setWaitingForInput(false);
             setOutput((prev) => prev + `${userInput}\n`);
 
+            // Send input to API
             response = await fetch(
               "https://isipython-dev.onrender.com/api/code",
               {
                 method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                   session_id: sessionId,
                   input: userInput,
@@ -1094,18 +1229,15 @@ export function CodeEditorLight({
             break;
           }
         } else if (result.still_running) {
+          // Poll for continued execution
           await new Promise((resolve) => setTimeout(resolve, 500));
 
           response = await fetch(
             "https://isipython-dev.onrender.com/api/code",
             {
               method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                session_id: sessionId,
-              }),
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ session_id: sessionId }),
             }
           );
 
@@ -1119,9 +1251,8 @@ export function CodeEditorLight({
         }
       }
 
-      // Check for errors after loop completion
+      // Handle errors after execution completion
       if (result.error || result.english_error) {
-        // Store both language versions for language switching
         const englishError =
           result.english_error || result.error || "Unknown error";
         const isixhosaError =
@@ -1152,11 +1283,11 @@ export function CodeEditorLight({
         }
       }
 
-      // NEW LOGIC: Only add frontend error formatting if the backend output doesn't already contain error messages
+      // Handle error formatting only if backend hasn't already formatted errors
       if (allErrors.length > 0) {
         const currentOutput = output;
 
-        // Check if the output already contains error indicators (common error patterns)
+        // Check if output already contains error indicators
         const hasErrorInOutput =
           currentOutput.includes("SyntaxError:") ||
           currentOutput.includes("NameError:") ||
@@ -1167,42 +1298,34 @@ export function CodeEditorLight({
           currentOutput.includes("Impazamo:");
 
         if (!hasErrorInOutput) {
-          // Only add our error formatting if the backend hasn't already formatted the error
+          // Add frontend error formatting
           setCleanOutput(currentOutput);
 
           const englishErrors = allErrors.map((err) => err.english);
           const isixhosaErrors = allErrors.map((err) => err.isixhosa);
 
-          setLastErrors({
-            english: englishErrors,
-            isixhosa: isixhosaErrors,
-          });
+          setLastErrors({ english: englishErrors, isixhosa: isixhosaErrors });
           setHasStoredErrors(true);
 
           const errorsToShow =
             errorLanguage === "english" ? englishErrors : isixhosaErrors;
           const errorTitle =
-            errorLanguage === "english"
-              ? "Execution Error"
-              : "Impazamo";
+            errorLanguage === "english" ? "Execution Error" : "Impazamo";
           const tryAgainText =
             errorLanguage === "english"
               ? "Check your code and try again!"
               : "Khangela ikhowudi yakho uzame kwakhona!";
 
-          const errorOutput = `\n❌ ${errorTitle}:\n${errorsToShow.join(
+          const errorOutput = `\n${errorTitle}:\n${errorsToShow.join(
             "\n"
-          )}\n\n🔧 ${tryAgainText}`;
+          )}\n\n${tryAgainText}`;
           setOutput((prev) => prev + errorOutput);
         } else {
-          // If error is already in output, just store it for language switching
+          // Store errors for language switching even if already formatted
           setCleanOutput(currentOutput);
           const englishErrors = allErrors.map((err) => err.english);
           const isixhosaErrors = allErrors.map((err) => err.isixhosa);
-          setLastErrors({
-            english: englishErrors,
-            isixhosa: isixhosaErrors,
-          });
+          setLastErrors({ english: englishErrors, isixhosa: isixhosaErrors });
           setHasStoredErrors(true);
         }
       } else if (result.completed) {
@@ -1216,7 +1339,7 @@ export function CodeEditorLight({
       setOutput(
         (prev) =>
           prev +
-          `\n❌ Network/Connection Error:\n${error.message}\n\n🔧 Please check your internet connection and try again!`
+          `\nNetwork/Connection Error:\n${error.message}\n\nPlease check your internet connection and try again!`
       );
     } finally {
       setIsRunning(false);
@@ -1224,11 +1347,13 @@ export function CodeEditorLight({
     }
   };
 
+  // Wait for user input during program execution
   const waitForUserInput = () => {
     return new Promise((resolve) => {
       const resolveRef = { current: resolve };
       setInputResolver(() => resolveRef);
 
+      // Set timeout for input (5 minutes)
       const timeout = setTimeout(() => {
         resolve(null);
         setInputResolver(null);
@@ -1238,6 +1363,7 @@ export function CodeEditorLight({
     });
   };
 
+  // Handle input submission for both normal execution and debugging
   const handleInputSubmit = () => {
     if (!input.trim()) return;
 
@@ -1253,6 +1379,7 @@ export function CodeEditorLight({
     }
   };
 
+  // Handle Enter key press in input field
   const handleInputKeyPress = (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -1265,9 +1392,12 @@ export function CodeEditorLight({
       }
     }
   };
-  // #endregion
 
-  // #region Save, Copy, Download functions (keeping original logic)
+  /**
+   * File Operations
+   */
+
+  // Handle manual save action
   const handleSave = (newFileName: string) => {
     setCurrentFileName(newFileName);
     if (onSave) {
@@ -1276,7 +1406,9 @@ export function CodeEditorLight({
     setHasUnsavedChanges(false);
   };
 
+  // Handle save new file action
   const handleSaveNewFile = async () => {
+    // Clear existing auto-save timer
     if (autoSaveTimerRef.current) {
       clearTimeout(autoSaveTimerRef.current);
       autoSaveTimerRef.current = null;
@@ -1298,30 +1430,31 @@ export function CodeEditorLight({
         }, 2000);
       } else {
         setAutoSaveStatus("error");
-
         setTimeout(() => {
           setAutoSaveStatus("idle");
         }, 3000);
       }
     } catch (error) {
       setAutoSaveStatus("error");
-
       setTimeout(() => {
         setAutoSaveStatus("idle");
       }, 3000);
     }
   };
 
+  // Copy current IsiPython code to clipboard
   const handleCopyCode = () => {
     navigator.clipboard.writeText(code);
   };
 
+  // Copy translated Python code to clipboard
   const handleCopyTranslatedCode = () => {
     if (translatedCode.trim()) {
       navigator.clipboard.writeText(translatedCode);
     }
   };
 
+  // Download current code as file
   const handleDownloadCode = () => {
     const blob = new Blob([code], { type: "text/python" });
     const url = URL.createObjectURL(blob);
@@ -1332,6 +1465,7 @@ export function CodeEditorLight({
     URL.revokeObjectURL(url);
   };
 
+  // Get auto-save status display information
   const getAutoSaveStatusDisplay = () => {
     switch (autoSaveStatus) {
       case "saving":
@@ -1361,7 +1495,10 @@ export function CodeEditorLight({
         return null;
     }
   };
-  // #endregion
+
+  /**
+   * Main Component Render
+   */
 
   return (
     <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30 text-gray-900 flex flex-col relative editor-container">
@@ -1504,7 +1641,9 @@ export function CodeEditorLight({
                       : "text-blue-600 border-blue-600 hover:bg-blue-50"
                   } transition-all duration-200`}
                   title={
-                    debugWaitingForInput ? t("Waiting for input") : t("Step Over")
+                    debugWaitingForInput
+                      ? t("Waiting for input")
+                      : t("Step Over")
                   }
                 >
                   {isStepInProgress ? (
@@ -1526,7 +1665,7 @@ export function CodeEditorLight({
 
             <Separator orientation="vertical" className="h-6" />
 
-            {/* Original Controls */}
+            {/* File Operation Controls */}
             <Button
               variant="ghost"
               size="icon"
@@ -1633,9 +1772,7 @@ export function CodeEditorLight({
             {showDebugPanel && (
               <div
                 className="border-t border-gray-200/50 bg-white/95 backdrop-blur-xl relative flex-shrink-0 flex flex-col"
-                style={{
-                  height: `${debugPanelHeight}px`,
-                }}
+                style={{ height: `${debugPanelHeight}px` }}
               >
                 {/* Resize handle for debug panel */}
                 <div
@@ -1798,14 +1935,14 @@ export function CodeEditorLight({
                   >
                     {debugWaitingForInput
                       ? t(
-                          "🛠 The debugger is waiting for your input! Write it above and press enter to continue debugging..."
+                          "The debugger is waiting for your input! Write it above and press enter to continue debugging..."
                         )
                       : waitingForInput
                       ? t(
-                          "⚡ The program is waiting for input! Write it above and press enter to continue..."
+                          "The program is waiting for input! Write it above and press enter to continue..."
                         )
                       : t(
-                          "💡 If your code requires input, enter it in the above box"
+                          "If your code requires input, enter it in the above box"
                         )}
                   </p>
                 </div>
@@ -1844,8 +1981,7 @@ export function CodeEditorLight({
                   className="bg-gradient-to-br from-slate-50 to-gray-100 border-2 border-gray-200/70 rounded-lg p-4 h-full overflow-y-auto shadow-inner"
                 >
                   <pre className="font-mono text-sm text-slate-700 whitespace-pre-wrap break-words">
-                    {t(output) ||
-                      t("🚀Output will appear here \n  \n  \n  \n  \n  \n")}
+                    {t(output) || t("Output will appear here")}
                   </pre>
                 </div>
               </CardContent>

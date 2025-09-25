@@ -31,7 +31,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useDashboardStats } from "../../useDashboardStats"; // Import the new hook
+import { useDashboardStats } from "../../useDashboardStats.js"; // Import the new hook
 import { useLearningPath } from "../../useLearningPath";
 import { useUser } from "../../useUser";
 import { useUserFiles } from "../../useUserFiles";
@@ -184,7 +184,7 @@ export function DashboardLight({
                 {file.name}
               </h3>
               <p className="text-xs text-gray-600">
-                {file.time === "Just now" 
+                {file.time === "Just now"
                   ? t(file.time)
                   : (() => {
                       const spaceIndex = file.time.indexOf(" ");
@@ -192,8 +192,7 @@ export function DashboardLight({
                       const number = file.time.slice(0, spaceIndex);
                       const unit = file.time.slice(spaceIndex + 1);
                       return `${number} ${t(unit)}`;
-                    })()
-                }
+                    })()}
               </p>
             </div>
           </div>

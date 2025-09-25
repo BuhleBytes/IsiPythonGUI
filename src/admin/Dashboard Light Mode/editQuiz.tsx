@@ -1,3 +1,33 @@
+/**
+ * EditQuiz Component
+ *
+ * This component provides a comprehensive interface for editing existing quizzes.
+ * It can handle both draft quizzes (that haven't been published yet) and published
+ * quizzes that need updates. The component loads the existing quiz data and
+ * populates the form fields for editing.
+ *
+ * Key Features:
+ * - Load and display existing quiz data for editing
+ * - Support for both draft and published quiz editing
+ * - Complete form interface matching the create quiz functionality
+ * - Quiz settings management (notifications, randomization, results display, etc.)
+ * - Dynamic instruction management (add, edit, remove instructions)
+ * - Question management (add, edit, remove multiple-choice questions)
+ * - Draft saving capabilities (update existing draft)
+ * - Publishing functionality (publish draft or update published quiz)
+ * - Comprehensive error handling and loading states
+ * - Navigation back to draft/quiz lists
+ * - API integration for quiz updates
+ * - Visual status indicators (draft vs published)
+ * - Notification system for user feedback
+ *
+ * The component integrates with custom hooks for:
+ * - useQuizDetails: Fetching existing quiz data
+ * - useQuizAPI: Handling save/publish operations
+ *
+ * @component
+ */
+
 "use client";
 
 import { Badge } from "@/components/ui/badge";
@@ -42,10 +72,14 @@ import { useEffect, useState } from "react";
 import { QuizQuestion, useQuizAPI } from "../useQuizAPI";
 import { useQuizDetails } from "../useQuizDetails";
 
+/**
+ * Props interface for the EditQuiz component
+ * Allows parent components to control navigation and handle updates
+ */
 interface EditQuizProps {
-  quizId: string;
-  onBackToList?: () => void;
-  onSave?: (updatedQuiz: any) => void;
+  quizId: string; // ID of the quiz to edit
+  onBackToList?: () => void; // Callback for navigating back to list
+  onSave?: (updatedQuiz: any) => void; // Callback after successful save/publish
 }
 
 export default function EditQuiz({
@@ -53,10 +87,10 @@ export default function EditQuiz({
   onBackToList,
   onSave,
 }: EditQuizProps) {
-  // Use the custom hook to fetch quiz details
+  // Custom hook to fetch existing quiz details
   const { quiz, loading, error, refetch } = useQuizDetails(quizId || "");
 
-  // Use the enhanced custom hook for API interactions
+  // Custom hook for API operations (same as create quiz for consistency)
   const {
     isSubmitting,
     error: apiError,
@@ -65,24 +99,34 @@ export default function EditQuiz({
     clearError,
   } = useQuizAPI();
 
+  // Form state - initialized empty and populated when quiz data loads
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [timeLimit, setTimeLimit] = useState("");
+
+  // Quiz configuration settings
   const [sendNotifications, setSendNotifications] = useState(true);
   const [randomizeOrder, setRandomizeOrder] = useState(true);
   const [showResultsImmediately, setShowResultsImmediately] = useState(false);
   const [allowMultipleAttempts, setAllowMultipleAttempts] = useState(true);
+
+  // Quiz content arrays
   const [instructions, setInstructions] = useState<string[]>([]);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
 
+  // UI state for notifications
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState("");
   const [notificationType, setNotificationType] = useState<
     "success" | "draft" | "error"
   >("success");
 
-  // Update form data when quiz is loaded
+  /**
+   * Effect to populate form fields when quiz data is loaded
+   * Converts API response format to form state format
+   * Provides fallback defaults for instructions and questions if empty
+   */
   useEffect(() => {
     if (quiz) {
       setTitle(quiz.title);
@@ -93,6 +137,8 @@ export default function EditQuiz({
       setRandomizeOrder(quiz.randomizeQuestions);
       setShowResultsImmediately(quiz.showResultsImmediately);
       setAllowMultipleAttempts(quiz.allowMultipleAttempts);
+
+      // Set instructions with fallback to default set if empty
       setInstructions(
         quiz.instructions.length > 0
           ? quiz.instructions
@@ -103,6 +149,8 @@ export default function EditQuiz({
               "Make sure to submit your quiz before the due date",
             ]
       );
+
+      // Set questions with fallback to single empty question if none exist
       setQuestions(
         quiz.questions.length > 0
           ? quiz.questions
@@ -123,7 +171,10 @@ export default function EditQuiz({
     }
   }, [quiz]);
 
-  // Handle API errors using notification
+  /**
+   * Effect to handle API errors and display them as notifications
+   * Same pattern as create quiz for consistency
+   */
   useEffect(() => {
     if (apiError) {
       setNotificationMessage(apiError);
@@ -138,10 +189,15 @@ export default function EditQuiz({
     }
   }, [apiError, clearError]);
 
-  // Inline Notification Component
+  /**
+   * Notification Component
+   * Displays contextual notifications for success, error, and draft operations
+   * Same implementation as create quiz for consistency
+   */
   const Notification = () => {
     if (!showNotification) return null;
 
+    // Configuration for different notification types
     const getNotificationConfig = () => {
       switch (notificationType) {
         case "success":
@@ -202,27 +258,39 @@ export default function EditQuiz({
     );
   };
 
+  /**
+   * Adds a new question to the questions array
+   * Creates a default multiple-choice question with empty values
+   */
   const addQuestion = () => {
     const newQuestion: QuizQuestion = {
-      id: Date.now().toString(),
+      id: Date.now().toString(), // Use timestamp as unique ID
       question_text: "",
       option_a: "",
       option_b: "",
       option_c: "",
       option_d: "",
-      correct_answer: "A",
+      correct_answer: "A", // Default to option A
       explanation: "",
-      points_weight: 10,
+      points_weight: 10, // Default point value
     };
     setQuestions([...questions, newQuestion]);
   };
 
+  /**
+   * Removes a question from the questions array
+   * Prevents removal if only one question remains (minimum requirement)
+   */
   const removeQuestion = (id: string) => {
     if (questions.length > 1) {
       setQuestions(questions.filter((q) => q.id !== id));
     }
   };
 
+  /**
+   * Updates a specific field of a question
+   * Uses the question ID to identify which question to update
+   */
   const updateQuestion = (
     id: string,
     field: keyof Omit<QuizQuestion, "id">,
@@ -233,22 +301,38 @@ export default function EditQuiz({
     );
   };
 
+  /**
+   * Adds a new instruction to the instructions array
+   * New instruction is added as an empty string for user input
+   */
   const addInstruction = () => {
     setInstructions([...instructions, ""]);
   };
 
+  /**
+   * Removes an instruction from the instructions array
+   * Prevents removal if only one instruction remains (minimum requirement)
+   */
   const removeInstruction = (index: number) => {
     if (instructions.length > 1) {
       setInstructions(instructions.filter((_, i) => i !== index));
     }
   };
 
+  /**
+   * Updates an instruction at a specific index
+   * Replaces the instruction text while maintaining array order
+   */
   const updateInstruction = (index: number, value: string) => {
     setInstructions(
       instructions.map((inst, i) => (i === index ? value : inst))
     );
   };
 
+  /**
+   * Collects all form data into a single object for API submission
+   * Maps frontend field names to expected backend field names
+   */
   const getFormData = () => ({
     title,
     description,
@@ -262,7 +346,11 @@ export default function EditQuiz({
     questions,
   });
 
-  // Enhanced API submit for editing - we need to create a modified version that handles existing quiz IDs
+  /**
+   * Custom API submission function for editing quizzes
+   * Handles both save draft and publish actions for existing quizzes
+   * Different from create quiz because it includes the existing quiz ID
+   */
   const submitEditQuiz = async (action: "save_draft" | "publish") => {
     const formData = getFormData();
 
@@ -271,6 +359,7 @@ export default function EditQuiz({
       const endpoint = `${apiBaseUrl}/api/admin/quizzes`;
 
       // Format data according to API requirements
+      // Key difference: always include the existing quiz ID
       const requestBody = {
         id: quizId, // Include the existing quiz ID
         title: formData.title.trim(),
@@ -300,11 +389,6 @@ export default function EditQuiz({
         action: action,
       };
 
-      console.log(
-        "Edit Quiz API Request:",
-        JSON.stringify(requestBody, null, 2)
-      );
-
       const response = await fetch(endpoint, {
         method: "POST",
         headers: {
@@ -313,9 +397,8 @@ export default function EditQuiz({
         body: JSON.stringify(requestBody),
       });
 
-      console.log("Edit Quiz Response status:", response.status);
-
       if (response.ok) {
+        // Handle successful response
         let responseData;
         try {
           responseData = await response.json();
@@ -323,14 +406,12 @@ export default function EditQuiz({
           responseData = {};
         }
 
-        console.log("Edit Quiz Success response:", responseData);
         return { success: true, data: responseData };
       } else {
-        // Enhanced error handling
+        // Handle error response with detailed error extraction
         let errorData;
         try {
           const errorText = await response.text();
-          console.error("Edit Quiz Error response text:", errorText);
 
           try {
             errorData = JSON.parse(errorText);
@@ -341,7 +422,7 @@ export default function EditQuiz({
           errorData = { message: "Network error" };
         }
 
-        // Extract specific error messages
+        // Extract specific error messages from API response
         let specificError = "Unknown server error";
 
         if (errorData.errors && typeof errorData.errors === "object") {
@@ -369,31 +450,36 @@ export default function EditQuiz({
         throw new Error(errorMessage);
       }
     } catch (error) {
-      console.error("Edit Quiz Network/Request error:", error);
       const errorMessage =
         error instanceof Error ? error.message : "Network error occurred";
       throw new Error(errorMessage);
     }
   };
 
+  /**
+   * Handles saving the quiz as a draft
+   * Updates the existing quiz while keeping it as draft status
+   */
   const handleSaveDraft = async () => {
     try {
       const result = await submitEditQuiz("save_draft");
 
       if (result.success) {
+        // Clear previous notifications
         setShowNotification(false);
+
         setTimeout(() => {
           setNotificationMessage("Quiz draft updated successfully!");
           setNotificationType("draft");
           setShowNotification(true);
         }, 100);
 
-        // Optional: Call onSave callback if provided
+        // Call onSave callback if provided
         if (onSave) {
           onSave(result.data);
         }
 
-        // Refetch quiz data to ensure UI is in sync
+        // Refetch quiz data to ensure UI is synchronized
         if (refetch) {
           await refetch();
         }
@@ -407,12 +493,18 @@ export default function EditQuiz({
     }
   };
 
+  /**
+   * Handles publishing the quiz
+   * Either publishes a draft or updates a published quiz
+   */
   const handlePublish = async () => {
     try {
       const result = await submitEditQuiz("publish");
 
       if (result.success) {
+        // Clear previous notifications
         setShowNotification(false);
+
         setTimeout(() => {
           setNotificationMessage(
             quiz?.status === "draft"
@@ -423,12 +515,12 @@ export default function EditQuiz({
           setShowNotification(true);
         }, 100);
 
-        // Optional: Call onSave callback if provided
+        // Call onSave callback if provided
         if (onSave) {
           onSave(result.data);
         }
 
-        // Refetch quiz data to ensure UI is in sync
+        // Refetch quiz data to ensure UI is synchronized
         if (refetch) {
           await refetch();
         }
@@ -442,13 +534,20 @@ export default function EditQuiz({
     }
   };
 
+  /**
+   * Handles navigation back to the quiz/draft list
+   * Calls the parent component's callback function
+   */
   const handleBackToList = () => {
     if (onBackToList) {
       onBackToList();
     }
   };
 
-  // Handle case where no quizId is provided
+  /**
+   * Invalid Quiz ID State
+   * Displayed when no quiz ID is provided
+   */
   if (!quizId) {
     return (
       <div className="flex-1 bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30 min-h-screen flex items-center justify-center">
@@ -467,7 +566,10 @@ export default function EditQuiz({
     );
   }
 
-  // Loading state
+  /**
+   * Loading State Component
+   * Displayed while quiz details are being fetched
+   */
   if (loading) {
     return (
       <div className="flex-1 bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30 min-h-screen flex items-center justify-center">
@@ -484,7 +586,10 @@ export default function EditQuiz({
     );
   }
 
-  // Error state
+  /**
+   * Error State Component
+   * Displayed when there's an error fetching quiz details
+   */
   if (error) {
     return (
       <div className="flex-1 bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30 min-h-screen flex items-center justify-center">
@@ -513,7 +618,10 @@ export default function EditQuiz({
     );
   }
 
-  // No quiz data
+  /**
+   * Quiz Not Found State
+   * Displayed when the quiz doesn't exist or has been deleted
+   */
   if (!quiz) {
     return (
       <div className="flex-1 bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30 min-h-screen flex items-center justify-center">
@@ -536,17 +644,18 @@ export default function EditQuiz({
 
   return (
     <div className="flex-1 bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30 min-h-screen flex flex-col overflow-hidden">
-      {/* Fixed Animated Background Elements */}
+      {/* Animated background elements for visual appeal */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <div className="absolute top-20 left-20 w-72 h-72 bg-gradient-to-r from-cyan-200/15 to-blue-300/15 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute top-40 right-32 w-96 h-96 bg-gradient-to-r from-purple-200/15 to-pink-300/15 rounded-full blur-3xl animate-pulse delay-1000"></div>
         <div className="absolute bottom-32 left-1/3 w-80 h-80 bg-gradient-to-r from-green-200/15 to-emerald-300/15 rounded-full blur-3xl animate-pulse delay-2000"></div>
       </div>
 
-      {/* Main Content */}
+      {/* Main scrollable content area */}
       <main className="flex-1 overflow-y-auto p-6 space-y-8 relative z-10">
-        {/* Header Section */}
+        {/* Page header with navigation and status indicators */}
         <div className="space-y-3">
+          {/* Navigation button */}
           <div className="flex items-center gap-4 mb-4">
             <Button
               onClick={handleBackToList}
@@ -557,6 +666,8 @@ export default function EditQuiz({
               Back to Drafts
             </Button>
           </div>
+
+          {/* Page title */}
           <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 via-cyan-600 to-emerald-600 bg-clip-text text-transparent flex items-center gap-3">
             Edit Quiz
             <Edit3 className="w-8 h-8 text-cyan-500 animate-pulse" />
@@ -564,6 +675,8 @@ export default function EditQuiz({
           <p className="text-lg text-gray-600">
             Update and refine your quiz before publishing
           </p>
+
+          {/* Quiz status badges */}
           <div className="flex items-center gap-4 mt-4">
             <Badge className="bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-200 hover:text-amber-800 hover:border-amber-300 font-medium transition-all duration-200">
               {quiz.status === "draft" ? "Draft Quiz" : "Published Quiz"}
@@ -575,11 +688,12 @@ export default function EditQuiz({
           </div>
         </div>
 
-        {/* Content - Same form structure as createQuiz */}
+        {/* Main form content - Same structure as createQuiz for consistency */}
         <div className="space-y-6">
-          {/* Quiz Details */}
+          {/* Quiz Details Section */}
           <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-xl hover:shadow-2xl transition-all duration-500 relative overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-blue-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
             <CardHeader className="border-b border-gray-200/50 bg-gradient-to-r from-cyan-50/50 to-blue-50/50 rounded-t-xl relative z-10">
               <CardTitle className="text-xl font-bold text-gray-900 flex items-center gap-3">
                 <div className="w-10 h-10 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md">
@@ -588,7 +702,9 @@ export default function EditQuiz({
                 Quiz Details
               </CardTitle>
             </CardHeader>
+
             <CardContent className="p-6 space-y-6 relative z-10">
+              {/* Title and Time Limit row */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label
@@ -606,6 +722,7 @@ export default function EditQuiz({
                     className="bg-white/70 border-gray-300/50 text-gray-900 placeholder-gray-500 focus:border-cyan-400 focus:ring-cyan-400/30 focus:ring-2 backdrop-blur-sm shadow-sm"
                   />
                 </div>
+
                 <div className="space-y-2">
                   <Label
                     htmlFor="timeLimit"
@@ -625,6 +742,7 @@ export default function EditQuiz({
                 </div>
               </div>
 
+              {/* Description field */}
               <div className="space-y-2">
                 <Label
                   htmlFor="description"
@@ -642,6 +760,7 @@ export default function EditQuiz({
                 />
               </div>
 
+              {/* Due date field */}
               <div className="space-y-2">
                 <Label
                   htmlFor="dueDate"
@@ -661,9 +780,10 @@ export default function EditQuiz({
             </CardContent>
           </Card>
 
-          {/* Quiz Settings */}
+          {/* Quiz Settings Section */}
           <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-xl hover:shadow-2xl transition-all duration-500 relative overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-pink-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
             <CardHeader className="border-b border-gray-200/50 bg-gradient-to-r from-purple-50/50 to-pink-50/50 rounded-t-xl relative z-10">
               <CardTitle className="text-xl font-bold text-gray-900 flex items-center gap-3">
                 <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl flex items-center justify-center shadow-md">
@@ -672,9 +792,12 @@ export default function EditQuiz({
                 Quiz Settings
               </CardTitle>
             </CardHeader>
+
             <CardContent className="p-6 space-y-4 relative z-10">
+              {/* Two-column layout for settings checkboxes */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
+                  {/* Send notifications checkbox */}
                   <div className="flex items-center space-x-3">
                     <Checkbox
                       id="notifications"
@@ -690,6 +813,7 @@ export default function EditQuiz({
                     </Label>
                   </div>
 
+                  {/* Randomize question order checkbox */}
                   <div className="flex items-center space-x-3">
                     <Checkbox
                       id="randomize"
@@ -707,6 +831,7 @@ export default function EditQuiz({
                 </div>
 
                 <div className="space-y-4">
+                  {/* Show results immediately checkbox */}
                   <div className="flex items-center space-x-3">
                     <Checkbox
                       id="showResults"
@@ -722,6 +847,7 @@ export default function EditQuiz({
                     </Label>
                   </div>
 
+                  {/* Allow multiple attempts checkbox */}
                   <div className="flex items-center space-x-3">
                     <Checkbox
                       id="multipleAttempts"
@@ -741,9 +867,10 @@ export default function EditQuiz({
             </CardContent>
           </Card>
 
-          {/* Instructions */}
+          {/* Instructions Section */}
           <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-xl hover:shadow-2xl transition-all duration-500 relative overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-emerald-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
             <CardHeader className="border-b border-gray-200/50 bg-gradient-to-r from-green-50/50 to-emerald-50/50 rounded-t-xl relative z-10">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-xl font-bold text-gray-900 flex items-center gap-3">
@@ -763,7 +890,9 @@ export default function EditQuiz({
                 </Button>
               </div>
             </CardHeader>
+
             <CardContent className="p-6 space-y-4 relative z-10">
+              {/* Render each instruction with input field and delete button */}
               {instructions.map((instruction, index) => (
                 <div key={index} className="flex items-center gap-3">
                   <Input
@@ -772,6 +901,7 @@ export default function EditQuiz({
                     placeholder="Enter instruction..."
                     className="flex-1 bg-white/70 border-gray-300/50 text-gray-900 placeholder-gray-500 focus:border-cyan-400 focus:ring-cyan-400/30 focus:ring-2 backdrop-blur-sm shadow-sm"
                   />
+                  {/* Only show delete button if more than one instruction exists */}
                   {instructions.length > 1 && (
                     <Button
                       onClick={() => removeInstruction(index)}
@@ -787,9 +917,10 @@ export default function EditQuiz({
             </CardContent>
           </Card>
 
-          {/* Questions */}
+          {/* Questions Section */}
           <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-xl hover:shadow-2xl transition-all duration-500 relative overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-purple-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
             <CardHeader className="border-b border-gray-200/50 bg-gradient-to-r from-indigo-50/50 to-purple-50/50 rounded-t-xl relative z-10">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-xl font-bold text-gray-900 flex items-center gap-3">
@@ -809,18 +940,22 @@ export default function EditQuiz({
                 </Button>
               </div>
             </CardHeader>
+
             <CardContent className="p-6 relative z-10">
               <div className="space-y-6">
+                {/* Render each question */}
                 {questions.map((question, index) => (
                   <Card
                     key={question.id}
                     className="bg-gradient-to-r from-gray-50/50 to-white/50 border border-gray-200/50 shadow-sm hover:shadow-md transition-all duration-300"
                   >
                     <CardContent className="p-5">
+                      {/* Question header with badge and delete button */}
                       <div className="flex items-center justify-between mb-4">
                         <Badge className="bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-200 font-medium transition-colors duration-200">
                           Question {index + 1}
                         </Badge>
+                        {/* Only show delete button if more than one question exists */}
                         {questions.length > 1 && (
                           <Button
                             onClick={() => removeQuestion(question.id)}
@@ -834,6 +969,7 @@ export default function EditQuiz({
                       </div>
 
                       <div className="space-y-4">
+                        {/* Question text field */}
                         <div className="space-y-2">
                           <Label className="text-gray-700 font-semibold">
                             Question Text
@@ -853,6 +989,7 @@ export default function EditQuiz({
                           />
                         </div>
 
+                        {/* Multiple choice options grid */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="space-y-2">
                             <Label className="text-gray-700 font-semibold">
@@ -871,6 +1008,7 @@ export default function EditQuiz({
                               className="bg-white/70 border-gray-300/50 text-gray-900 placeholder-gray-500 focus:border-cyan-400 focus:ring-cyan-400/30 focus:ring-2 backdrop-blur-sm shadow-sm"
                             />
                           </div>
+
                           <div className="space-y-2">
                             <Label className="text-gray-700 font-semibold">
                               Option B
@@ -888,6 +1026,7 @@ export default function EditQuiz({
                               className="bg-white/70 border-gray-300/50 text-gray-900 placeholder-gray-500 focus:border-cyan-400 focus:ring-cyan-400/30 focus:ring-2 backdrop-blur-sm shadow-sm"
                             />
                           </div>
+
                           <div className="space-y-2">
                             <Label className="text-gray-700 font-semibold">
                               Option C
@@ -905,6 +1044,7 @@ export default function EditQuiz({
                               className="bg-white/70 border-gray-300/50 text-gray-900 placeholder-gray-500 focus:border-cyan-400 focus:ring-cyan-400/30 focus:ring-2 backdrop-blur-sm shadow-sm"
                             />
                           </div>
+
                           <div className="space-y-2">
                             <Label className="text-gray-700 font-semibold">
                               Option D
@@ -924,6 +1064,7 @@ export default function EditQuiz({
                           </div>
                         </div>
 
+                        {/* Correct answer and points weight row */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div className="space-y-2">
                             <Label className="text-gray-700 font-semibold">
@@ -991,6 +1132,7 @@ export default function EditQuiz({
                           </div>
                         </div>
 
+                        {/* Explanation field */}
                         <div className="space-y-2">
                           <Label className="text-gray-700 font-semibold">
                             Explanation
@@ -1016,8 +1158,9 @@ export default function EditQuiz({
             </CardContent>
           </Card>
 
-          {/* Action Buttons */}
+          {/* Action Buttons Section */}
           <div className="flex items-center justify-end gap-4 pt-4">
+            {/* Save Draft button */}
             <Button
               onClick={handleSaveDraft}
               variant="outline"
@@ -1028,6 +1171,7 @@ export default function EditQuiz({
               {isSubmitting ? "Updating..." : "Update Draft"}
             </Button>
 
+            {/* Publish button - Dynamic text based on current quiz status */}
             <Button
               onClick={handlePublish}
               className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg px-6 py-3 font-medium hover:scale-105"
@@ -1044,7 +1188,7 @@ export default function EditQuiz({
         </div>
       </main>
 
-      {/* Inline Notification */}
+      {/* Notification overlay */}
       <Notification />
     </div>
   );

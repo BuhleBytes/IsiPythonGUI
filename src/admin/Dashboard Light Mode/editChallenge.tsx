@@ -1,3 +1,32 @@
+/**
+ * EditChallenge Component
+ *
+ * This component provides a comprehensive interface for editing existing coding challenges.
+ * It can handle both draft challenges (that haven't been published yet) and published
+ * challenges that need updates. The component loads the existing challenge data and
+ * populates the form fields for editing.
+ *
+ * Key Features:
+ * - Load and display existing challenge data for editing
+ * - Support for both draft and published challenge editing
+ * - Complete form interface matching the create challenge functionality
+ * - Test case management (add, edit, remove test cases)
+ * - Real-time preview functionality
+ * - Draft saving capabilities (update existing draft)
+ * - Publishing functionality (publish draft or update published challenge)
+ * - Comprehensive error handling and loading states
+ * - Navigation back to draft/challenge lists
+ * - API integration for challenge updates
+ * - Visual status indicators (draft vs published)
+ * - Notification system for user feedback
+ *
+ * The component integrates with custom hooks for:
+ * - useChallengeDetails: Fetching existing challenge data
+ * - useChallengeAPI: Handling save/publish operations
+ *
+ * @component
+ */
+
 "use client";
 
 import { ChallengePreviewModal } from "@/components/challenge-preview-modal";
@@ -42,6 +71,10 @@ import { useEffect, useState } from "react";
 import { useChallengeAPI } from "../useChallengeAPI";
 import { useChallengeDetails } from "../useChallengeDetails";
 
+/**
+ * Interface defining the structure of a test case
+ * Matches the test case structure used in challenge creation
+ */
 interface TestCase {
   id: string;
   input: string;
@@ -52,10 +85,14 @@ interface TestCase {
   pointsWeight: number;
 }
 
+/**
+ * Props interface for the EditChallenge component
+ * Allows parent components to control navigation and handle updates
+ */
 interface EditChallengeProps {
-  challengeId: string;
-  onBackToList?: () => void;
-  onSave?: (updatedChallenge: any) => void;
+  challengeId: string; // ID of the challenge to edit
+  onBackToList?: () => void; // Callback for navigating back to list
+  onSave?: (updatedChallenge: any) => void; // Callback after successful save/publish
 }
 
 export default function EditChallenge({
@@ -63,12 +100,12 @@ export default function EditChallenge({
   onBackToList,
   onSave,
 }: EditChallengeProps) {
-  // Use the custom hook to fetch challenge details
+  // Custom hook to fetch existing challenge details
   const { challenge, loading, error, refetch } = useChallengeDetails(
     challengeId || ""
   );
 
-  // Use the enhanced custom hook for API interactions (same as createChallenge)
+  // Custom hook for API operations (same as create challenge for consistency)
   const {
     isSubmitting,
     error: apiError,
@@ -79,6 +116,7 @@ export default function EditChallenge({
     resetDraft,
   } = useChallengeAPI();
 
+  // Form state - initialized empty and populated when challenge data loads
   const [title, setTitle] = useState("");
   const [shortDescription, setShortDescription] = useState("");
   const [rewardPoints, setRewardPoints] = useState("");
@@ -91,6 +129,7 @@ export default function EditChallenge({
   const [sendNotifications, setSendNotifications] = useState(true);
   const [testCases, setTestCases] = useState<TestCase[]>([]);
 
+  // UI state for modals and notifications
   const [showPreview, setShowPreview] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState("");
@@ -98,7 +137,10 @@ export default function EditChallenge({
     "success" | "draft" | "error"
   >("success");
 
-  // Update form data when challenge is loaded
+  /**
+   * Effect to populate form fields when challenge data is loaded
+   * Converts API response format to form state format
+   */
   useEffect(() => {
     if (challenge) {
       setTitle(challenge.title);
@@ -113,7 +155,10 @@ export default function EditChallenge({
     }
   }, [challenge]);
 
-  // Handle API errors using notification (same pattern as createChallenge)
+  /**
+   * Effect to handle API errors and display them as notifications
+   * Same pattern as create challenge for consistency
+   */
   useEffect(() => {
     if (apiError) {
       setNotificationMessage(apiError);
@@ -128,10 +173,15 @@ export default function EditChallenge({
     }
   }, [apiError, clearError]);
 
-  // Inline Notification Component (same as createChallenge)
+  /**
+   * Notification Component
+   * Displays contextual notifications for success, error, and draft operations
+   * Same implementation as create challenge for consistency
+   */
   const Notification = () => {
     if (!showNotification) return null;
 
+    // Configuration for different notification types
     const getNotificationConfig = () => {
       switch (notificationType) {
         case "success":
@@ -192,25 +242,37 @@ export default function EditChallenge({
     );
   };
 
+  /**
+   * Adds a new test case to the test cases array
+   * Creates a default test case with empty values
+   */
   const addTestCase = () => {
     const newTestCase: TestCase = {
-      id: Date.now().toString(),
+      id: Date.now().toString(), // Use timestamp as unique ID
       input: "",
       expectedOutput: "",
       explanation: "",
       isHidden: false,
-      isExample: false,
+      isExample: false, // New test cases default to non-example
       pointsWeight: 25.0,
     };
     setTestCases([...testCases, newTestCase]);
   };
 
+  /**
+   * Removes a test case from the array
+   * Prevents removal if only one test case remains
+   */
   const removeTestCase = (id: string) => {
     if (testCases.length > 1) {
       setTestCases(testCases.filter((tc) => tc.id !== id));
     }
   };
 
+  /**
+   * Updates a specific field of a test case
+   * Uses the test case ID to identify which case to update
+   */
   const updateTestCase = (
     id: string,
     field: keyof Omit<TestCase, "id">,
@@ -221,6 +283,10 @@ export default function EditChallenge({
     );
   };
 
+  /**
+   * Collects all form data into a single object for API submission
+   * Same format as create challenge for consistency
+   */
   const getFormData = () => ({
     title,
     shortDescription,
@@ -233,22 +299,20 @@ export default function EditChallenge({
     testCases,
   });
 
-  // Enhanced API hook for editing - we need to create a modified version that handles existing challenge IDs
+  /**
+   * Custom API submission function for editing challenges
+   * Handles both save draft and publish actions for existing challenges
+   * Different from create challenge because it includes the existing challenge ID
+   */
   const submitEditChallenge = async (action: "save_draft" | "publish") => {
     const formData = getFormData();
 
-    // Create a modified version of the form data that includes the challenge ID
-    const enhancedFormData = {
-      ...formData,
-      challengeId: challengeId, // Include the existing challenge ID
-    };
-
-    // Manually construct the API request since we need to handle existing challenges
     try {
       const apiBaseUrl = "https://isipython-dev.onrender.com";
       const endpoint = `${apiBaseUrl}/api/admin/challenges`;
 
       // Format data according to API requirements
+      // Key difference: always include the existing challenge ID
       const requestBody = {
         id: challengeId, // This is the key difference - we always include the existing ID
         title: formData.title.trim(),
@@ -263,9 +327,11 @@ export default function EditChallenge({
           .filter((tag) => tag.length > 0),
         send_notifications: formData.sendNotifications,
         test_cases: formData.testCases.map((tc) => {
+          // Parse input data with error handling
           let inputData;
           const trimmedInput = tc.input.trim();
 
+          // Handle JSON array format
           if (trimmedInput.startsWith("[") && trimmedInput.endsWith("]")) {
             try {
               inputData = JSON.parse(trimmedInput);
@@ -275,6 +341,7 @@ export default function EditChallenge({
                 inputData = [String(inputData)];
               }
             } catch (e) {
+              // Fallback: parse as comma-separated values inside brackets
               inputData = trimmedInput
                 .slice(1, -1)
                 .split(",")
@@ -282,6 +349,7 @@ export default function EditChallenge({
                 .filter((item) => item !== "");
             }
           } else {
+            // Handle comma-separated or single value format
             if (trimmedInput.includes(",")) {
               inputData = trimmedInput
                 .split(",")
@@ -305,11 +373,6 @@ export default function EditChallenge({
         action: action,
       };
 
-      console.log(
-        "Edit Challenge API Request:",
-        JSON.stringify(requestBody, null, 2)
-      );
-
       const response = await fetch(endpoint, {
         method: "POST",
         headers: {
@@ -318,9 +381,8 @@ export default function EditChallenge({
         body: JSON.stringify(requestBody),
       });
 
-      console.log("Edit Challenge Response status:", response.status);
-
       if (response.ok) {
+        // Handle successful response
         let responseData;
         try {
           responseData = await response.json();
@@ -328,14 +390,12 @@ export default function EditChallenge({
           responseData = {};
         }
 
-        console.log("Edit Challenge Success response:", responseData);
         return { success: true, data: responseData };
       } else {
-        // Enhanced error handling (same as useChallengeAPI)
+        // Handle error response with detailed error extraction
         let errorData;
         try {
           const errorText = await response.text();
-          console.error("Edit Challenge Error response text:", errorText);
 
           try {
             errorData = JSON.parse(errorText);
@@ -346,7 +406,7 @@ export default function EditChallenge({
           errorData = { message: "Network error" };
         }
 
-        // Extract specific error messages
+        // Extract specific error messages from API response
         let specificError = "Unknown server error";
 
         if (errorData.errors && typeof errorData.errors === "object") {
@@ -374,31 +434,36 @@ export default function EditChallenge({
         throw new Error(errorMessage);
       }
     } catch (error) {
-      console.error("Edit Challenge Network/Request error:", error);
       const errorMessage =
         error instanceof Error ? error.message : "Network error occurred";
       throw new Error(errorMessage);
     }
   };
 
+  /**
+   * Handles saving the challenge as a draft
+   * Updates the existing challenge while keeping it as draft status
+   */
   const handleSaveDraft = async () => {
     try {
       const result = await submitEditChallenge("save_draft");
 
       if (result.success) {
+        // Clear previous notifications
         setShowNotification(false);
+
         setTimeout(() => {
           setNotificationMessage("Challenge draft updated successfully!");
           setNotificationType("draft");
           setShowNotification(true);
         }, 100);
 
-        // Optional: Call onSave callback if provided
+        // Call onSave callback if provided
         if (onSave) {
           onSave(result.data);
         }
 
-        // Refetch challenge data to ensure UI is in sync
+        // Refetch challenge data to ensure UI is synchronized
         if (refetch) {
           await refetch();
         }
@@ -414,12 +479,18 @@ export default function EditChallenge({
     }
   };
 
+  /**
+   * Handles publishing the challenge
+   * Either publishes a draft or updates a published challenge
+   */
   const handlePublish = async () => {
     try {
       const result = await submitEditChallenge("publish");
 
       if (result.success) {
+        // Clear previous notifications
         setShowNotification(false);
+
         setTimeout(() => {
           setNotificationMessage(
             challenge?.status === "draft"
@@ -430,12 +501,12 @@ export default function EditChallenge({
           setShowNotification(true);
         }, 100);
 
-        // Optional: Call onSave callback if provided
+        // Call onSave callback if provided
         if (onSave) {
           onSave(result.data);
         }
 
-        // Refetch challenge data to ensure UI is in sync
+        // Refetch challenge data to ensure UI is synchronized
         if (refetch) {
           await refetch();
         }
@@ -449,13 +520,20 @@ export default function EditChallenge({
     }
   };
 
+  /**
+   * Handles navigation back to the challenge/draft list
+   * Calls the parent component's callback function
+   */
   const handleBackToList = () => {
     if (onBackToList) {
       onBackToList();
     }
   };
 
-  // Handle case where no challengeId is provided
+  /**
+   * Invalid Challenge ID State
+   * Displayed when no challenge ID is provided
+   */
   if (!challengeId) {
     return (
       <div className="flex-1 bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30 min-h-screen flex items-center justify-center">
@@ -476,7 +554,10 @@ export default function EditChallenge({
     );
   }
 
-  // Loading state
+  /**
+   * Loading State Component
+   * Displayed while challenge details are being fetched
+   */
   if (loading) {
     return (
       <div className="flex-1 bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30 min-h-screen flex items-center justify-center">
@@ -493,7 +574,10 @@ export default function EditChallenge({
     );
   }
 
-  // Error state
+  /**
+   * Error State Component
+   * Displayed when there's an error fetching challenge details
+   */
   if (error) {
     return (
       <div className="flex-1 bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30 min-h-screen flex items-center justify-center">
@@ -522,7 +606,10 @@ export default function EditChallenge({
     );
   }
 
-  // No challenge data
+  /**
+   * Challenge Not Found State
+   * Displayed when the challenge doesn't exist or has been deleted
+   */
   if (!challenge) {
     return (
       <div className="flex-1 bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30 min-h-screen flex items-center justify-center">
@@ -545,17 +632,18 @@ export default function EditChallenge({
 
   return (
     <div className="flex-1 bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30 min-h-screen flex flex-col overflow-hidden">
-      {/* Fixed Animated Background Elements */}
+      {/* Animated background elements for visual appeal */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <div className="absolute top-20 left-20 w-72 h-72 bg-gradient-to-r from-cyan-200/15 to-blue-300/15 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute top-40 right-32 w-96 h-96 bg-gradient-to-r from-purple-200/15 to-pink-300/15 rounded-full blur-3xl animate-pulse delay-1000"></div>
         <div className="absolute bottom-32 left-1/3 w-80 h-80 bg-gradient-to-r from-green-200/15 to-emerald-300/15 rounded-full blur-3xl animate-pulse delay-2000"></div>
       </div>
 
-      {/* Main Content */}
+      {/* Main scrollable content area */}
       <main className="flex-1 overflow-y-auto p-6 space-y-8 relative z-10">
-        {/* Header Section */}
+        {/* Page header with navigation and status indicators */}
         <div className="space-y-3">
+          {/* Navigation button */}
           <div className="flex items-center gap-4 mb-4">
             <Button
               onClick={handleBackToList}
@@ -566,6 +654,8 @@ export default function EditChallenge({
               Back to Drafts
             </Button>
           </div>
+
+          {/* Page title */}
           <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 via-cyan-600 to-emerald-600 bg-clip-text text-transparent flex items-center gap-3">
             Edit Challenge
             <Edit3 className="w-8 h-8 text-cyan-500 animate-pulse" />
@@ -573,6 +663,8 @@ export default function EditChallenge({
           <p className="text-lg text-gray-600">
             Update and refine your coding challenge before publishing
           </p>
+
+          {/* Challenge status badges */}
           <div className="flex items-center gap-4 mt-4">
             <Badge className="bg-amber-100 text-amber-700 border-amber-200 hover:bg-amber-200 hover:text-amber-800 hover:border-amber-300 font-medium transition-all duration-200">
               {challenge.status === "draft"
@@ -586,11 +678,12 @@ export default function EditChallenge({
           </div>
         </div>
 
-        {/* Content - Same form structure as createChallenge */}
+        {/* Main form content - Same structure as createChallenge for consistency */}
         <div className="space-y-6">
-          {/* Challenge Details */}
+          {/* Challenge Details Section */}
           <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-xl hover:shadow-2xl transition-all duration-500 relative overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-blue-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
             <CardHeader className="border-b border-gray-200/50 bg-gradient-to-r from-cyan-50/50 to-blue-50/50 rounded-t-xl relative z-10">
               <CardTitle className="text-xl font-bold text-gray-900 flex items-center gap-3">
                 <div className="w-10 h-10 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md">
@@ -599,7 +692,9 @@ export default function EditChallenge({
                 Challenge Details
               </CardTitle>
             </CardHeader>
+
             <CardContent className="p-6 space-y-6 relative z-10">
+              {/* Title and Difficulty row */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <Label
@@ -617,6 +712,7 @@ export default function EditChallenge({
                     className="bg-white/70 border-gray-300/50 text-gray-900 placeholder-gray-500 focus:border-cyan-400 focus:ring-cyan-400/30 focus:ring-2 backdrop-blur-sm shadow-sm"
                   />
                 </div>
+
                 <div className="space-y-2">
                   <Label
                     htmlFor="difficulty"
@@ -653,6 +749,7 @@ export default function EditChallenge({
                 </div>
               </div>
 
+              {/* Short description field */}
               <div className="space-y-2">
                 <Label
                   htmlFor="shortDesc"
@@ -669,6 +766,7 @@ export default function EditChallenge({
                 />
               </div>
 
+              {/* Points, Time, and Notifications row */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="space-y-2">
                   <Label
@@ -729,6 +827,7 @@ export default function EditChallenge({
                 </div>
               </div>
 
+              {/* Tags field */}
               <div className="space-y-2">
                 <Label
                   htmlFor="tags"
@@ -748,9 +847,10 @@ export default function EditChallenge({
             </CardContent>
           </Card>
 
-          {/* Problem Description */}
+          {/* Problem Description Section */}
           <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-xl hover:shadow-2xl transition-all duration-500 relative overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-emerald-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
             <CardHeader className="border-b border-gray-200/50 bg-gradient-to-r from-green-50/50 to-emerald-50/50 rounded-t-xl relative z-10">
               <CardTitle className="text-xl font-bold text-gray-900 flex items-center gap-3">
                 <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-md">
@@ -759,6 +859,7 @@ export default function EditChallenge({
                 Problem Description
               </CardTitle>
             </CardHeader>
+
             <CardContent className="p-6 relative z-10">
               <div className="space-y-2">
                 <Label
@@ -779,9 +880,10 @@ export default function EditChallenge({
             </CardContent>
           </Card>
 
-          {/* Test Cases */}
+          {/* Test Cases Section */}
           <Card className="bg-white/90 backdrop-blur-xl border-0 shadow-xl hover:shadow-2xl transition-all duration-500 relative overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-pink-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+
             <CardHeader className="border-b border-gray-200/50 bg-gradient-to-r from-purple-50/50 to-pink-50/50 rounded-t-xl relative z-10">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-xl font-bold text-gray-900 flex items-center gap-3">
@@ -801,14 +903,17 @@ export default function EditChallenge({
                 </Button>
               </div>
             </CardHeader>
+
             <CardContent className="p-6 relative z-10">
               <div className="space-y-6">
+                {/* Render each test case */}
                 {testCases.map((testCase, index) => (
                   <Card
                     key={testCase.id}
                     className="bg-gradient-to-r from-gray-50/50 to-white/50 border border-gray-200/50 shadow-sm hover:shadow-md transition-all duration-300"
                   >
                     <CardContent className="p-5">
+                      {/* Test case header with badges and delete button */}
                       <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2">
                           <Badge className="bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-200 hover:text-purple-800 hover:border-purple-300 font-medium transition-all duration-200">
@@ -825,6 +930,7 @@ export default function EditChallenge({
                             </Badge>
                           )}
                         </div>
+                        {/* Only show delete button if more than one test case exists */}
                         {testCases.length > 1 && (
                           <Button
                             onClick={() => removeTestCase(testCase.id)}
@@ -837,6 +943,7 @@ export default function EditChallenge({
                         )}
                       </div>
 
+                      {/* Input and Expected Output fields */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div className="space-y-2">
                           <Label className="text-gray-700 font-semibold">
@@ -856,6 +963,7 @@ export default function EditChallenge({
                             className="bg-white/70 border-gray-300/50 text-gray-900 placeholder-gray-500 focus:border-cyan-400 focus:ring-cyan-400/30 focus:ring-2 resize-none backdrop-blur-sm shadow-sm"
                           />
                         </div>
+
                         <div className="space-y-2">
                           <Label className="text-gray-700 font-semibold">
                             Expected Output
@@ -876,6 +984,7 @@ export default function EditChallenge({
                         </div>
                       </div>
 
+                      {/* Additional test case options */}
                       <div className="space-y-4">
                         <div className="space-y-2">
                           <Label className="text-gray-700 font-semibold">
@@ -895,6 +1004,7 @@ export default function EditChallenge({
                           />
                         </div>
 
+                        {/* Points weight and checkboxes */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div className="space-y-2">
                             <Label className="text-gray-700 font-semibold">
@@ -920,6 +1030,7 @@ export default function EditChallenge({
                               Options
                             </Label>
                             <div className="flex items-center space-x-4 h-10">
+                              {/* Example test case checkbox */}
                               <div className="flex items-center space-x-2">
                                 <Checkbox
                                   checked={testCase.isExample}
@@ -935,6 +1046,8 @@ export default function EditChallenge({
                                   Example
                                 </Label>
                               </div>
+
+                              {/* Hidden test case checkbox */}
                               <div className="flex items-center space-x-2">
                                 <Checkbox
                                   checked={testCase.isHidden}
@@ -961,8 +1074,9 @@ export default function EditChallenge({
             </CardContent>
           </Card>
 
-          {/* Action Buttons - Fixed to actually work */}
+          {/* Action Buttons Section */}
           <div className="flex items-center justify-end gap-4 pt-4">
+            {/* Preview button */}
             <Button
               onClick={() => setShowPreview(true)}
               variant="outline"
@@ -972,6 +1086,8 @@ export default function EditChallenge({
               <Eye className="w-4 h-4 mr-2" />
               Preview Challenge
             </Button>
+
+            {/* Save Draft button */}
             <Button
               onClick={handleSaveDraft}
               variant="outline"
@@ -981,6 +1097,8 @@ export default function EditChallenge({
               <Save className="w-4 h-4 mr-2" />
               {isSubmitting ? "Updating..." : "Update Draft"}
             </Button>
+
+            {/* Publish button - Dynamic text based on current challenge status */}
             <Button
               onClick={handlePublish}
               className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg px-6 py-3 font-medium hover:scale-105"
@@ -997,7 +1115,7 @@ export default function EditChallenge({
         </div>
       </main>
 
-      {/* Inline Notification */}
+      {/* Notification overlay */}
       <Notification />
 
       {/* Challenge Preview Modal */}

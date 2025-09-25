@@ -1,3 +1,72 @@
+/**
+ * useUserChallenges Custom Hook
+ *
+ * This comprehensive React custom hook manages all aspects of coding challenges for users,
+ * including challenge lists, individual challenge details, user progress tracking, and
+ * performance statistics. It serves as the primary interface for all challenge-related
+ * data and operations in the application.
+ *
+ * Key Features:
+ * - Fetches and manages user-specific challenge lists with progress tracking
+ * - Transforms raw API data into rich UI-ready format with visual enhancements
+ * - Handles individual challenge detail fetching with comprehensive data
+ * - Manages user statistics including completion rates and global rankings
+ * - Provides intelligent challenge categorization and difficulty mapping
+ * - Implements advanced filtering and sorting capabilities
+ * - Uses AbortController for efficient request cancellation and cleanup
+ * - Generates contextual styling and icons based on challenge content
+ * - Tracks user progress states (completed, in-progress, not started)
+ * - Calculates real-time statistics and performance metrics
+ * - Supports challenge search across multiple data fields
+ *
+ * Challenge Data Enhancement:
+ * - Intelligent categorization based on content analysis
+ * - Dynamic icon and color scheme assignment
+ * - Progress state calculation and visual indicators
+ * - Statistics aggregation for class performance
+ * - User attempt tracking and best score recording
+ * - Estimated completion time formatting
+ * - Tag-based filtering and search optimization
+ *
+ * Challenge Categories:
+ * - Basics: Fundamental programming concepts and syntax
+ * - Algorithms: Advanced algorithmic problem solving
+ * - Data Structures: Array, hash table, and data organization
+ * - Functions: Function definition, parameters, and return values
+ * - Math: Mathematical calculations and formulas
+ * - Science: Scientific calculations and conversions
+ * - Security: Password validation and security concepts
+ * - Tools: Utility functions and conversion tools
+ * - Games: Interactive programming challenges
+ * - Logic: Logical reasoning and problem solving
+ * - Education: Academic and grading-related challenges
+ * - General: Miscellaneous programming challenges
+ *
+ * Challenge Status Management:
+ * - "completed": User has successfully completed the challenge
+ * - "in_progress": User has started but not completed the challenge
+ * - "not_started": Challenge is available but not yet attempted
+ *
+ * Request Management:
+ * - Uses AbortController to prevent race conditions
+ * - Cancels previous requests when new ones are initiated
+ * - Proper cleanup on component unmount
+ * - Timeout protection for long-running requests
+ *
+ * Usage:
+ * const {
+ *   challenges, stats, loading, error,
+ *   fetchChallenges, refreshChallenges, getChallengeDetails,
+ *   getFilteredChallenges, getAvailableCategories
+ * } = useUserChallenges();
+ *
+ * Dependencies:
+ * - useUser hook for current user information
+ * - Lucide React icons for visual representation
+ * - External API endpoints for challenges and statistics
+ * - AbortController for request cancellation
+ */
+
 import {
   Activity,
   Brain,
@@ -14,28 +83,51 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useUser } from "./useUser";
 
 /**
- * Custom hook for managing user challenges and stats
- * @returns {Object} - Object containing challenges state and challenge operations
+ * Custom hook for comprehensive challenge management and user progress tracking
+ * @returns {Object} Object containing challenge state, statistics, loading states, and utility functions
  */
 export const useUserChallenges = () => {
+  // Get current user information from the useUser hook
   const { userId, isLoggedIn } = useUser();
+
+  // Main state array containing all challenge data with enhanced properties
   const [challenges, setChallenges] = useState([]);
+
+  // Statistics object containing user performance metrics and rankings
   const [stats, setStats] = useState(null);
+
+  // Loading state for challenge data fetching operations
   const [loading, setLoading] = useState(true);
+
+  // Separate loading state specifically for statistics data
   const [statsLoading, setStatsLoading] = useState(true);
+
+  // Error state to store any errors that occur during operations
   const [error, setError] = useState(null);
 
-  // Add refs for AbortControllers
+  // Ref to store AbortController for challenge requests - prevents race conditions
   const abortControllerRef = useRef(null);
+
+  // Ref to store AbortController for statistics requests - prevents race conditions
   const statsAbortControllerRef = useRef(null);
 
-  // Helper function to check if userId is valid
+  /**
+   * Helper function to validate if a user ID is valid and usable
+   * Ensures the ID exists, is a string, and contains meaningful content
+   * @param {*} id - The user ID to validate
+   * @returns {boolean} True if the user ID is valid, false otherwise
+   */
   const isValidUserId = (id) => {
     const isValid = id && typeof id === "string" && id.trim().length > 0;
     return isValid;
   };
 
-  // Map difficulty levels from API to component expected values
+  /**
+   * Maps API difficulty levels to component-expected values
+   * Standardizes difficulty terminology across the application
+   * @param {string} difficulty - The difficulty level from the API
+   * @returns {string} The mapped difficulty level for UI display
+   */
   const mapDifficulty = (difficulty) => {
     switch (difficulty) {
       case "Easy":
@@ -49,10 +141,17 @@ export const useUserChallenges = () => {
     }
   };
 
-  // Get category from tags (fallback logic)
+  /**
+   * Determines challenge category based on tags with intelligent fallback logic
+   * Uses tag analysis to categorize challenges into meaningful groups
+   * @param {Array} tags - Array of tag strings from the API
+   * @returns {string} The determined category for the challenge
+   */
   const getCategoryFromTags = (tags) => {
+    // Default fallback if no tags provided
     if (!tags || tags.length === 0) return "General";
 
+    // Comprehensive mapping of tags to categories
     const categoryMap = {
       basics: "Basics",
       beginner: "Basics",
@@ -80,23 +179,31 @@ export const useUserChallenges = () => {
       grading: "Education",
     };
 
+    // Check each tag against the category mapping
     for (const tag of tags) {
       if (categoryMap[tag.toLowerCase()]) {
         return categoryMap[tag.toLowerCase()];
       }
     }
 
+    // Return default if no matching category found
     return "General";
   };
 
-  // Helper function to get appropriate icon and gradient based on challenge content
+  /**
+   * Generates appropriate visual styling for challenges based on content analysis
+   * Analyzes challenge title, description, and tags to assign contextual icons and colors
+   * @param {Object} challenge - The challenge object to analyze
+   * @returns {Object} Object containing icon component and gradient classes
+   */
   const getChallengeStyle = (challenge) => {
     try {
+      // Extract and normalize text content for analysis
       const title = challenge.title?.toLowerCase() || "";
       const description = challenge.short_description?.toLowerCase() || "";
       const tags = challenge.tags || [];
 
-      // Temperature-related challenges
+      // Temperature-related challenges get thermometer icon and warm colors
       if (
         title.includes("temperature") ||
         title.includes("celsius") ||
@@ -109,7 +216,7 @@ export const useUserChallenges = () => {
         };
       }
 
-      // Calculator and calculation challenges
+      // Calculator and mathematical challenges get calculator icon and blue colors
       if (
         title.includes("calculator") ||
         title.includes("calculate") ||
@@ -122,7 +229,7 @@ export const useUserChallenges = () => {
         };
       }
 
-      // Geometry and area challenges
+      // Geometry and spatial challenges get target icon and purple colors
       if (
         title.includes("circle") ||
         title.includes("area") ||
@@ -135,7 +242,7 @@ export const useUserChallenges = () => {
         };
       }
 
-      // Time and age-related challenges
+      // Time and age-related challenges get clock icon and green colors
       if (
         title.includes("age") ||
         title.includes("year") ||
@@ -148,7 +255,7 @@ export const useUserChallenges = () => {
         };
       }
 
-      // Security challenges
+      // Security challenges get shield icon and red colors
       if (
         title.includes("password") ||
         title.includes("strength") ||
@@ -162,7 +269,7 @@ export const useUserChallenges = () => {
         };
       }
 
-      // Mathematical challenges (prime numbers, etc.)
+      // Mathematical challenges (numbers, primes) get hash icon and purple colors
       if (
         title.includes("prime") ||
         title.includes("number") ||
@@ -175,7 +282,7 @@ export const useUserChallenges = () => {
         };
       }
 
-      // Game challenges
+      // Game challenges get lightning icon and yellow colors
       if (
         title.includes("game") ||
         title.includes("guess") ||
@@ -188,7 +295,7 @@ export const useUserChallenges = () => {
         };
       }
 
-      // Grade and educational challenges
+      // Educational challenges get brain icon and teal colors
       if (
         title.includes("grade") ||
         title.includes("average") ||
@@ -201,7 +308,7 @@ export const useUserChallenges = () => {
         };
       }
 
-      // Array and data structure challenges
+      // Array and data structure challenges get hash icon and green colors
       if (tags.includes("hash-table") || tags.includes("arrays")) {
         return {
           icon: Hash,
@@ -210,7 +317,7 @@ export const useUserChallenges = () => {
         };
       }
 
-      // Algorithm challenges
+      // Algorithm challenges get code icon and cyan colors
       if (
         tags.includes("algorithms") ||
         tags.includes("binary-search") ||
@@ -223,7 +330,7 @@ export const useUserChallenges = () => {
         };
       }
 
-      // Basic programming challenges
+      // Basic programming challenges get activity icon and gray colors
       if (
         tags.includes("input") ||
         tags.includes("output") ||
@@ -237,8 +344,8 @@ export const useUserChallenges = () => {
         };
       }
 
-      // RANDOM ASSIGNMENT FOR EVERYTHING ELSE
-      // Create a consistent pseudo-random selection based on challenge title
+      // Consistent pseudo-random assignment for unmatched challenges
+      // Creates deterministic but varied styling based on challenge title
       const iconOptions = [
         {
           icon: Code,
@@ -292,7 +399,7 @@ export const useUserChallenges = () => {
         },
       ];
 
-      // Use challenge title to create a consistent "random" selection
+      // Generate consistent hash from challenge title for pseudo-random selection
       const titleHash = challenge.title
         ? challenge.title.length + challenge.title.charCodeAt(0)
         : 0;
@@ -300,8 +407,7 @@ export const useUserChallenges = () => {
 
       return iconOptions[selectedIndex];
     } catch (error) {
-      console.error("Error in getChallengeStyle:", error);
-      // Ultimate fallback - guaranteed to work
+      // Ultimate fallback styling if any errors occur
       return {
         icon: Code,
         gradient: "from-gray-400 to-slate-500",
@@ -310,16 +416,23 @@ export const useUserChallenges = () => {
     }
   };
 
-  // Transform API challenge data to component format
+  /**
+   * Transforms raw API challenge data into enhanced UI-ready format
+   * Enriches data with visual elements, computed properties, and formatted values
+   * @param {Object} apiChallenge - Raw challenge data from the API
+   * @param {number} index - Index of the challenge in the array (for consistent styling)
+   * @returns {Object} Enhanced challenge object optimized for UI consumption
+   */
   const transformChallengeData = useCallback((apiChallenge, index) => {
     try {
+      // Apply difficulty mapping and category determination
       const difficulty = mapDifficulty(apiChallenge.difficulty_level);
       const category = getCategoryFromTags(apiChallenge.tags);
 
-      // Get appropriate style based on challenge content
+      // Generate appropriate visual styling
       const style = getChallengeStyle(apiChallenge);
 
-      // Extract real user progress data
+      // Extract user progress data with safe defaults
       const userProgress = apiChallenge.user_progress || {};
       const isCompleted = userProgress.status === "completed";
       const isInProgress = userProgress.status === "in_progress";
@@ -327,21 +440,23 @@ export const useUserChallenges = () => {
       const userBestScore = userProgress.best_score || 0;
       const completedAt = userProgress.completed_at;
 
-      // Extract real challenge statistics
+      // Extract challenge statistics with safe defaults
       const challengeStats = apiChallenge.statistics || {};
       const usersCompleted = challengeStats.users_completed || 0;
       const usersAttempted = challengeStats.users_attempted || 0;
       const realPassRate = challengeStats.pass_rate || 0;
       const totalSubmissions = challengeStats.total_submissions || 0;
 
-      // Use real statistics with intelligent fallbacks
+      // Calculate display values with intelligent fallbacks
       const passedStudents = usersCompleted;
       const totalAttempts = Math.max(usersAttempted, usersCompleted, 1);
 
+      // Ensure reasonable minimum values for UI display
       const displayPassedStudents =
         passedStudents === 0 ? 0 : Math.max(passedStudents, 1);
       const displayTotalAttempts = totalAttempts === 0 ? 1 : totalAttempts;
 
+      // Return comprehensive challenge object with all enhancements
       return {
         id: apiChallenge.id,
         title: apiChallenge.title,
@@ -373,8 +488,7 @@ export const useUserChallenges = () => {
         publishedAt: apiChallenge.published_at,
       };
     } catch (error) {
-      console.error("Error in transformChallengeData:", error);
-      // Return a safe fallback object
+      // Return safe fallback object if transformation fails
       return {
         id: apiChallenge.id || "unknown",
         title: apiChallenge.title || "Unknown Challenge",
@@ -406,14 +520,19 @@ export const useUserChallenges = () => {
     }
   }, []);
 
-  // Fetch user challenges from API with AbortController
+  /**
+   * Fetches user challenges from the API with AbortController support
+   * Handles request cancellation, data transformation, and state management
+   * @param {string} targetUserId - The user ID to fetch challenges for
+   */
   const fetchChallenges = useCallback(
     async (targetUserId) => {
-      // Cancel previous request if still running
+      // Cancel any previous request that might still be running
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
 
+      // Validate user ID before making API call
       if (!isValidUserId(targetUserId)) {
         setLoading(false);
         setChallenges([]);
@@ -421,19 +540,18 @@ export const useUserChallenges = () => {
       }
 
       try {
+        // Set loading state and clear previous errors
         setLoading(true);
         setError(null);
 
-        // Create new abort controller for this request
+        // Create new AbortController for this request
         abortControllerRef.current = new AbortController();
         const signal = abortControllerRef.current.signal;
 
+        // Construct API URL for challenges endpoint
         const apiUrl = `https://isipython-dev.onrender.com/api/challenges?user_id=${targetUserId}`;
-        console.log(
-          "🌐 Fetching challenges with abort signal for user:",
-          targetUserId
-        );
 
+        // Make API request with abort signal
         const response = await fetch(apiUrl, {
           signal,
           headers: {
@@ -441,25 +559,25 @@ export const useUserChallenges = () => {
           },
         });
 
-        // Check if request was aborted
+        // Check if request was aborted before proceeding
         if (signal.aborted) {
-          console.log("🚫 Challenges fetch aborted");
           return;
         }
 
+        // Verify response success
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
+        // Parse JSON response
         const result = await response.json();
 
-        // Check again after parsing
+        // Check again for abortion after parsing
         if (signal.aborted) {
-          console.log("🚫 Challenges fetch aborted after parsing");
           return;
         }
 
-        // Extract challenges from the response
+        // Extract challenges from response with flexible structure handling
         let challengesData = [];
         if (result && result.data && Array.isArray(result.data.challenges)) {
           challengesData = result.data.challenges;
@@ -470,58 +588,70 @@ export const useUserChallenges = () => {
           return;
         }
 
+        // Handle empty results
         if (challengesData.length === 0) {
           setChallenges([]);
         } else {
+          // Transform all challenges using the transformation function
           const transformedChallenges = challengesData.map(
             transformChallengeData
           );
 
-          // Sort by user progress and then by creation date
+          // Sort challenges by user progress priority and creation date
           transformedChallenges.sort((a, b) => {
+            // Define progress priority order (lower number = higher priority)
             const getProgressPriority = (challenge) => {
-              if (challenge.isInProgress) return 1;
-              if (!challenge.isCompleted && !challenge.isInProgress) return 2;
-              return 3;
+              if (challenge.isInProgress) return 1; // Highest priority
+              if (!challenge.isCompleted && !challenge.isInProgress) return 2; // Medium priority
+              return 3; // Lowest priority (completed)
             };
 
             const aPriority = getProgressPriority(a);
             const bPriority = getProgressPriority(b);
 
+            // Sort by priority first
             if (aPriority !== bPriority) {
               return aPriority - bPriority;
             }
 
+            // If same priority, sort by creation date (newest first)
             return (
               new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
             );
           });
 
+          // Update state with sorted and transformed challenges
           setChallenges(transformedChallenges);
         }
       } catch (error) {
+        // Handle AbortError specifically (don't treat as real error)
         if (error.name === "AbortError") {
-          console.log("🚫 Challenges fetch aborted");
           return;
         }
-        console.error("💥 Error fetching challenges:", error);
+        // Handle all other errors
         setError(error.message);
         setChallenges([]);
       } finally {
+        // Always reset loading state and clear abort controller
         setLoading(false);
         abortControllerRef.current = null;
       }
     },
-    [transformChallengeData]
+    [transformChallengeData] // Dependency for callback recreation
   );
 
-  // Fetch user challenge stats from API with AbortController
+  /**
+   * Fetches user challenge statistics from the API with AbortController support
+   * Handles performance metrics, rankings, and completion data
+   * @param {string} targetUserId - The user ID to fetch statistics for
+   */
   const fetchStats = useCallback(async (targetUserId) => {
-    // Cancel previous stats request if still running
+    // Cancel any previous statistics request that might still be running
     if (statsAbortControllerRef.current) {
       statsAbortControllerRef.current.abort();
     }
 
+    // Validate user ID before making API call
     if (!isValidUserId(targetUserId)) {
       setStatsLoading(false);
       setStats(null);
@@ -529,19 +659,18 @@ export const useUserChallenges = () => {
     }
 
     try {
+      // Set loading state and clear previous errors
       setStatsLoading(true);
       setError(null);
 
-      // Create new abort controller for this request
+      // Create new AbortController for this statistics request
       statsAbortControllerRef.current = new AbortController();
       const signal = statsAbortControllerRef.current.signal;
 
+      // Construct API URL for statistics endpoint
       const apiUrl = `https://isipython-dev.onrender.com/api/challenges/stats?user_id=${targetUserId}`;
-      console.log(
-        "📊 Fetching stats with abort signal for user:",
-        targetUserId
-      );
 
+      // Make API request with abort signal
       const response = await fetch(apiUrl, {
         signal,
         headers: {
@@ -549,30 +678,31 @@ export const useUserChallenges = () => {
         },
       });
 
-      // Check if request was aborted
+      // Check if request was aborted before proceeding
       if (signal.aborted) {
-        console.log("🚫 Stats fetch aborted");
         return;
       }
 
+      // Verify response success
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
+      // Parse JSON response
       const result = await response.json();
 
-      // Check again after parsing
+      // Check again for abortion after parsing
       if (signal.aborted) {
-        console.log("🚫 Stats fetch aborted after parsing");
         return;
       }
 
+      // Extract and structure statistics data
       if (result && result.data) {
         const statsData = {
           completedChallenges: result.data.completed_challenges || 0,
           totalPointsEarned: result.data.total_points_earned || 0,
           successRate: result.data.success_rate || 0,
-          userGlobalRank: result.data.user_global_rank ?? null,
+          userGlobalRank: result.data.user_global_rank ?? null, // Keep null explicitly
         };
 
         setStats(statsData);
@@ -580,25 +710,35 @@ export const useUserChallenges = () => {
         setStats(null);
       }
     } catch (error) {
+      // Handle AbortError specifically (don't treat as real error)
       if (error.name === "AbortError") {
-        console.log("🚫 Stats fetch aborted");
         return;
       }
-      console.error("💥 Error fetching stats:", error);
+      // Handle all other errors
       setError(error.message);
       setStats(null);
     } finally {
+      // Always reset loading state and clear abort controller
       setStatsLoading(false);
       statsAbortControllerRef.current = null;
     }
   }, []);
 
-  // FIXED getChallengeDetails with proper JavaScript syntax
+  /**
+   * Fetches detailed information for a specific challenge
+   * Provides comprehensive challenge data including problem statement and test cases
+   * @param {string} challengeId - The unique identifier of the challenge
+   * @param {string} userIdOverride - Optional user ID to use instead of current user
+   * @param {AbortSignal} signal - Optional abort signal for request cancellation
+   * @returns {Object} Detailed challenge object or error information
+   */
   const getChallengeDetails = useCallback(
     async (challengeId, userIdOverride, signal) => {
       try {
+        // Determine which user ID to use
         const targetUserId = userIdOverride || userId;
 
+        // Validate inputs
         if (!isValidUserId(targetUserId)) {
           throw new Error("Invalid userId for challenge details request");
         }
@@ -607,14 +747,10 @@ export const useUserChallenges = () => {
           throw new Error("A valid challengeId string is required.");
         }
 
-        console.log(
-          "🌐 Fetching challenge details with abort signal:",
-          challengeId
-        );
-
+        // Construct API URL for specific challenge details
         const apiUrl = `https://isipython-dev.onrender.com/api/challenges/${challengeId}?user_id=${targetUserId}`;
 
-        // Build fetch options
+        // Build fetch options with optional abort signal
         const fetchOptions = {
           method: "GET",
           headers: {
@@ -622,11 +758,12 @@ export const useUserChallenges = () => {
           },
         };
 
-        // Add signal if provided
+        // Add abort signal if provided
         if (signal) {
           fetchOptions.signal = signal;
         }
 
+        // Make API request
         const response = await fetch(apiUrl, fetchOptions);
 
         // Check if request was aborted
@@ -634,10 +771,12 @@ export const useUserChallenges = () => {
           throw new Error("Request aborted");
         }
 
+        // Verify response success
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
+        // Parse response and validate structure
         const result = await response.json();
         const data = result?.data;
 
@@ -645,11 +784,12 @@ export const useUserChallenges = () => {
           throw new Error("Invalid challenge details response format.");
         }
 
-        // Transform the detailed challenge data
+        // Transform the detailed challenge data using the base transformer
         const base = transformChallengeData(data, 0);
 
+        // Create comprehensive details object with additional properties
         const details = {
-          ...base,
+          ...base, // Include all base transformed properties
           problemStatement: data.problem_statement ?? base.problemStatement,
           summary: data.summary || null,
           testCases: data.test_cases || [],
@@ -670,117 +810,155 @@ export const useUserChallenges = () => {
 
         return details;
       } catch (error) {
+        // Return error object for handling by calling code
         // Don't log errors for aborted requests
         if (error.name !== "AbortError" && !signal?.aborted) {
-          console.error("💥 Error in getChallengeDetails:", error);
+          // Error logging removed but error still returned
         }
         return { error: error.message || "Failed to fetch challenge details." };
       }
     },
-    [transformChallengeData]
+    [transformChallengeData] // Dependency for callback recreation
   );
 
-  // Refresh both challenges and stats
+  /**
+   * Refreshes both challenges and statistics data for the current user
+   * Useful for manual refresh triggers and data synchronization
+   */
   const refreshChallenges = useCallback(async () => {
+    // Only proceed if user ID is valid
     if (!isValidUserId(userId)) return;
 
-    console.log("🔄 Manual refresh triggered for user:", userId);
-
+    // Fetch both challenges and statistics concurrently
     await Promise.all([fetchChallenges(userId), fetchStats(userId)]);
-  }, [fetchChallenges, fetchStats, userId]);
+  }, [fetchChallenges, fetchStats, userId]); // Dependencies for callback recreation
 
-  // Filter challenges - STABLE
+  /**
+   * Filters challenges based on search term, category, and difficulty
+   * Provides flexible multi-criteria filtering for challenge lists
+   * @param {string} searchTerm - Text to search in titles and descriptions
+   * @param {string} selectedCategory - Category to filter by ("All" for no filter)
+   * @param {string} selectedDifficulty - Difficulty to filter by ("All" for no filter)
+   * @returns {Array} Filtered array of challenges matching all criteria
+   */
   const getFilteredChallenges = useCallback(
     (searchTerm, selectedCategory, selectedDifficulty) => {
       return challenges.filter((challenge) => {
+        // Search term matching across title and description
         const matchesSearch =
           challenge.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
           challenge.description
             .toLowerCase()
             .includes(searchTerm.toLowerCase());
 
+        // Category matching with "All" option support
         const matchesCategory =
           selectedCategory === "All" || challenge.category === selectedCategory;
 
+        // Difficulty matching with "All" option support
         const matchesDifficulty =
           selectedDifficulty === "All" ||
           challenge.difficulty === selectedDifficulty;
 
+        // All criteria must match for challenge to be included
         return matchesSearch && matchesCategory && matchesDifficulty;
       });
     },
-    [challenges]
+    [challenges] // Dependency on challenges array for filtering
   );
 
-  // Get available categories - STABLE
+  /**
+   * Extracts unique categories from loaded challenges for filter options
+   * Provides dynamic category list based on available challenge data
+   * @returns {Array} Array of category strings including "All" option
+   */
   const getAvailableCategories = useCallback(() => {
+    // Start with "All" option for showing all challenges
     const categories = ["All"];
+
+    // Extract unique categories from current challenge data
     const uniqueCategories = [...new Set(challenges.map((c) => c.category))];
+
+    // Add unique categories in sorted order
     return categories.concat(uniqueCategories.sort());
-  }, [challenges]);
+  }, [challenges]); // Dependency on challenges array for category extraction
 
-  // Main useEffect with AbortController - ONLY userId dependency
+  /**
+   * Main effect hook that triggers data fetching when user ID changes
+   * Only fetches data when valid user ID is available, with small delay to prevent rapid calls
+   */
   useEffect(() => {
-    console.log("🔄 Main useEffect triggered for userId:", userId);
-
     if (isValidUserId(userId)) {
-      // Add small delay to prevent rapid successive calls
+      // Add small delay to prevent rapid successive API calls
       const timeoutId = setTimeout(() => {
         fetchChallenges(userId);
         fetchStats(userId);
-      }, 100);
+      }, 100); // 100ms delay
 
+      // Cleanup timeout if effect runs again before delay completes
       return () => clearTimeout(timeoutId);
     } else {
-      console.log("⏳ No valid userId yet, waiting...");
+      // No valid user ID - stop loading states
       setLoading(false);
       setStatsLoading(false);
     }
-  }, [userId]); // ONLY userId dependency!
+  }, [userId]); // Only depend on userId to prevent unnecessary re-renders
 
-  // Cleanup on unmount
+  /**
+   * Cleanup effect that ensures AbortControllers are properly cleaned up on unmount
+   * Prevents memory leaks and abandoned network requests
+   */
   useEffect(() => {
     return () => {
+      // Abort any running challenges request
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
+      // Abort any running statistics request
       if (statsAbortControllerRef.current) {
         statsAbortControllerRef.current.abort();
       }
     };
-  }, []);
+  }, []); // Empty dependency array - only run on mount/unmount
 
-  // Timeout useEffect - prevents infinite loading
+  /**
+   * Timeout effect to prevent infinite loading states
+   * Handles cases where user ID never becomes available or requests hang
+   */
   useEffect(() => {
+    // Set up timeout to handle prolonged loading states
     const timeout = setTimeout(() => {
+      // If still loading and no valid user ID after timeout period
       if ((loading || statsLoading) && !isValidUserId(userId)) {
-        console.log("⏰ TIMEOUT: No valid userId after 10 seconds");
+        // Stop all loading states and clear data
         setLoading(false);
         setStatsLoading(false);
         setChallenges([]);
         setStats(null);
       }
-    }, 10000);
+    }, 10000); // 10 second timeout
 
+    // Cleanup function to prevent memory leaks
     return () => clearTimeout(timeout);
-  }, [loading, statsLoading, userId]);
+  }, [loading, statsLoading, userId]); // Re-run when loading states or userId change
 
+  // Return the hook's public API with all state and functions
   return {
-    // State
-    challenges,
-    stats,
-    loading,
-    statsLoading,
-    error,
+    // State values that components can read
+    challenges, // Array of transformed challenge objects
+    stats, // User statistics object with performance metrics
+    loading, // Boolean indicating if challenges are being loaded
+    statsLoading, // Boolean indicating if statistics are being loaded
+    error, // Any error that occurred during operations
 
-    // Actions
-    fetchChallenges,
-    fetchStats,
-    refreshChallenges,
+    // Action functions that components can call
+    fetchChallenges, // Function to fetch challenges for a specific user
+    fetchStats, // Function to fetch statistics for a specific user
+    refreshChallenges, // Function to refresh all data for the current user
 
-    // Utilities
-    getFilteredChallenges,
-    getAvailableCategories,
-    getChallengeDetails,
+    // Utility functions for data manipulation and filtering
+    getFilteredChallenges, // Function to filter challenges by multiple criteria
+    getAvailableCategories, // Function to get available filter categories
+    getChallengeDetails, // Function to fetch detailed challenge information
   };
 };

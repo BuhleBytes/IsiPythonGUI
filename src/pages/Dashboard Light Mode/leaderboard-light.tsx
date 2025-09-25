@@ -1,25 +1,24 @@
-import { useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
+  BarChart3,
   BookOpen,
-  Search,
+  Calendar,
   Crown,
-  RefreshCw,
-  Loader2,
   Flame,
+  Loader2,
+  Medal,
+  RefreshCw,
+  Search,
   Sparkles,
   Star,
   Target,
-  Medal,
   TrendingUp,
   Trophy,
   Users,
-  Zap,
-  Calendar,
-  BarChart3,
 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 // API Hooks
 const BASE_URL = "https://isipython-dev.onrender.com";
@@ -123,7 +122,7 @@ export default function LeaderboardScreen() {
       case 1:
         return <Crown color="gold" />;
       case 2:
-        return  <Medal color="silver" />;
+        return <Medal color="silver" />;
       case 3:
         return <Medal color="#CD7F32" />;
       default:
@@ -198,7 +197,7 @@ export default function LeaderboardScreen() {
               </p>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-3">
             <Button
               variant="ghost"
@@ -280,9 +279,9 @@ export default function LeaderboardScreen() {
               <h3 className="text-sm font-medium text-gray-700">
                 {t("Total Participants")}
               </h3>
-                <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-600 rounded-lg flex items-center justify-center shadow-md">
-                  <Users className="w-6 h-6 text-white" />
-                </div>
+              <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-600 rounded-lg flex items-center justify-center shadow-md">
+                <Users className="w-6 h-6 text-white" />
+              </div>
             </div>
             <div className="px-6 pb-6 relative z-10">
               <div className="text-3xl font-bold bg-gradient-to-r from-cyan-600 to-blue-700 bg-clip-text text-transparent">
@@ -357,11 +356,13 @@ export default function LeaderboardScreen() {
           <div className="p-6 border-b border-gray-200/50">
             <h2 className="text-xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent flex items-center gap-2">
               {activeTab === "challenges" ? (
-                  <Trophy className="w-7 h-7 text-yellow-500" />
-                ) : (
-                  <BookOpen className="w-7 h-7 text-yellow-500" />
+                <Trophy className="w-7 h-7 text-yellow-500" />
+              ) : (
+                <BookOpen className="w-7 h-7 text-yellow-500" />
               )}
-              {activeTab === "challenges" ? t("Challenge Leaderboard") : t("Quiz Leaderboard")}{" "}
+              {activeTab === "challenges"
+                ? t("Challenge Leaderboard")
+                : t("Quiz Leaderboard")}{" "}
             </h2>
           </div>
           <div className="p-0">
@@ -416,7 +417,7 @@ export default function LeaderboardScreen() {
                         <div className="flex flex-wrap gap-4 mt-1">
                           {activeTab === "challenges" ? (
                             <>
-                              <div className="flex items-center gap-1 text-sm text-gray-600"> 
+                              <div className="flex items-center gap-1 text-sm text-gray-600">
                                 <Trophy className="w-3 h-3 text-green" />
                                 {user.challenges_completed} {t("challenges")}
                               </div>
@@ -497,12 +498,14 @@ export default function LeaderboardScreen() {
                   </div>
                   <div className="text-white/90 text-sm">
                     {activeTab === "challenges"
-                      ? `${filteredData[0].total_score} ${t("points from")} ${filteredData[0].challenges_completed} ${t("challenges")}`
-                      : `${filteredData[0].average_percentage.toFixed(
-                          1
-                        )}% ${t("average from")} ${
-                          filteredData[0].quizzes_completed
-                        } ${t("quizzes")}`}
+                      ? `${filteredData[0].total_score} ${t("points from")} ${
+                          filteredData[0].challenges_completed
+                        } ${t("challenges")}`
+                      : `${filteredData[0].average_percentage.toFixed(1)}% ${t(
+                          "average from"
+                        )} ${filteredData[0].quizzes_completed} ${t(
+                          "quizzes"
+                        )}`}
                   </div>
                 </div>
               )}
@@ -536,8 +539,12 @@ export default function LeaderboardScreen() {
                       </div>
                       <div className="text-white/90 text-sm">
                         {activeTab === "challenges"
-                          ? `${mostActive.challenges_completed} ${t("challenges completed")}`
-                          : `${mostActive.quizzes_completed} ${t("quizzes taken")}`}
+                          ? `${mostActive.challenges_completed} ${t(
+                              "challenges completed"
+                            )}`
+                          : `${mostActive.quizzes_completed} ${t(
+                              "quizzes taken"
+                            )}`}
                       </div>
                     </div>
                   )

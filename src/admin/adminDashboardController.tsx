@@ -2,15 +2,20 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { loadState, saveCurrentRoute, saveCurrentView } from "../utils/storage";
+import LeaderboardPage from "./Dashboard Light Mode/adminLeaderboard";
+import AnalyticsPage from "./Dashboard Light Mode/analytics";
 import CreateChallenge from "./Dashboard Light Mode/createChallenge";
 import CreateQuiz from "./Dashboard Light Mode/createQuiz";
 import DraftChallenges from "./Dashboard Light Mode/draftChallenges";
 import DraftQuizzes from "./Dashboard Light Mode/draftQuizzes";
 import EditChallenge from "./Dashboard Light Mode/editChallenge";
+import EditQuiz from "./Dashboard Light Mode/editQuiz";
 import AdminDashboard from "./Dashboard Light Mode/homeDashboard";
 import PublishedChallenges from "./Dashboard Light Mode/publishedChallenges";
+import PublishedQuizzes from "./Dashboard Light Mode/publishedQuizzes";
 import { AdminSidebar } from "./Dashboard Light Mode/sidebar";
 import ViewChallenge from "./Dashboard Light Mode/viewChallenge";
+import ViewQuiz from "./Dashboard Light Mode/viewQuiz"; // Added ViewQuiz import
 
 export default function AdminDashboardController() {
   const location = useLocation();
@@ -41,6 +46,9 @@ export default function AdminDashboardController() {
 
   // Track which challenge is being viewed
   const [viewChallengeId, setViewChallengeId] = useState<string>("");
+
+  // Track which quiz is being viewed
+  const [viewQuizId, setViewQuizId] = useState<string>("");
 
   // Persist current route for session management
   useEffect(() => {
@@ -81,6 +89,13 @@ export default function AdminDashboardController() {
     } else if (view !== "view") {
       setViewChallengeId("");
     }
+
+    // Handle quiz viewing - store quiz ID and clear when leaving
+    if (view === "view-quiz" && data?.quizId) {
+      setViewQuizId(data.quizId);
+    } else if (view !== "view-quiz") {
+      setViewQuizId("");
+    }
   };
 
   // Navigation handler: return to draft challenges list
@@ -96,6 +111,11 @@ export default function AdminDashboardController() {
   // Navigation handler: return to published challenges list
   const handleBackToPublishedList = () => {
     handleViewChange("published");
+  };
+
+  // Navigation handler: return to published quizzes list
+  const handleBackToPublishedQuizzes = () => {
+    handleViewChange("published-quizzes");
   };
 
   // Main content renderer based on active view
@@ -124,7 +144,12 @@ export default function AdminDashboardController() {
         );
       case "draft-quizzes":
         return (
-          <DraftQuizzes onCreateNew={() => handleViewChange("create-quiz")} />
+          <DraftQuizzes
+            onEditQuiz={(quizId: string) =>
+              handleViewChange("edit-quiz", { quizId })
+            }
+            onCreateNew={() => handleViewChange("create-quiz")}
+          />
         );
       case "edit":
         return (
@@ -137,6 +162,17 @@ export default function AdminDashboardController() {
             }}
           />
         );
+      case "edit-quiz":
+        return (
+          <EditQuiz
+            quizId={editQuizId}
+            onBackToList={handleBackToQuizDrafts}
+            onSave={(updatedQuiz) => {
+              // Return to draft quizzes list after successful save
+              handleViewChange("draft-quizzes");
+            }}
+          />
+        );
       case "published":
         return (
           <PublishedChallenges
@@ -146,6 +182,15 @@ export default function AdminDashboardController() {
             onCreateNew={() => handleViewChange("create")}
           />
         );
+      case "published-quizzes":
+        return (
+          <PublishedQuizzes
+            onViewQuiz={(quizId: string) =>
+              handleViewChange("view-quiz", { quizId })
+            }
+            onCreateNew={() => handleViewChange("create-quiz")}
+          />
+        );
       case "view":
         return (
           <ViewChallenge
@@ -153,13 +198,17 @@ export default function AdminDashboardController() {
             onBackToList={handleBackToPublishedList}
           />
         );
-      case "analytics":
+      case "view-quiz": // Added new case for viewing quiz details
         return (
-          <div className="p-6">
-            <h1 className="text-2xl font-bold">Analytics</h1>
-            <p>Analytics component will be implemented here</p>
-          </div>
+          <ViewQuiz
+            quizId={viewQuizId}
+            onBackToList={handleBackToPublishedQuizzes}
+          />
         );
+      case "analytics":
+        return <AnalyticsPage />;
+      case "leaderboard":
+        return <LeaderboardPage />;
       case "settings":
         return (
           <div className="p-6">

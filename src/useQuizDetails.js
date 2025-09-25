@@ -1,39 +1,115 @@
+/**
+ * useQuizDetails Custom Hook
+ *
+ * This comprehensive React custom hook manages all aspects of individual quiz interactions,
+ * including fetching quiz data, handling quiz submissions, and retrieving results.
+ * It provides a complete quiz-taking experience with proper state management and error handling.
+ *
+ * Key Features:
+ * - Fetches detailed quiz information including questions, options, and metadata
+ * - Transforms raw API data into UI-friendly format with enhanced properties
+ * - Handles quiz submission with answer validation and time tracking
+ * - Manages quiz results retrieval and score calculation
+ * - Provides comprehensive error handling and loading states
+ * - Supports multiple quiz states (loading, submitting, fetching results)
+ * - Includes helper functions for answer format conversion (index ↔ letter)
+ * - Automatically determines quiz difficulty and question topics
+ * - Validates quiz completion and handles incomplete submissions
+ * - Manages timeout scenarios and retry functionality
+ *
+ * Quiz Data Structure:
+ * - Basic info: title, description, duration, total marks
+ * - Questions: text, multiple choice options, correct answers, explanations
+ * - Settings: multiple attempts, immediate results, question randomization
+ * - Submission: user answers, time taken, score calculation
+ * - Results: detailed breakdown with correct answers and explanations
+ *
+ * Answer Format Handling:
+ * - UI uses 0-based indices (0=A, 1=B, 2=C, 3=D) for easy array access
+ * - API expects letter format (A, B, C, D) for standardization
+ * - Hook automatically converts between formats as needed
+ *
+ * Usage:
+ * const {
+ *   quiz, loading, submitting, error, submission, quizResults,
+ *   submitQuiz, fetchQuizResults, retryFetch, calculateScoreFromSubmission
+ * } = useQuizDetails(quizId);
+ *
+ * Dependencies:
+ * - useUser hook for current user information
+ * - External API endpoints for quiz data, submission, and results
+ */
+
 import { useCallback, useEffect, useState } from "react";
 import { useUser } from "./useUser";
 
 /**
- * Custom hook for managing individual quiz details and submission
- * @param {string} quizId - The ID of the quiz to fetch
- * @returns {Object} - Object containing quiz state and quiz operations
+ * Custom hook for managing individual quiz details, submission, and results
+ * @param {string} quizId - The unique identifier of the quiz to manage
+ * @returns {Object} Object containing quiz state, loading states, error states, and action functions
  */
 export const useQuizDetails = (quizId) => {
+  // Get current user information from the useUser hook
   const { userId, isLoggedIn } = useUser();
+
+  // Main quiz data state containing all quiz information and questions
   const [quiz, setQuiz] = useState(null);
+
+  // Loading state for initial quiz data fetching
   const [loading, setLoading] = useState(true);
+
+  // Submitting state specifically for quiz submission process
   const [submitting, setSubmitting] = useState(false);
+
+  // Loading state for fetching quiz results after submission
   const [fetchingResults, setFetchingResults] = useState(false);
+
+  // Error state to store any errors that occur during operations
   const [error, setError] = useState(null);
+
+  // Submission data returned from the API after quiz submission
   const [submission, setSubmission] = useState(null);
+
+  // Quiz results data containing detailed breakdown of answers and scores
   const [quizResults, setQuizResults] = useState(null);
 
-  // Helper function to check if userId is valid
+  /**
+   * Helper function to validate if a user ID is valid and usable
+   * Ensures the ID exists, is a string, and contains meaningful content
+   * @param {*} id - The user ID to validate
+   * @returns {boolean} True if the user ID is valid, false otherwise
+   */
   const isValidUserId = (id) => {
     const isValid = id && typeof id === "string" && id.trim().length > 0;
-    console.log("🔍 DEBUG - isValidUserId check:", { id, isValid });
     return isValid;
   };
 
-  // Helper function to determine difficulty based on points and time
+  /**
+   * Helper function to determine quiz difficulty based on points and time limit
+   * Uses simple heuristics to categorize quiz complexity
+   * @param {number} totalPoints - Total points available in the quiz
+   * @param {number} timeLimit - Time limit in minutes
+   * @returns {string} Difficulty level: "Easy", "Medium", or "Hard"
+   */
   const determineDifficulty = (totalPoints, timeLimit) => {
+    // Easy quizzes: low points and short time
     if (totalPoints <= 30 && timeLimit <= 30) return "Easy";
+    // Medium quizzes: moderate points and time
     if (totalPoints <= 50 && timeLimit <= 60) return "Medium";
+    // Hard quizzes: high points or long time
     return "Hard";
   };
 
-  // Helper function to determine topic from question text
+  /**
+   * Helper function to determine question topic based on question text content
+   * Uses keyword matching to categorize questions into programming topics
+   * @param {string} questionText - The text content of the question
+   * @returns {string} The determined topic category
+   */
   const determineTopic = (questionText) => {
     const text = questionText.toLowerCase();
 
+    // Check for various programming concepts and keywords
     if (text.includes("variable") || text.includes("declare"))
       return "Variables";
     if (
@@ -63,57 +139,71 @@ export const useQuizDetails = (quizId) => {
     if (text.includes("type") || text.includes("uhlobo")) return "Data Types";
     if (text.includes("isixhosa") || text.includes("xhosa")) return "IsiXhosa";
 
+    // Default fallback topic
     return "Programming";
   };
 
-  // Helper function to convert letter to index (A=0, B=1, C=2, D=3)
+  /**
+   * Helper function to convert letter format to array index
+   * Converts A,B,C,D to 0,1,2,3 for easier array manipulation in UI
+   * @param {string} letter - The letter to convert (A, B, C, or D)
+   * @returns {number} The corresponding array index (0, 1, 2, or 3)
+   */
   const letterToIndex = useCallback((letter) => {
+    // Validate input parameter
     if (!letter || typeof letter !== "string") {
-      console.log("⚠️ DEBUG - Invalid letter for letterToIndex:", letter);
-      return 0; // Default to A
+      return 0; // Default to A (index 0)
     }
+    // Map letters to indices
     const letterMap = { A: 0, B: 1, C: 2, D: 3 };
     return letterMap[letter.toUpperCase()] || 0;
   }, []);
 
-  // Helper function to convert index to letter (0=A, 1=B, 2=C, 3=D)
+  /**
+   * Helper function to convert array index to letter format
+   * Converts 0,1,2,3 to A,B,C,D for API communication
+   * @param {number} index - The array index to convert (0, 1, 2, or 3)
+   * @returns {string} The corresponding letter (A, B, C, or D)
+   */
   const indexToLetter = useCallback((index) => {
+    // Validate input parameter
     if (typeof index !== "number" || index < 0 || index > 3) {
-      console.log("⚠️ DEBUG - Invalid index for indexToLetter:", index);
       return "A"; // Default to A
     }
+    // Map indices to letters
     const indexMap = { 0: "A", 1: "B", 2: "C", 3: "D" };
     return indexMap[index] || "A";
   }, []);
 
-  // Transform API quiz data to component format
+  /**
+   * Transforms raw API quiz data into UI-friendly format
+   * Enhances data with calculated properties, consistent structure, and UI elements
+   * @param {Object} apiQuiz - Raw quiz data from the API
+   * @returns {Object} Transformed quiz data optimized for UI consumption
+   */
   const transformQuizData = useCallback(
     (apiQuiz) => {
-      console.log("🔄 DEBUG - Transforming quiz data:", apiQuiz);
-
+      // Validate input data
       if (!apiQuiz) {
-        console.log("❌ DEBUG - No quiz data to transform");
         throw new Error("No quiz data provided");
       }
 
+      // Calculate quiz difficulty based on points and time
       const difficulty = determineDifficulty(
         apiQuiz.total_points,
         apiQuiz.time_limit_minutes
       );
 
-      // Transform questions
+      // Transform questions array with enhanced properties
       const transformedQuestions =
         apiQuiz.questions?.map((apiQuestion, index) => {
-          console.log(
-            `🔄 DEBUG - Transforming question ${index + 1}:`,
-            apiQuestion
-          );
-
+          // Determine topic category for the question
           const topic = determineTopic(apiQuestion.question_text);
 
           return {
             id: apiQuestion.id, // Keep original UUID for API calls
             question: apiQuestion.question_text || "",
+            // Structure options as array for easier UI iteration
             options: [
               apiQuestion.option_a || "",
               apiQuestion.option_b || "",
@@ -127,13 +217,15 @@ export const useQuizDetails = (quizId) => {
             difficulty: difficulty,
             topic: topic,
             points: apiQuestion.points_weight || 0,
+            // Ensure questions are displayed in correct order
             orderIndex: parseInt(apiQuestion.question_order_idx) || index + 1,
           };
         }) || [];
 
-      // Sort questions by order index
+      // Sort questions by their designated order
       transformedQuestions.sort((a, b) => a.orderIndex - b.orderIndex);
 
+      // Create comprehensive quiz object with all necessary properties
       const transformedQuiz = {
         id: apiQuiz.id,
         title: apiQuiz.title || "Untitled Quiz",
@@ -141,6 +233,7 @@ export const useQuizDetails = (quizId) => {
         totalMarks: apiQuiz.total_points || 0,
         duration: apiQuiz.time_limit_minutes || 60,
         questions: transformedQuestions,
+        // Generate default instructions if none provided
         instructions: apiQuiz.instructions || [
           "This quiz contains multiple-choice questions",
           "Each question has only one correct answer",
@@ -153,6 +246,7 @@ export const useQuizDetails = (quizId) => {
           "Your score will be calculated based on correct answers",
           "Review your answers carefully before final submission",
         ],
+        // Quiz configuration settings
         allowMultipleAttempts: apiQuiz.allow_multiple_attempts || false,
         showResultsImmediately: apiQuiz.show_results_immediately || true,
         randomizeQuestionOrder: apiQuiz.randomize_question_order || false,
@@ -160,48 +254,43 @@ export const useQuizDetails = (quizId) => {
         status: apiQuiz.status || "published",
       };
 
-      console.log("✅ DEBUG - Transformed quiz:", transformedQuiz);
       return transformedQuiz;
     },
-    [letterToIndex]
+    [letterToIndex] // Dependencies for callback recreation
   );
 
-  // Fetch quiz details
+  /**
+   * Fetches detailed quiz information from the API
+   * Handles the complete request lifecycle with validation and error handling
+   * @param {string} userIdToUse - Optional user ID to use instead of the hook's userId
+   */
   const fetchQuizDetails = useCallback(
     async (userIdToUse) => {
-      console.log("🚀 =================================");
-      console.log("🚀 FETCH QUIZ DETAILS CALLED");
-      console.log("🚀 =================================");
-
+      // Determine which user ID to use
       const targetUserId = userIdToUse || userId;
 
-      console.log("🔍 DEBUG - Target User ID:", targetUserId);
-      console.log("🔍 DEBUG - Quiz ID:", quizId);
-      console.log("🔍 DEBUG - User ID type:", typeof targetUserId);
-      console.log("🔍 DEBUG - User ID valid:", isValidUserId(targetUserId));
-
+      // Validate required parameters
       if (!quizId) {
-        console.log("❌ DEBUG - No quiz ID provided");
         setError("No quiz ID provided");
         setLoading(false);
         return;
       }
 
       if (!isValidUserId(targetUserId)) {
-        console.log("❌ DEBUG - Invalid or missing userId");
         setError("User not logged in");
         setLoading(false);
         return;
       }
 
       try {
+        // Set loading state and clear previous errors
         setLoading(true);
         setError(null);
 
+        // Construct API URL for quiz details
         const quizUrl = `https://isipython-dev.onrender.com/api/quizzes/${quizId}?user_id=${targetUserId}`;
-        console.log("🌐 DEBUG - Quiz API URL:", quizUrl);
 
-        console.log("📡 DEBUG - Making fetch request...");
+        // Make API request with proper headers
         const response = await fetch(quizUrl, {
           method: "GET",
           headers: {
@@ -209,28 +298,20 @@ export const useQuizDetails = (quizId) => {
           },
         });
 
-        console.log("📡 DEBUG - Response received");
-        console.log("📡 DEBUG - Response Status:", response.status);
-        console.log("📡 DEBUG - Response OK:", response.ok);
-        console.log("📡 DEBUG - Response Status Text:", response.statusText);
-
+        // Check if request was successful
         if (!response.ok) {
           const errorText = await response.text();
-          console.log("❌ DEBUG - Response Error Text:", errorText);
           throw new Error(
             `Failed to fetch quiz: ${response.status} ${response.statusText}`
           );
         }
 
-        console.log("🔄 DEBUG - Parsing JSON response...");
+        // Parse JSON response
         const result = await response.json();
-        console.log("🔄 DEBUG - Full API Response:", result);
 
+        // Validate response structure
         if (result && result.data) {
-          console.log("✅ DEBUG - Valid response structure found");
-          console.log("🔄 DEBUG - Quiz data:", result.data);
-
-          // Validate quiz data structure
+          // Additional validation for quiz data completeness
           if (!result.data.id) {
             throw new Error("Invalid quiz data: missing quiz ID");
           }
@@ -245,21 +326,14 @@ export const useQuizDetails = (quizId) => {
             throw new Error("This quiz has no questions");
           }
 
+          // Transform and store the quiz data
           const transformedQuiz = transformQuizData(result.data);
           setQuiz(transformedQuiz);
-          console.log("✅ DEBUG - Quiz details loaded successfully");
         } else {
-          console.log("❌ DEBUG - Invalid response structure");
-          console.log("❌ DEBUG - Result:", result);
           throw new Error("Invalid quiz response format - no data field");
         }
       } catch (error) {
-        console.error("💥 DEBUG - Error in fetchQuizDetails:");
-        console.error("💥 DEBUG - Error name:", error.name);
-        console.error("💥 DEBUG - Error message:", error.message);
-        console.error("💥 DEBUG - Error stack:", error.stack);
-
-        // Provide more specific error messages
+        // Provide more specific error messages based on error type
         let errorMessage = error.message;
         if (error.name === "TypeError" && error.message.includes("fetch")) {
           errorMessage =
@@ -275,98 +349,67 @@ export const useQuizDetails = (quizId) => {
 
         setError(errorMessage);
       } finally {
+        // Always set loading to false when operation completes
         setLoading(false);
-        console.log("🏁 DEBUG - fetchQuizDetails completed");
       }
     },
-    [quizId, userId, transformQuizData]
+    [quizId, userId, transformQuizData] // Dependencies for callback recreation
   );
 
-  // Submit quiz answers
+  /**
+   * Submits quiz answers to the API with comprehensive validation and error handling
+   * @param {Object} selectedAnswers - Object mapping question IDs to selected answer indices
+   * @param {number} timeTaken - Time taken to complete the quiz in seconds
+   * @returns {Object} Result object with success status and submission data or error message
+   */
   const submitQuiz = useCallback(
     async (selectedAnswers, timeTaken) => {
-      console.log("📤 =================================");
-      console.log("📤 SUBMIT QUIZ CALLED");
-      console.log("📤 =================================");
-      console.log("📤 DEBUG - Quiz ID:", quizId);
-      console.log("📤 DEBUG - User ID:", userId);
-      console.log("📤 DEBUG - Selected answers:", selectedAnswers);
-      console.log("📤 DEBUG - Time taken:", timeTaken);
-      console.log(
-        "📤 DEBUG - Quiz questions:",
-        quiz?.questions?.map((q) => ({
-          id: q.id,
-          question: q.question.substring(0, 50) + "...",
-        }))
-      );
-
-      // Enhanced validation
+      // Enhanced validation of required parameters
       if (!quizId) {
-        console.log("❌ DEBUG - No quiz ID");
         return { success: false, error: "No quiz ID provided" };
       }
 
       if (!isValidUserId(userId)) {
-        console.log("❌ DEBUG - Invalid user ID");
         return { success: false, error: "User not logged in" };
       }
 
       if (!quiz) {
-        console.log("❌ DEBUG - No quiz data");
         return { success: false, error: "Quiz data not loaded" };
       }
 
       if (!selectedAnswers || Object.keys(selectedAnswers).length === 0) {
-        console.log("❌ DEBUG - No answers provided");
         return { success: false, error: "Please answer at least one question" };
       }
 
       if (typeof timeTaken !== "number" || timeTaken < 0) {
-        console.log("❌ DEBUG - Invalid time taken:", timeTaken);
         return { success: false, error: "Invalid time taken" };
       }
 
-      // IMPORTANT: Validate time taken against quiz duration
+      // Validate time taken against quiz duration limits
       const maxTimeInSeconds = quiz.duration * 60;
       if (timeTaken > maxTimeInSeconds) {
-        console.log(
-          "⚠️ DEBUG - Time taken exceeds quiz duration, capping at max time"
-        );
-        console.log("⚠️ DEBUG - Original time taken:", timeTaken);
-        console.log("⚠️ DEBUG - Max allowed time:", maxTimeInSeconds);
-        timeTaken = maxTimeInSeconds; // Cap the time at the quiz duration
+        // Cap the time at the quiz duration to prevent API rejection
+        timeTaken = maxTimeInSeconds;
       }
 
-      // Check if all questions are answered (might be required by API)
+      // Check answer coverage and fill in missing answers
       const totalQuestions = quiz.questions.length;
       const answeredQuestions = Object.keys(selectedAnswers).length;
 
-      console.log("📊 DEBUG - Answer coverage:");
-      console.log("📊 DEBUG - Total questions:", totalQuestions);
-      console.log("📊 DEBUG - Answered questions:", answeredQuestions);
-
       if (answeredQuestions < totalQuestions) {
-        console.log("⚠️ DEBUG - Not all questions answered, but proceeding...");
-
-        // Create answers for unanswered questions (default to "A")
+        // Create complete answers set with defaults for unanswered questions
         const completeAnswers = { ...selectedAnswers };
         quiz.questions.forEach((question) => {
           if (!(question.id in completeAnswers)) {
-            console.log(
-              "➕ DEBUG - Adding default answer for question:",
-              question.id
-            );
-            completeAnswers[question.id] = 0; // Default to "A"
+            // Default unanswered questions to "A" (index 0)
+            completeAnswers[question.id] = 0;
           }
         });
         selectedAnswers = completeAnswers;
-        console.log(
-          "📤 DEBUG - Complete answers with defaults:",
-          selectedAnswers
-        );
       }
 
       try {
+        // Set submitting state and clear errors
         setSubmitting(true);
         setError(null);
 
@@ -375,50 +418,20 @@ export const useQuizDetails = (quizId) => {
         Object.entries(selectedAnswers).forEach(([questionId, answerIndex]) => {
           const letter = indexToLetter(answerIndex);
           apiAnswers[questionId] = letter;
-          console.log(
-            `🔄 DEBUG - Converting answer: ${questionId} -> ${answerIndex} -> ${letter}`
-          );
         });
 
+        // Prepare submission data
         const submitUrl = `https://isipython-dev.onrender.com/api/quizzes/${quizId}/submit`;
         const submitData = {
           user_id: userId,
+          // Ensure time is a positive integer within limits
           time_taken: Math.round(
             Math.max(1, Math.min(timeTaken, maxTimeInSeconds))
-          ), // Ensure it's a positive integer within limits
+          ),
           answers: apiAnswers,
         };
 
-        console.log("🌐 DEBUG - Submit URL:", submitUrl);
-        console.log(
-          "📤 DEBUG - Submit data:",
-          JSON.stringify(submitData, null, 2)
-        );
-
-        // Validate the submit data structure
-        console.log("🔍 DEBUG - Submit data validation:");
-        console.log("🔍 DEBUG - user_id type:", typeof submitData.user_id);
-        console.log("🔍 DEBUG - user_id value:", submitData.user_id);
-        console.log(
-          "🔍 DEBUG - time_taken type:",
-          typeof submitData.time_taken
-        );
-        console.log("🔍 DEBUG - time_taken value:", submitData.time_taken);
-        console.log("🔍 DEBUG - quiz duration (seconds):", maxTimeInSeconds);
-        console.log(
-          "🔍 DEBUG - time within limits:",
-          submitData.time_taken <= maxTimeInSeconds
-        );
-        console.log("🔍 DEBUG - answers type:", typeof submitData.answers);
-        console.log(
-          "🔍 DEBUG - answers keys:",
-          Object.keys(submitData.answers)
-        );
-        console.log(
-          "🔍 DEBUG - answers values:",
-          Object.values(submitData.answers)
-        );
-
+        // Make submission request
         const response = await fetch(submitUrl, {
           method: "POST",
           headers: {
@@ -427,27 +440,16 @@ export const useQuizDetails = (quizId) => {
           body: JSON.stringify(submitData),
         });
 
-        console.log("📡 DEBUG - Submit Response Status:", response.status);
-        console.log("📡 DEBUG - Submit Response OK:", response.ok);
-        console.log("📡 DEBUG - Submit Response Headers:", response.headers);
-
+        // Handle response parsing
         let result;
         let responseText;
 
         try {
           responseText = await response.text();
-          console.log("🔄 DEBUG - Raw response text:", responseText);
-
           if (responseText) {
             result = JSON.parse(responseText);
-            console.log("🔄 DEBUG - Parsed response:", result);
           }
         } catch (parseError) {
-          console.error("💥 DEBUG - Error parsing response:", parseError);
-          console.log(
-            "🔄 DEBUG - Response text that failed to parse:",
-            responseText
-          );
           throw new Error(
             `Failed to parse response: ${
               responseText?.substring(0, 200) || "Empty response"
@@ -455,48 +457,30 @@ export const useQuizDetails = (quizId) => {
           );
         }
 
+        // Check if submission was successful
         if (!response.ok) {
-          console.error("❌ DEBUG - HTTP Error Response:");
-          console.error("❌ DEBUG - Status:", response.status);
-          console.error("❌ DEBUG - Status Text:", response.statusText);
-          console.error("❌ DEBUG - Response body:", result);
-
           let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
           if (result && result.error) {
             errorMessage += ` - ${result.error}`;
           } else if (result && result.message) {
             errorMessage += ` - ${result.message}`;
           }
-
           throw new Error(errorMessage);
         }
 
+        // Validate response structure and extract submission data
         if (result && result.data && result.data.submission) {
-          console.log("✅ DEBUG - Quiz submitted successfully");
-          console.log("📊 DEBUG - Submission data:", result.data.submission);
-
           setSubmission(result.data.submission);
           return { success: true, submission: result.data.submission };
         } else {
-          console.error("❌ DEBUG - Invalid submission response format");
-          console.error(
-            "❌ DEBUG - Expected submission in result.data.submission"
-          );
-          console.error("❌ DEBUG - Actual result:", result);
-
           throw new Error(
             "Invalid submission response format - missing submission data"
           );
         }
       } catch (error) {
-        console.error("💥 DEBUG - Error in submitQuiz:");
-        console.error("💥 DEBUG - Error type:", error.constructor.name);
-        console.error("💥 DEBUG - Error message:", error.message);
-        console.error("💥 DEBUG - Error stack:", error.stack);
-
+        // Provide user-friendly error messages
         let errorMessage = error.message;
 
-        // Provide more user-friendly error messages
         if (error.message.includes("400")) {
           errorMessage =
             "Invalid quiz submission data. Please check your answers and try again.";
@@ -519,50 +503,48 @@ export const useQuizDetails = (quizId) => {
         setError(errorMessage);
         return { success: false, error: errorMessage };
       } finally {
+        // Always reset submitting state
         setSubmitting(false);
-        console.log("🏁 DEBUG - submitQuiz completed");
       }
     },
-    [quizId, userId, quiz, indexToLetter]
+    [quizId, userId, quiz, indexToLetter] // Dependencies for callback recreation
   );
 
-  // Fetch quiz results for review
+  /**
+   * Fetches detailed quiz results including correct answers and explanations
+   * Used for post-submission review and analysis
+   * @returns {Object} Result object with success status and results data or error message
+   */
   const fetchQuizResults = useCallback(async () => {
-    console.log("📊 =================================");
-    console.log("📊 FETCH QUIZ RESULTS CALLED");
-    console.log("📊 =================================");
-    console.log("📊 DEBUG - Quiz ID:", quizId);
-    console.log("📊 DEBUG - User ID:", userId);
-
+    // Validate required parameters
     if (!quizId || !isValidUserId(userId)) {
-      console.log("❌ DEBUG - Cannot fetch results: missing required data");
       return { success: false, error: "Missing required data" };
     }
 
     try {
+      // Set loading state for results
       setFetchingResults(true);
       setError(null);
 
+      // Construct results API URL
       const resultsUrl = `https://isipython-dev.onrender.com/api/quizzes/${quizId}/results?user_id=${userId}`;
-      console.log("🌐 DEBUG - Results URL:", resultsUrl);
 
+      // Make API request
       const response = await fetch(resultsUrl);
-      console.log("📡 DEBUG - Results Response Status:", response.status);
-      console.log("📡 DEBUG - Results Response OK:", response.ok);
 
+      // Check if request was successful
       if (!response.ok) {
         const errorText = await response.text();
-        console.log("❌ DEBUG - Results Error Response:", errorText);
         throw new Error(
           `Failed to fetch results: ${response.status} ${response.statusText}`
         );
       }
 
+      // Parse and validate response
       const result = await response.json();
-      console.log("🔄 DEBUG - Results API Response:", result);
 
       if (result.data) {
-        // Transform and store the results
+        // Transform and store the results data
         const transformedResults = {
           quiz: result.data.quiz,
           questions: result.data.questions,
@@ -570,27 +552,31 @@ export const useQuizDetails = (quizId) => {
         };
 
         setQuizResults(transformedResults);
-        console.log("✅ DEBUG - Quiz results loaded successfully");
         return { success: true, results: transformedResults };
       } else {
-        console.log("❌ DEBUG - Invalid results response format");
         throw new Error("Invalid results response format");
       }
     } catch (error) {
-      console.error("💥 DEBUG - Error fetching quiz results:", error);
       setError(error.message);
       return { success: false, error: error.message };
     } finally {
+      // Always reset loading state
       setFetchingResults(false);
-      console.log("🏁 DEBUG - fetchQuizResults completed");
     }
-  }, [quizId, userId]);
+  }, [quizId, userId]); // Dependencies for callback recreation
 
-  // Calculate score from submission
+  /**
+   * Calculates score metrics from submission data
+   * Provides comprehensive score breakdown for display
+   * @param {Object} submissionData - The submission data object from API
+   * @returns {Object} Score metrics including raw scores, percentages, and points
+   */
   const calculateScoreFromSubmission = useCallback(
     (submissionData) => {
+      // Handle case where no submission data is available
       if (!submissionData) return { score: 0, total: 0, percentage: 0 };
 
+      // Extract and calculate score metrics
       return {
         score: submissionData.questions_correct || 0,
         total: submissionData.questions_total || 0,
@@ -599,70 +585,65 @@ export const useQuizDetails = (quizId) => {
         totalPoints: quiz?.totalMarks || 0,
       };
     },
-    [quiz]
+    [quiz] // Dependencies for callback recreation
   );
 
-  // Main effect - fetch data when quiz ID or user ID changes
+  /**
+   * Main effect hook that triggers quiz data fetching when dependencies change
+   * Only fetches when all required data is available
+   */
   useEffect(() => {
-    console.log("🔄 DEBUG - Quiz details useEffect triggered");
-    console.log("🔄 DEBUG - quizId:", quizId);
-    console.log("🔄 DEBUG - userId:", userId);
-    console.log("🔄 DEBUG - isLoggedIn:", isLoggedIn);
-
+    // Check if all required conditions are met
     if (quizId && isValidUserId(userId) && isLoggedIn) {
-      console.log("✅ DEBUG - Valid data found, fetching quiz details");
+      // Valid data found, proceed with fetching quiz details
       fetchQuizDetails(userId);
     } else {
-      console.log("⏳ DEBUG - Waiting for valid quizId and userId...");
-      console.log("⏳ DEBUG - Missing:", {
-        quizId: !quizId,
-        userId: !isValidUserId(userId),
-        isLoggedIn: !isLoggedIn,
-      });
-
-      // Set loading to false if we've been waiting too long without a valid userId
+      // Set timeout to handle cases where user never logs in
       const timeout = setTimeout(() => {
         if (!isValidUserId(userId) && !isLoggedIn) {
-          console.log("⏰ DEBUG - Timeout waiting for user login");
           setError("Please log in to access this quiz");
           setLoading(false);
         }
-      }, 5000);
+      }, 5000); // 5 second timeout
 
+      // Cleanup function to prevent memory leaks
       return () => clearTimeout(timeout);
     }
-  }, [quizId, userId, isLoggedIn, fetchQuizDetails]);
+  }, [quizId, userId, isLoggedIn, fetchQuizDetails]); // Dependencies for effect
 
-  // Manual retry function
+  /**
+   * Manual retry function for failed operations
+   * Allows users to retry fetching quiz data after errors
+   */
   const retryFetch = useCallback(() => {
-    console.log("🔄 DEBUG - Manual retry triggered");
+    // Validate that retry is possible
     if (quizId && isValidUserId(userId)) {
       fetchQuizDetails(userId);
     } else {
-      console.log("❌ DEBUG - Cannot retry: missing quizId or userId");
       setError("Cannot retry: missing quiz ID or user not logged in");
     }
-  }, [quizId, userId, fetchQuizDetails]);
+  }, [quizId, userId, fetchQuizDetails]); // Dependencies for callback recreation
 
+  // Return the hook's public API
   return {
-    // State
-    quiz,
-    loading,
-    submitting,
-    fetchingResults,
-    error,
-    submission,
-    quizResults,
+    // State values that components can read
+    quiz, // The complete quiz data with questions and settings
+    loading, // Whether initial quiz data is being loaded
+    submitting, // Whether a quiz submission is in progress
+    fetchingResults, // Whether quiz results are being fetched
+    error, // Any error that occurred during operations
+    submission, // Submission data returned after quiz completion
+    quizResults, // Detailed results with correct answers and analysis
 
-    // Actions
-    fetchQuizDetails,
-    retryFetch,
-    submitQuiz,
-    fetchQuizResults,
+    // Action functions that components can call
+    fetchQuizDetails, // Function to fetch quiz data for a specific user
+    retryFetch, // Function to retry failed operations
+    submitQuiz, // Function to submit quiz answers
+    fetchQuizResults, // Function to fetch detailed results
 
-    // Utilities
-    calculateScoreFromSubmission,
-    letterToIndex,
-    indexToLetter,
+    // Utility functions for data manipulation
+    calculateScoreFromSubmission, // Function to calculate score metrics
+    letterToIndex, // Helper to convert letters to indices
+    indexToLetter, // Helper to convert indices to letters
   };
 };

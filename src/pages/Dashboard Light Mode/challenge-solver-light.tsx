@@ -1,3 +1,23 @@
+// path: challenge-solver-light.tsx
+/**
+ * ChallengeSolverLight
+ *
+ * What this file does:
+ * - Presents a "lightweight" challenge-solving workspace.
+ * - Fetches a coding challenge for the current user, renders its details, and provides a Monaco editor (IsiPython).
+ * - Submits code to a remote API, displays visible test results, tracks hidden test stats, and lists submission history.
+ * - Offers a resizable output panel to review test outputs alongside the editor.
+ *
+ * Why it exists:
+ * - Creates a focused solve-and-iterate flow: read problem -> write code -> run -> inspect results -> iterate.
+ * - Minimizes navigation overhead by embedding everything (problem, editor, output, submissions) in one screen.
+ *
+ * Notes on decisions:
+ * - AbortController + "isMounted" guards prevent state updates after unmount (race conditions).
+ * - We transform API payloads into view-friendly shapes for consistent rendering.
+ * - We avoid changing functionality; only removed emojis and console statements, and added comments for clarity.
+ */
+
 "use client";
 
 import { Badge } from "@/components/ui/badge";
@@ -36,46 +56,63 @@ import { useUser } from "../../useUser";
 import { useUserChallenges } from "../../useUserChallenges";
 
 export function ChallengeSolverLight() {
+  // URL params and user/context hooks
   const { id: challengeId } = useParams();
   const { userId } = useUser();
   const { getChallengeDetails } = useUserChallenges();
   const navigate = useNavigate();
   const { t } = useTranslation();
 
-  // Default starter code if none provided
+  // Starter code: falls back to a localized prompt when the challenge has no template
   const defaultStarterCode = `${t("# Write your code here")}`;
 
-  // Challenge data state
-  const [challenge, setChallenge] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  /**
+   * Data and UI state
+   * - challenge/load/error: controls problem fetching lifecycle.
+   * - editor+execution: code text, running/submitting flags, results + output text.
+   * - submissions panel: list, loading, error.
+   * - activeTab: explanation vs submissions.
+   * - language: future-proofing, even if only IsiPython is present now.
+   * - output panel sizing: height and drag state.
+   * - hiddenTestStats: summarized hidden tests returned by backend.
+   */
+  const [challenge, setChallenge] = useState<any>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Editor and execution state
-  const [code, setCode] = useState(defaultStarterCode);
-  const [isRunning, setIsRunning] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [testResults, setTestResults] = useState([]);
-  const [submissions, setSubmissions] = useState([]);
-  const [submissionsLoading, setSubmissionsLoading] = useState(false);
-  const [submissionsError, setSubmissionsError] = useState(null);
-  const [activeTab, setActiveTab] = useState("explanation");
-  const [language, setLanguage] = useState("IsiPython");
-  const [output, setOutput] = useState("");
-  const [outputPanelHeight, setOutputPanelHeight] = useState(300);
-  const [isResizingOutput, setIsResizingOutput] = useState(false);
+  const [code, setCode] = useState<string>(defaultStarterCode);
+  const [isRunning, setIsRunning] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [testResults, setTestResults] = useState<any[]>([]);
+  const [submissions, setSubmissions] = useState<any[]>([]);
+  const [submissionsLoading, setSubmissionsLoading] = useState<boolean>(false);
+  const [submissionsError, setSubmissionsError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"explanation" | "submissions">(
+    "explanation"
+  );
+  const [language, setLanguage] = useState<string>("IsiPython");
+  const [output, setOutput] = useState<string>("");
+  const [outputPanelHeight, setOutputPanelHeight] = useState<number>(300);
+  const [isResizingOutput, setIsResizingOutput] = useState<boolean>(false);
 
-  // New state for hidden test statistics
-  const [hiddenTestStats, setHiddenTestStats] = useState({
+  const [hiddenTestStats, setHiddenTestStats] = useState<{
+    passed: number;
+    failed: number;
+    total: number;
+  }>({
     passed: 0,
     failed: 0,
     total: 0,
   });
 
-  // Fetch challenge details when component mounts
+  /**
+   * Fetch challenge details on mount/param change.
+   * Why: centralizes initial page data; guards handle aborts during rapid nav.
+   */
   useEffect(() => {
     const abortController = new AbortController();
     let isMounted = true;
-    let timeoutId;
+    let timeoutId: ReturnType<typeof setTimeout>;
 
     const fetchChallengeData = async () => {
       if (!challengeId || !userId) {
@@ -97,27 +134,18 @@ export function ChallengeSolverLight() {
           setOutput("");
         }
 
-        console.log("🚀 Fetching challenge with AbortController:", challengeId);
-
+        // Small artificial delay to smooth UI transitions; harmless if aborted
         await new Promise((resolve) => {
           timeoutId = setTimeout(resolve, 200);
         });
-
-        if (abortController.signal.aborted || !isMounted) {
-          console.log("🚫 Request aborted during delay");
-          return;
-        }
+        if (abortController.signal.aborted || !isMounted) return;
 
         const challengeDetails = await getChallengeDetails(
           challengeId,
           userId,
           abortController.signal
         );
-
-        if (abortController.signal.aborted || !isMounted) {
-          console.log("🚫 Request aborted after API call");
-          return;
-        }
+        if (abortController.signal.aborted || !isMounted) return;
 
         if (challengeDetails.error) {
           if (isMounted) {
@@ -127,16 +155,13 @@ export function ChallengeSolverLight() {
           return;
         }
 
-        console.log("✅ Challenge loaded successfully!");
-
         if (isMounted) {
           setChallenge(challengeDetails);
           setCode(defaultStarterCode);
           setLoading(false);
         }
-      } catch (err) {
+      } catch (err: unknown) {
         if (!abortController.signal.aborted && isMounted) {
-          console.error("💥 Error fetching challenge:", err);
           setError(
             err instanceof Error ? err.message : "Failed to load challenge"
           );
@@ -146,6 +171,7 @@ export function ChallengeSolverLight() {
     };
 
     if (challengeId && userId) {
+      // Slight jitter prevents thundering herd during route transitions
       const randomDelay = 50 + Math.random() * 100;
       timeoutId = setTimeout(() => {
         if (!abortController.signal.aborted && isMounted) {
@@ -157,45 +183,64 @@ export function ChallengeSolverLight() {
     }
 
     return () => {
-      console.log("🧹 Aborting challenge request cleanup");
+      // Abort on unmount/param change to avoid setState on unmounted component
       isMounted = false;
       abortController.abort();
       if (timeoutId) {
         clearTimeout(timeoutId);
       }
     };
-  }, [challengeId, userId, getChallengeDetails]);
+  }, [challengeId, userId, getChallengeDetails, defaultStarterCode]);
 
-  // Monaco Editor setup
-  const handleEditorWillMount = useCallback((monaco) => {
+  /**
+   * Monaco language registration.
+   * Why: registers custom IsiPython grammar/theme prior to editor mount.
+   */
+  const handleEditorWillMount = useCallback((monaco: any) => {
     registerIsiPython(monaco);
   }, []);
 
+  /**
+   * Back navigation
+   * Why: preserve "challenges" tab selection when leaving.
+   */
   const goBack = useCallback(() => {
     navigate("/dash", { state: { activeView: "challenges" } });
   }, [navigate]);
 
-  // Clear test output function
+  /**
+   * Clear the test area.
+   * Why: lets users reset noisy output between runs.
+   */
   const clearTestOutput = useCallback(() => {
     setTestResults([]);
     setOutput("");
     setHiddenTestStats({ passed: 0, failed: 0, total: 0 });
   }, []);
 
-  // Output panel resize functionality
-  const handleOutputResizeStart = useCallback((e) => {
-    setIsResizingOutput(true);
-    e.preventDefault();
-  }, []);
+  /**
+   * Begin output panel resize drag.
+   * Why: UX affordance for vertical split tuning.
+   */
+  const handleOutputResizeStart = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      setIsResizingOutput(true);
+      e.preventDefault();
+    },
+    []
+  );
 
+  /**
+   * Resize handlers bound to document during drag.
+   * Why: supports resizing outside the handle area until mouseup.
+   */
   useEffect(() => {
-    const handleOutputMouseMove = (e) => {
+    const handleOutputMouseMove = (e: MouseEvent) => {
       if (!isResizingOutput) return;
-
       const container = document.querySelector(".challenge-container");
       if (!container) return;
 
-      const containerRect = container.getBoundingClientRect();
+      const containerRect = (container as HTMLElement).getBoundingClientRect();
       const newHeight = containerRect.bottom - e.clientY;
       const minHeight = 150;
       const maxHeight = containerRect.height * 0.6;
@@ -224,8 +269,11 @@ export function ChallengeSolverLight() {
     };
   }, [isResizingOutput]);
 
-  // Transform API test results to component format
-  const transformTestResults = useCallback((visibleTests) => {
+  /**
+   * Helpers: transform API payloads to view models.
+   * Why: normalize and decouple rendering from backend response shape.
+   */
+  const transformTestResults = useCallback((visibleTests: any[]) => {
     return visibleTests.map((test, index) => ({
       id: index + 1,
       input: Array.isArray(test.input_data)
@@ -236,15 +284,14 @@ export function ChallengeSolverLight() {
       passed: test.status === "passed",
       explanation: test.explanation || "",
       status: test.status,
-      errorMessage: test.error_message || "", // IsiXhosa error message
-      englishError: test.english_error || "", // English error for debugging
+      errorMessage: test.error_message || "",
+      englishError: test.english_error || "",
       hasError:
         test.status === "failed" && (test.error_message || test.english_error),
     }));
   }, []);
 
-  // Transform API submissions to component format
-  const transformSubmissions = useCallback((apiSubmissions) => {
+  const transformSubmissions = useCallback((apiSubmissions: any[]) => {
     return apiSubmissions
       .map((submission) => ({
         id: submission.id,
@@ -253,7 +300,7 @@ export function ChallengeSolverLight() {
         passedTests: submission.tests_passed,
         totalTests: submission.tests_total,
         code: submission.code,
-        executionTime: Math.floor(Math.random() * 1000) + 100,
+        executionTime: Math.floor(Math.random() * 1000) + 100, // cosmetic only
         score: submission.score,
         status: submission.status,
         submissionId: submission.id,
@@ -262,7 +309,10 @@ export function ChallengeSolverLight() {
       .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
   }, []);
 
-  // Fetch submissions from API
+  /**
+   * Load submissions for the current challenge+user.
+   * Why: lets users compare previous attempts and restore code.
+   */
   const fetchSubmissions = useCallback(async () => {
     if (!challengeId || !userId) return;
 
@@ -272,51 +322,33 @@ export function ChallengeSolverLight() {
     try {
       const apiUrl = `https://isipython-dev.onrender.com/api/challenges/${challengeId}/submissions/${userId}`;
 
-      console.log("🌐 Fetching submissions from:", apiUrl);
-
       const response = await fetch(apiUrl, {
         method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
       });
 
       if (!response.ok) {
         let errorMessage = `HTTP error! status: ${response.status}`;
         try {
           const result = await response.json();
-          if (result.error) {
-            errorMessage = result.error;
-          } else if (result.message) {
-            errorMessage = result.message;
-          }
-        } catch (parseError) {
-          console.error(
-            "Error parsing submissions error response:",
-            parseError
-          );
+          if (result.error) errorMessage = result.error;
+          else if (result.message) errorMessage = result.message;
+        } catch {
+          // Swallow JSON parse errors; preserve original HTTP error message
         }
         throw new Error(errorMessage);
       }
 
       const result = await response.json();
-      console.log("📡 Submissions API Response:", result);
-
       if (result.data && Array.isArray(result.data)) {
         const transformedSubmissions = transformSubmissions(result.data);
         setSubmissions(transformedSubmissions);
-        console.log(
-          "✅ Submissions loaded successfully:",
-          transformedSubmissions.length
-        );
       } else {
-        console.log("📝 No submissions found for this challenge");
         setSubmissions([]);
       }
-    } catch (error) {
-      console.error("💥 Error fetching submissions:", error);
+    } catch (err: unknown) {
       setSubmissionsError(
-        error instanceof Error ? error.message : "Failed to load submissions"
+        err instanceof Error ? err.message : "Failed to load submissions"
       );
       setSubmissions([]);
     } finally {
@@ -324,11 +356,13 @@ export function ChallengeSolverLight() {
     }
   }, [challengeId, userId, transformSubmissions]);
 
-  // Handle tab change - fetch submissions when submissions tab is activated
+  /**
+   * Tab change handler.
+   * Why: lazy-load submissions only when user opens that tab.
+   */
   const handleTabChange = useCallback(
-    (newTab) => {
+    (newTab: "explanation" | "submissions") => {
       setActiveTab(newTab);
-
       if (newTab === "submissions" && challengeId && userId) {
         fetchSubmissions();
       }
@@ -336,51 +370,42 @@ export function ChallengeSolverLight() {
     [fetchSubmissions, challengeId, userId]
   );
 
-  // Updated runCode function with real API integration
+  /**
+   * Execute code against backend tests.
+   * Why: central action of the solver; handles response shaping and UI output.
+   */
   const runCode = useCallback(async () => {
     if (isRunning || !challengeId || !userId) return;
 
     setIsRunning(true);
+    // Clear, human-friendly, no-emoji run banner
     setOutput(
-      "🚀 Qalisa ukusebenza...\n⚡ Layisha i-Python interpreter...\n🔥 Thumela ikhowudi yakho...\n"
+      "Qalisa ukusebenza...\nLayisha i-Python interpreter...\nThumela ikhowudi yakho...\n"
     );
 
     try {
       const apiUrl = `https://isipython-dev.onrender.com/api/challenges/${challengeId}/submit`;
 
-      console.log("🌐 Submitting code to:", apiUrl);
-      console.log("📝 Code being submitted:", code);
-
       const response = await fetch(apiUrl, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          user_id: userId,
-          code: code,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: userId, code }),
       });
 
       if (!response.ok) {
         let errorMessage = `HTTP error! status: ${response.status}`;
         try {
           const result = await response.json();
-          if (result.validation_error) {
-            errorMessage = result.validation_error;
-          } else if (result.error) {
-            errorMessage = result.error;
-          } else if (result.message) {
-            errorMessage = result.message;
-          }
-        } catch (parseError) {
-          console.error("Error parsing error response:", parseError);
+          if (result.validation_error) errorMessage = result.validation_error;
+          else if (result.error) errorMessage = result.error;
+          else if (result.message) errorMessage = result.message;
+        } catch {
+          // Ignore parse errors; keep HTTP status-based message
         }
-        throw new Error(`❌ ${errorMessage}`);
+        throw new Error(errorMessage);
       }
 
       const result = await response.json();
-      console.log("📡 API Response:", result);
 
       if (result.test_results && result.test_results.visible_tests) {
         const transformedResults = transformTestResults(
@@ -391,7 +416,7 @@ export function ChallengeSolverLight() {
         const passedCount = transformedResults.filter((r) => r.passed).length;
         const totalCount = transformedResults.length;
 
-        // Handle hidden test statistics
+        // Hidden tests summary (not detailed)
         const hiddenTests = result.test_results.hidden_tests;
         const hiddenStats = {
           passed: hiddenTests ? hiddenTests.passed : 0,
@@ -403,85 +428,72 @@ export function ChallengeSolverLight() {
         const totalPassedTests = result.tests_passed || passedCount;
         const totalTests = result.tests_total || totalCount;
 
-        let outputSummary = `✨ Iziphumo zovavanyo:\n\n`;
+        // Build a clean, readable summary (no emojis)
+        let outputSummary = `Iziphumo zovavanyo:\n\n`;
 
-        // Display visible test results
         transformedResults.forEach((test, index) => {
           outputSummary += `Uvavanyo ${index + 1}: ${
-            test.passed ? "✅ KUPHUMELELE" : "❌ KUHLULEKILE"
+            test.passed ? "KUPHUMELELE" : "KUHLULEKILE"
           }\n`;
 
           if (test.hasError && test.errorMessage) {
-            outputSummary += `❌ Impazamo: ${test.errorMessage}\n`;
+            outputSummary += `Impazamo: ${test.errorMessage}\n`;
           } else {
-            if (test.input) {
-              outputSummary += `Input: ${test.input}\n`;
-            }
+            if (test.input) outputSummary += `Input: ${test.input}\n`;
             outputSummary += `Okulindelwe: ${test.expectedOutput}\n`;
             outputSummary += `Okufunyenwe: ${test.actualOutput}\n`;
-            if (test.explanation) {
+            if (test.explanation)
               outputSummary += `Incazelo: ${test.explanation}\n`;
-            }
           }
           outputSummary += `\n`;
         });
 
-        outputSummary += `📊 Isishwankathelo:\n`;
+        outputSummary += `Isishwankathelo:\n`;
         outputSummary += `${totalPassedTests}/${totalTests} izivavanyo ziphumelele\n`;
 
-        // Add hidden test statistics
         if (hiddenStats.total > 0) {
-          outputSummary += `🔒 Izivivinyo ezifihlakeleyo: ${hiddenStats.passed}/${hiddenStats.total} ziphumelele`;
-          if (hiddenStats.failed > 0) {
+          outputSummary += `Izivivinyo ezifihlakeleyo: ${hiddenStats.passed}/${hiddenStats.total}`;
+          if (hiddenStats.failed > 0)
             outputSummary += ` (${hiddenStats.failed} zihlulekile)`;
-          }
           outputSummary += `\n`;
         }
 
         if (result.score !== undefined) {
-          outputSummary += `🎯 Amaphuzu: ${result.score}\n`;
+          outputSummary += `Amaphuzu: ${result.score}\n`;
         }
-
         if (result.status) {
-          outputSummary += `📋 Isimo: ${result.status}\n`;
+          outputSummary += `Isimo: ${result.status}\n`;
         }
 
         setOutput(outputSummary);
 
+        // Optimistically record a submission entry for the session list
         const newSubmission = {
           id: result.submission_id || `temp-${Date.now()}`,
           timestamp: new Date(),
           passed: result.status === "passed",
           passedTests: totalPassedTests,
           totalTests: totalTests,
-          code: code,
+          code,
           executionTime: Math.floor(Math.random() * 1000) + 100,
           score: result.score,
           status: result.status,
           submissionId: result.submission_id,
           challengeId: challengeId,
         };
-
         setSubmissions((prev) => [newSubmission, ...prev]);
       } else {
         throw new Error("Invalid response format from API");
       }
-    } catch (error) {
-      console.error("💥 Error running code:", error);
-
-      let errorMessage = "❌ Error running code: ";
-      if (error instanceof Error) {
-        if (error.message.startsWith("❌")) {
-          errorMessage = error.message;
-        } else {
-          errorMessage += error.message;
-        }
+    } catch (err: unknown) {
+      // Provide a clear actionable message without emojis
+      let errorMessage = "Error running code: ";
+      if (err instanceof Error) {
+        errorMessage += err.message;
       } else {
         errorMessage += "Unknown error occurred";
       }
-
-      errorMessage += "\n\n🔧 Khangela ikhowudi yakho uzame kwakhona!";
-
+      errorMessage += "\n\nKhangela ikhowudi yakho uzame kwakhona!";
       setOutput(errorMessage);
       setTestResults([]);
       setHiddenTestStats({ passed: 0, failed: 0, total: 0 });
@@ -490,22 +502,26 @@ export function ChallengeSolverLight() {
     }
   }, [isRunning, challengeId, userId, code, transformTestResults]);
 
-  // Submit code function (same as runCode since the API handles both)
+  /**
+   * Submit code (alias of run).
+   * Why: keeps API semantics future-proof if a separate submit is reintroduced.
+   */
   const submitCode = useCallback(async () => {
     await runCode();
   }, [runCode]);
 
-  const formatDate = useCallback((date) => {
+  // Small utils for rendering metadata
+  const formatDate = useCallback((date: Date) => {
     return date.toLocaleDateString() + " " + date.toLocaleTimeString();
   }, []);
 
-  const getSubmissionStatusColor = useCallback((passed) => {
+  const getSubmissionStatusColor = useCallback((passed: boolean) => {
     return passed
       ? "text-green-600 bg-green-50 border-green-200"
       : "text-red-600 bg-red-50 border-red-200";
   }, []);
 
-  // Loading state
+  // Loading screen
   if (loading) {
     return (
       <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30 flex items-center justify-center">
@@ -522,7 +538,7 @@ export function ChallengeSolverLight() {
     );
   }
 
-  // Error state
+  // Error screen
   if (error || !challenge) {
     return (
       <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30 flex items-center justify-center">
@@ -546,9 +562,10 @@ export function ChallengeSolverLight() {
     );
   }
 
+  // Main layout: left problem, right editor+output
   return (
     <div className="h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/30 text-gray-900 flex flex-col relative overflow-hidden challenge-container">
-      {/* Animated Background Elements */}
+      {/* Background decoration */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <div className="absolute top-20 left-20 w-72 h-72 bg-gradient-to-r from-cyan-200/10 to-blue-300/10 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute top-40 right-32 w-96 h-96 bg-gradient-to-r from-purple-200/10 to-pink-300/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
@@ -603,16 +620,16 @@ export function ChallengeSolverLight() {
         </div>
       </div>
 
-      {/* Main Content */}
+      {/* Split content */}
       <div className="flex-1 flex relative z-10 min-h-0">
-        {/* Left Panel - Problem Description */}
+        {/* Left: problem and submissions */}
         <div className="w-1/2 border-r border-gray-200/50 flex flex-col bg-white/80 backdrop-blur-sm min-h-0">
           <Tabs
             value={activeTab}
             onValueChange={handleTabChange}
             className="flex-1 flex flex-col min-h-0"
           >
-            {/* Tab Headers */}
+            {/* Tab headers */}
             <TabsList className="bg-white/90 backdrop-blur-sm border-b border-gray-200/50 rounded-none justify-start p-0 h-12 flex-shrink-0">
               <TabsTrigger
                 value="explanation"
@@ -635,8 +652,9 @@ export function ChallengeSolverLight() {
               </TabsTrigger>
             </TabsList>
 
-            {/* Tab Content */}
+            {/* Tab content */}
             <div className="flex-1 min-h-0 overflow-hidden">
+              {/* Explanation */}
               <TabsContent value="explanation" className="h-full m-0 p-0">
                 <div className="h-full overflow-y-auto p-6 space-y-6">
                   <div>
@@ -654,59 +672,61 @@ export function ChallengeSolverLight() {
                         {t("Examples")}
                       </h3>
                       <div className="space-y-4">
-                        {challenge.testCases.map((testCase, index) => {
-                          const inputDisplay = Array.isArray(
-                            testCase.input_data
-                          )
-                            ? testCase.input_data.join(" ")
-                            : testCase.input_data || "";
+                        {challenge.testCases.map(
+                          (testCase: any, index: number) => {
+                            const inputDisplay = Array.isArray(
+                              testCase.input_data
+                            )
+                              ? testCase.input_data.join(" ")
+                              : testCase.input_data || "";
 
-                          const hasInput = inputDisplay.trim().length > 0;
+                            const hasInput = inputDisplay.trim().length > 0;
 
-                          return (
-                            <Card
-                              key={index}
-                              className="bg-white/90 backdrop-blur-sm border border-gray-200/50 shadow-md hover:shadow-lg transition-all duration-300"
-                            >
-                              <CardContent className="p-4">
-                                <div className="space-y-3">
-                                  {hasInput && (
-                                    <div>
-                                      <div className="text-sm font-medium text-gray-600 mb-1">
-                                        {t("Input")}:
+                            return (
+                              <Card
+                                key={index}
+                                className="bg-white/90 backdrop-blur-sm border border-gray-200/50 shadow-md hover:shadow-lg transition-all duration-300"
+                              >
+                                <CardContent className="p-4">
+                                  <div className="space-y-3">
+                                    {hasInput && (
+                                      <div>
+                                        <div className="text-sm font-medium text-gray-600 mb-1">
+                                          {t("Input")}:
+                                        </div>
+                                        <code className="block text-cyan-600 font-mono bg-cyan-50/50 px-3 py-2 rounded border border-cyan-200/50 whitespace-pre-line">
+                                          {inputDisplay}
+                                        </code>
                                       </div>
-                                      <code className="block text-cyan-600 font-mono bg-cyan-50/50 px-3 py-2 rounded border border-cyan-200/50 whitespace-pre-line">
-                                        {inputDisplay}
-                                      </code>
-                                    </div>
-                                  )}
+                                    )}
 
-                                  {testCase.expected_output && (
-                                    <div>
-                                      <div className="text-sm font-medium text-gray-600 mb-1">
-                                        {t("Output")}:
+                                    {testCase.expected_output && (
+                                      <div>
+                                        <div className="text-sm font-medium text-gray-600 mb-1">
+                                          {t("Output")}:
+                                        </div>
+                                        <code className="block text-green-600 font-mono bg-green-50/50 px-3 py-2 rounded border border-green-200/50 whitespace-pre-line">
+                                          {testCase.expected_output}
+                                        </code>
                                       </div>
-                                      <code className="block text-green-600 font-mono bg-green-50/50 px-3 py-2 rounded border border-green-200/50 whitespace-pre-line">
-                                        {testCase.expected_output}
-                                      </code>
-                                    </div>
-                                  )}
+                                    )}
 
-                                  {testCase.explanation && (
-                                    <div>
-                                      <div className="text-sm font-medium text-gray-600 mb-1">
-                                        {t("Explanation")}:
+                                    {testCase.explanation && (
+                                      <div>
+                                        <div className="text-sm font-medium text-gray-600 mb-1">
+                                          {t("Explanation")}:
+                                        </div>
+                                        <div className="text-gray-700 whitespace-pre-line bg-gray-50/50 px-3 py-2 rounded border border-gray-200/50">
+                                          {testCase.explanation}
+                                        </div>
                                       </div>
-                                      <div className="text-gray-700 whitespace-pre-line bg-gray-50/50 px-3 py-2 rounded border border-gray-200/50">
-                                        {testCase.explanation}
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              </CardContent>
-                            </Card>
-                          );
-                        })}
+                                    )}
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            );
+                          }
+                        )}
                       </div>
                     </div>
                   )}
@@ -721,7 +741,7 @@ export function ChallengeSolverLight() {
                           <CardContent className="p-4">
                             <ul className="space-y-1">
                               {challenge.constraints.map(
-                                (constraint, index) => (
+                                (constraint: string, index: number) => (
                                   <li
                                     key={index}
                                     className="text-gray-700 text-sm flex items-start gap-2"
@@ -745,7 +765,7 @@ export function ChallengeSolverLight() {
                         {t("Tags")}
                       </h3>
                       <div className="flex flex-wrap gap-2">
-                        {challenge.tags.map((tag, index) => (
+                        {challenge.tags.map((tag: string, index: number) => (
                           <Badge
                             key={index}
                             variant="outline"
@@ -760,6 +780,7 @@ export function ChallengeSolverLight() {
                 </div>
               </TabsContent>
 
+              {/* Submissions */}
               <TabsContent value="submissions" className="h-full m-0 p-0">
                 <div className="h-full overflow-y-auto p-6">
                   {submissionsLoading && (
@@ -940,7 +961,6 @@ export function ChallengeSolverLight() {
                               {!submission.passed && (
                                 <div className="mt-3 p-2 bg-red-50/50 rounded border border-red-200/50">
                                   <p className="text-sm text-red-700">
-                                    💡{" "}
                                     {t(
                                       "Some test cases failed. Review your solution and try again."
                                     )}
@@ -958,9 +978,9 @@ export function ChallengeSolverLight() {
           </Tabs>
         </div>
 
-        {/* Right Panel - Code Editor */}
+        {/* Right: editor and output */}
         <div className="w-1/2 flex flex-col bg-white/80 backdrop-blur-sm min-h-0">
-          {/* Editor Header */}
+          {/* Editor toolbar */}
           <div className="border-b border-gray-200/50 p-4 bg-white/90 backdrop-blur-sm flex-shrink-0">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
@@ -993,6 +1013,8 @@ export function ChallengeSolverLight() {
                     </>
                   )}
                 </Button>
+
+                {/* Submit button kept commented (no behavior change) */}
                 {/* <Button
                   onClick={submitCode}
                   disabled={isSubmitting || isRunning}
@@ -1014,7 +1036,7 @@ export function ChallengeSolverLight() {
             </div>
           </div>
 
-          {/* Code Editor */}
+          {/* Editor */}
           <div
             className="flex-1 flex flex-col min-h-0"
             style={{ height: `calc(100% - ${outputPanelHeight}px)` }}
@@ -1043,12 +1065,12 @@ export function ChallengeSolverLight() {
             </div>
           </div>
 
-          {/* Resizable Output Panel */}
+          {/* Output panel (resizable) */}
           <div
             className="border-t border-gray-200/50 bg-white/90 backdrop-blur-sm flex flex-col"
             style={{ height: `${outputPanelHeight}px` }}
           >
-            {/* Resize Handle */}
+            {/* Resize handle */}
             <div
               className="w-full h-1 bg-transparent hover:bg-cyan-400 cursor-row-resize transition-colors duration-200 flex-shrink-0"
               onMouseDown={handleOutputResizeStart}
@@ -1057,7 +1079,7 @@ export function ChallengeSolverLight() {
               <div className="w-full h-1 bg-gray-300 opacity-0 hover:opacity-100 transition-opacity duration-200"></div>
             </div>
 
-            {/* Output Header */}
+            {/* Output header */}
             <div className="bg-gray-100/80 backdrop-blur-sm border-b border-gray-200/50 p-3 flex-shrink-0">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-medium bg-gradient-to-r from-purple-600 to-pink-700 bg-clip-text text-transparent flex items-center gap-2">
@@ -1065,20 +1087,20 @@ export function ChallengeSolverLight() {
                   {t("Test Case Outputs")}
                 </h3>
                 <div className="flex items-center gap-2">
-                  {/* Hidden test statistics */}
+                  {/* Hidden tests summary badge */}
                   {hiddenTestStats.total > 0 && (
                     <div className="flex items-center gap-2 text-xs">
                       <Badge
                         variant="outline"
                         className="bg-purple-50 text-purple-700 border-purple-200"
                       >
-                        🔒 {t("Hidden")}: {hiddenTestStats.passed}/
+                        {t("Hidden")}: {hiddenTestStats.passed}/
                         {hiddenTestStats.total}
                       </Badge>
                     </div>
                   )}
 
-                  {/* Clear button */}
+                  {/* Clear output */}
                   {(testResults.length > 0 || output) && (
                     <Button
                       onClick={clearTestOutput}
@@ -1098,7 +1120,7 @@ export function ChallengeSolverLight() {
               </div>
             </div>
 
-            {/* Output Content */}
+            {/* Output content */}
             <div className="flex-1 overflow-y-auto p-4 min-h-0">
               {testResults.length > 0 ? (
                 <div className="space-y-4">
@@ -1111,7 +1133,7 @@ export function ChallengeSolverLight() {
                           : "bg-gradient-to-r from-red-50/90 to-rose-50/90 border-red-200/60 hover:border-red-300/80"
                       }`}
                     >
-                      {/* Test Header */}
+                      {/* Test header */}
                       <div className="flex items-center justify-between p-4 pb-3">
                         <div className="flex items-center gap-3">
                           <div
@@ -1146,9 +1168,9 @@ export function ChallengeSolverLight() {
                         </div>
                       </div>
 
-                      {/* Test Content */}
+                      {/* Test content */}
                       <div className="px-4 pb-4 space-y-3">
-                        {/* Error Message Section (if there's an error) */}
+                        {/* Error block (runtime/validation) */}
                         {result.hasError && result.errorMessage && (
                           <div className="bg-red-50/80 backdrop-blur-sm rounded-lg border border-red-200/50 p-3">
                             <div className="flex items-start gap-2">
@@ -1165,7 +1187,7 @@ export function ChallengeSolverLight() {
                           </div>
                         )}
 
-                        {/* Input Section */}
+                        {/* Input */}
                         {result.input && (
                           <div>
                             <div className="text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wide">
@@ -1179,10 +1201,9 @@ export function ChallengeSolverLight() {
                           </div>
                         )}
 
-                        {/* Output Comparison Grid - Only show if no error */}
+                        {/* Expected vs Actual (only if no error) */}
                         {!result.hasError && (
                           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                            {/* Expected Output */}
                             <div className="space-y-2">
                               <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
                                 {t("Expected Output")}
@@ -1194,7 +1215,6 @@ export function ChallengeSolverLight() {
                               </div>
                             </div>
 
-                            {/* Your Output */}
                             <div className="space-y-2">
                               <div className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
                                 {t("Your Output")}
@@ -1220,7 +1240,7 @@ export function ChallengeSolverLight() {
                           </div>
                         )}
 
-                        {/* Explanation Section */}
+                        {/* Explanation */}
                         {result.explanation && (
                           <div className="mt-4 pt-3 border-t border-gray-200/50">
                             <div className="text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wide">
@@ -1234,7 +1254,7 @@ export function ChallengeSolverLight() {
                           </div>
                         )}
 
-                        {/* Status Message for Failed Tests */}
+                        {/* Friendly nudge for mismatches (non-error) */}
                         {!result.passed && !result.hasError && (
                           <div className="mt-3 p-3 bg-red-50/80 backdrop-blur-sm rounded-lg border border-red-200/50">
                             <div className="flex items-start gap-2">
@@ -1243,7 +1263,9 @@ export function ChallengeSolverLight() {
                                 <span className="font-semibold">
                                   {t("Test Failed")}:
                                 </span>{" "}
-                                {t("Your output doesn't match the expected result. Check your logic and try again.")}
+                                {t(
+                                  "Your output doesn't match the expected result. Check your logic and try again."
+                                )}
                               </p>
                             </div>
                           </div>

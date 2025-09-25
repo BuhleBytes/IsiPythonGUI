@@ -70,24 +70,6 @@ export const AuthContextProvider = ({ children }) => {
     }
   };
 
-  useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-    });
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setLoading(false);
-    });
-
-    return () => subscription?.unsubscribe();
-  }, []);
-
   // Sign out
   const signOut = async () => {
     try {
@@ -99,6 +81,25 @@ export const AuthContextProvider = ({ children }) => {
       return { success: true };
     } catch (error) {
       console.error("An error occurred during sign out: ", error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Password reset function
+  const resetPassword = async (email) => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) {
+        console.error("Password reset error:", error);
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error("An error occurred during password reset:", error);
       return { success: false, error: error.message };
     }
   };
@@ -153,6 +154,69 @@ export const AuthContextProvider = ({ children }) => {
     }
   };
 
+  // Check if current user is admin
+  const isCurrentUserAdmin = () => {
+    return session?.user?.user_metadata?.admin === true;
+  };
+
+  // Get current user role
+  const getCurrentUserRole = () => {
+    return session?.user?.user_metadata?.admin === true ? "admin" : "student";
+  };
+
+  // Get current user info with role
+  const getCurrentUser = () => {
+    if (!session?.user) return null;
+
+    return {
+      id: session.user.id,
+      email: session.user.email,
+      firstName: session.user.user_metadata?.first_name,
+      lastName: session.user.user_metadata?.last_name,
+      role: session.user.user_metadata?.admin === true ? "admin" : "student",
+      isAdmin: session.user.user_metadata?.admin === true,
+      fullMetadata: session.user.user_metadata,
+    };
+  };
+
+  // Get user metadata for debugging
+  const getUserMetadata = () => {
+    return session?.user?.user_metadata || null;
+  };
+
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+
+      // Debug log to see user metadata
+      if (session?.user) {
+        console.log("User metadata:", session.user.user_metadata);
+        console.log("Is admin:", session.user.user_metadata?.admin === true);
+      }
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setLoading(false);
+
+      // Debug log to see user metadata on auth state change
+      if (session?.user) {
+        console.log(
+          "Auth state changed - User metadata:",
+          session.user.user_metadata
+        );
+        console.log("Is admin:", session.user.user_metadata?.admin === true);
+      }
+    });
+
+    return () => subscription?.unsubscribe();
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
@@ -160,9 +224,14 @@ export const AuthContextProvider = ({ children }) => {
         signUpNewUser,
         signInUser,
         signOut,
+        resetPassword,
         loading,
         getUserProfile,
         updateUserProfile,
+        isCurrentUserAdmin,
+        getCurrentUserRole,
+        getCurrentUser,
+        getUserMetadata,
       }}
     >
       {children}
