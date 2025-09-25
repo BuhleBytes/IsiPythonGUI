@@ -306,7 +306,7 @@ export default function CreateChallenge() {
       // Set new notification with slight delay for smooth transition
       setTimeout(() => {
         setNotificationMessage(
-          result.message || "Challenge saved as draft successfully!"
+          result.message || t("Challenge saved as draft successfully!")
         );
         setNotificationType("draft");
         setShowNotification(true);
@@ -330,7 +330,7 @@ export default function CreateChallenge() {
       // Set success notification and reset form
       setTimeout(() => {
         setNotificationMessage(
-          result.message || "Challenge published successfully!"
+          result.message || t("Challenge published successfully!")
         );
         setNotificationType("success");
         setShowNotification(true);
@@ -347,14 +347,14 @@ export default function CreateChallenge() {
   const handleClearDraft = () => {
     if (
       confirm(
-        "Are you sure you want to start over? This will clear your current draft and all unsaved changes."
+        t("Are you sure you want to start over? This will clear your current draft and all unsaved changes.")
       )
     ) {
       resetForm();
       setShowNotification(false);
       setTimeout(() => {
         setNotificationMessage(
-          "Draft cleared. You can start creating a new challenge."
+          t("Draft cleared. You can start creating a new challenge.")
         );
         setNotificationType("draft");
         setShowNotification(true);
@@ -377,23 +377,22 @@ export default function CreateChallenge() {
         <div className="space-y-3">
           <div className="flex items-center gap-3">
             <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 via-cyan-600 to-emerald-600 bg-clip-text text-transparent flex items-center gap-3">
-              Create New Challenge
+              {t("Create New Challenge")}
               <Sparkles className="w-8 h-8 text-cyan-500 animate-pulse" />
             </h1>
             {/* Show draft badge when user has saved draft */}
             {hasDraft && (
               <Badge className="bg-amber-100 text-amber-800 border-amber-300 px-3 py-1 text-sm font-medium">
-                Draft Saved
+                {t("Draft Saved")}
               </Badge>
             )}
           </div>
           <p className="text-lg text-gray-600">
-            Design engaging coding challenges to inspire and educate students
+            {t("Design engaging coding challenges to inspire and educate students")}
             {/* Additional guidance when draft exists */}
             {hasDraft && (
               <span className="block text-sm text-amber-600 mt-1">
-                You have an unsaved draft. Click "Publish Draft" to make it live
-                or "Update Draft" to save changes.
+                {t("You have an unsaved draft. Click 'Publish Draft' to make it live or 'Update Draft' to save changes.")}
               </span>
             )}
           </p>
@@ -411,7 +410,7 @@ export default function CreateChallenge() {
                 <div className="w-10 h-10 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md">
                   <Code className="w-5 h-5 text-white" />
                 </div>
-                Challenge Details
+                {t("Challenge Details")}
               </CardTitle>
             </CardHeader>
 
@@ -424,7 +423,7 @@ export default function CreateChallenge() {
                     className="text-gray-700 font-semibold flex items-center gap-2"
                   >
                     <Target className="w-4 h-4 text-cyan-500" />
-                    Challenge Title
+                    {t("Challenge Title")}
                   </Label>
                   <Input
                     id="title"
@@ -441,11 +440,11 @@ export default function CreateChallenge() {
                     className="text-gray-700 font-semibold flex items-center gap-2"
                   >
                     <Zap className="w-4 h-4 text-purple-500" />
-                    Difficulty Level
+                    {t("Difficulty Level")}
                   </Label>
                   <Select value={difficulty} onValueChange={setDifficulty}>
                     <SelectTrigger className="bg-white/70 border-gray-300/50 text-gray-900 focus:border-cyan-400 focus:ring-cyan-400/30 backdrop-blur-sm shadow-sm">
-                      <SelectValue placeholder="Select difficulty" />
+                      <SelectValue placeholder={t("Select difficulty")} />
                     </SelectTrigger>
                     <SelectContent className="bg-white/95 backdrop-blur-xl border-gray-200/50 shadow-xl">
                       <SelectItem
@@ -477,13 +476,13 @@ export default function CreateChallenge() {
                   htmlFor="shortDesc"
                   className="text-gray-700 font-semibold"
                 >
-                  Short Description
+                  {t("Short Description")}
                 </Label>
                 <Input
                   id="shortDesc"
                   value={shortDescription}
                   onChange={(e) => setShortDescription(e.target.value)}
-                  placeholder="Brief description of the challenge"
+                  placeholder={t("Brief description of the challenge")}
                   className="bg-white/70 border-gray-300/50 text-gray-900 placeholder-gray-500 focus:border-cyan-400 focus:ring-cyan-400/30 focus:ring-2 backdrop-blur-sm shadow-sm"
                 />
               </div>
@@ -498,7 +497,7 @@ export default function CreateChallenge() {
                     <div className="w-5 h-5 bg-gradient-to-r from-orange-500 to-red-600 rounded-md flex items-center justify-center">
                       <Trophy className="w-3 h-3 text-white" />
                     </div>
-                    Reward Points
+                    {t("Reward Points")}
                   </Label>
                   <Input
                     id="points"
@@ -516,7 +515,7 @@ export default function CreateChallenge() {
                     className="text-gray-700 font-semibold flex items-center gap-2"
                   >
                     <Clock className="w-4 h-4 text-blue-500" />
-                    Estimated Time (minutes)
+                    {t("Estimated Time")} ({t("minutes")})
                   </Label>
                   <Input
                     id="estimatedTime"
@@ -556,7 +555,7 @@ export default function CreateChallenge() {
                   className="text-gray-700 font-semibold flex items-center gap-2"
                 >
                   <Tag className="w-4 h-4 text-indigo-500" />
-                  Tags (comma-separated)
+                  {t("Tags")} ({t("comma-separated")})
                 </Label>
                 <Input
                   id="tags"
@@ -578,7 +577,7 @@ export default function CreateChallenge() {
                 <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-md">
                   <FileText className="w-5 h-5 text-white" />
                 </div>
-                Problem Description
+                {t("Problem Description")}
               </CardTitle>
             </CardHeader>
 
@@ -588,13 +587,13 @@ export default function CreateChallenge() {
                   htmlFor="problemDesc"
                   className="text-gray-700 font-semibold"
                 >
-                  Detailed Problem Statement
+                  {t("Detailed Problem Statement")}
                 </Label>
                 <Textarea
                   id="problemDesc"
                   value={problemDescription}
                   onChange={(e) => setProblemDescription(e.target.value)}
-                  placeholder="Describe the coding problem that students need to solve. Include examples, constraints, and any special requirements..."
+                  placeholder={t("Describe the coding problem that students need to solve. Include examples, constraints, and any special requirements...")}
                   rows={8}
                   className="bg-white/70 border-gray-300/50 text-gray-900 placeholder-gray-500 focus:border-cyan-400 focus:ring-cyan-400/30 focus:ring-2 resize-none backdrop-blur-sm shadow-sm"
                 />
@@ -612,7 +611,7 @@ export default function CreateChallenge() {
                   <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl flex items-center justify-center shadow-md">
                     <TestTube className="w-5 h-5 text-white" />
                   </div>
-                  Test Cases
+                  {t("Test Cases")}
                 </CardTitle>
                 <Button
                   onClick={addTestCase}
@@ -621,7 +620,7 @@ export default function CreateChallenge() {
                   className="border-purple-200 text-purple-700 hover:bg-purple-50 bg-white/80 rounded-lg font-medium hover:scale-105 transition-all duration-300 shadow-sm"
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  Add Test Case
+                  {t("Add Test Case")}
                 </Button>
               </div>
             </CardHeader>
@@ -638,7 +637,7 @@ export default function CreateChallenge() {
                       {/* Test case header with badge and delete button */}
                       <div className="flex items-center justify-between mb-4">
                         <Badge className="bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-200 font-medium transition-colors duration-200">
-                          Test Case {index + 1}
+                          {t("Test Case")} {index + 1}
                         </Badge>
                         {/* Only show delete button if more than one test case exists */}
                         {testCases.length > 1 && (
@@ -657,7 +656,7 @@ export default function CreateChallenge() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div className="space-y-2">
                           <Label className="text-gray-700 font-semibold">
-                            Input
+                            {t("Input")}
                           </Label>
                           <Textarea
                             value={testCase.input}
@@ -668,7 +667,7 @@ export default function CreateChallenge() {
                                 e.target.value
                               )
                             }
-                            placeholder='Enter test input (e.g., ["[1,3,5,7,9,11]", "7"])'
+                            placeholder={`${t("Enter test input")} (e.g., ["[1,3,5,7,9,11]", "7"])`}
                             rows={3}
                             className="bg-white/70 border-gray-300/50 text-gray-900 placeholder-gray-500 focus:border-cyan-400 focus:ring-cyan-400/30 focus:ring-2 resize-none backdrop-blur-sm shadow-sm"
                           />
@@ -676,7 +675,7 @@ export default function CreateChallenge() {
 
                         <div className="space-y-2">
                           <Label className="text-gray-700 font-semibold">
-                            Expected Output
+                            {t("Expected Output")}
                           </Label>
                           <Textarea
                             value={testCase.expectedOutput}
@@ -687,7 +686,7 @@ export default function CreateChallenge() {
                                 e.target.value
                               )
                             }
-                            placeholder="Enter expected output..."
+                            placeholder={t("Enter expected output...")}
                             rows={3}
                             className="bg-white/70 border-gray-300/50 text-gray-900 placeholder-gray-500 focus:border-cyan-400 focus:ring-cyan-400/30 focus:ring-2 resize-none backdrop-blur-sm shadow-sm"
                           />
@@ -698,7 +697,7 @@ export default function CreateChallenge() {
                       <div className="space-y-4">
                         <div className="space-y-2">
                           <Label className="text-gray-700 font-semibold">
-                            Explanation
+                            {t("Explanation")}
                           </Label>
                           <Input
                             value={testCase.explanation}
@@ -709,7 +708,7 @@ export default function CreateChallenge() {
                                 e.target.value
                               )
                             }
-                            placeholder="Brief explanation of this test case..."
+                            placeholder={t("Brief explanation of this test case...")}
                             className="bg-white/70 border-gray-300/50 text-gray-900 placeholder-gray-500 focus:border-cyan-400 focus:ring-cyan-400/30 focus:ring-2 backdrop-blur-sm shadow-sm"
                           />
                         </div>
@@ -718,7 +717,7 @@ export default function CreateChallenge() {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div className="space-y-2">
                             <Label className="text-gray-700 font-semibold">
-                              Points Weight
+                              {t("Points Weight")}
                             </Label>
                             <Input
                               type="number"
@@ -737,7 +736,7 @@ export default function CreateChallenge() {
 
                           <div className="space-y-2">
                             <Label className="text-gray-700 font-semibold">
-                              Options
+                              {t("Options")}
                             </Label>
                             <div className="flex items-center space-x-4 h-10">
                               {/* Example test case checkbox */}
@@ -753,7 +752,7 @@ export default function CreateChallenge() {
                                   }
                                 />
                                 <Label className="text-sm text-gray-700">
-                                  Example
+                                  {t("Example test")}
                                 </Label>
                               </div>
 
@@ -770,7 +769,7 @@ export default function CreateChallenge() {
                                   }
                                 />
                                 <Label className="text-sm text-gray-700">
-                                  Hidden
+                                  {t("Hidden test")}
                                 </Label>
                               </div>
                             </div>
@@ -794,7 +793,7 @@ export default function CreateChallenge() {
               disabled={isSubmitting}
             >
               <Eye className="w-4 h-4 mr-2" />
-              Preview Challenge
+              {t("Preview Challenge")}
             </Button>
 
             {/* Save Draft button */}
@@ -806,10 +805,10 @@ export default function CreateChallenge() {
             >
               <Save className="w-4 h-4 mr-2" />
               {isSubmitting
-                ? "Saving..."
+                ? t("Saving...")
                 : hasDraft
-                ? "Update Draft"
-                : "Save as Draft"}
+                ? t("Update Draft")
+                : t("Save as Draft")}
             </Button>
 
             {/* Publish button */}
@@ -820,10 +819,10 @@ export default function CreateChallenge() {
             >
               <Send className="w-4 h-4 mr-2" />
               {isSubmitting
-                ? "Publishing..."
+                ? t("Publishing...")
                 : hasDraft
-                ? "Publish Draft"
-                : "Publish Challenge"}
+                ? t("Publish Draft")
+                : t("Publish Challenge")}
             </Button>
 
             {/* Clear Draft button - only shown when draft exists */}
@@ -835,7 +834,7 @@ export default function CreateChallenge() {
                 disabled={isSubmitting}
               >
                 <X className="w-4 h-4 mr-2" />
-                Clear Draft
+                {t("Clear Draft")}
               </Button>
             )}
           </div>

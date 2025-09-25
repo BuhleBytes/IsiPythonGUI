@@ -73,6 +73,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { usePublishedQuizzes } from "../usePublishedQuizzes";
+import { useTranslation } from "react-i18next";
 
 /**
  * Interface defining the structure of a published quiz
@@ -121,6 +122,7 @@ export default function PublishedQuizzes({
   const [searchQuery, setSearchQuery] = useState("");
   const [timeFilter, setTimeFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("recent");
+  const {t} = useTranslation();
 
   // Custom hook for managing published quizzes data and operations
   const {
@@ -279,7 +281,7 @@ export default function PublishedQuizzes({
     event.stopPropagation();
 
     // Create detailed confirmation message
-    const confirmMessage = `Are you sure you want to delete "${quiz.title}"?\n\nThis action cannot be undone and will permanently remove the published quiz. Students will no longer be able to access it.`;
+    const confirmMessage = `${t("Are you sure you want to delete ")}"${quiz.title}"?\n\n${t("This action cannot be undone and will permanently remove the published quiz. Students will no longer be able to access it.")}`;
 
     // Show confirmation dialog
     if (!window.confirm(confirmMessage)) {
@@ -303,10 +305,10 @@ export default function PublishedQuizzes({
         <div className="text-center space-y-4">
           <RefreshCw className="w-12 h-12 text-cyan-500 animate-spin mx-auto" />
           <div className="text-xl font-semibold text-gray-700">
-            Loading Published Quizzes...
+            {t("Loading Published Quizzes...")}
           </div>
           <div className="text-sm text-gray-500">
-            Fetching live quizzes and statistics
+            {t("Fetching live quizzes and statistics")}
           </div>
         </div>
       </div>
@@ -331,7 +333,7 @@ export default function PublishedQuizzes({
           <div className="text-sm text-gray-500">{error}</div>
           <Button onClick={refetch} className="mt-4">
             <RefreshCw className="w-4 h-4 mr-2" />
-            Try Again
+            {t("Try Again")}
           </Button>
         </div>
       </div>
@@ -352,11 +354,11 @@ export default function PublishedQuizzes({
         {/* Page header section */}
         <div className="space-y-3">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 via-cyan-600 to-emerald-600 bg-clip-text text-transparent flex items-center gap-3">
-            Published Quizzes
+            {t("Published Quizzes")}
             <Send className="w-8 h-8 text-cyan-500 animate-pulse" />
           </h1>
           <p className="text-lg text-gray-600">
-            Manage live quizzes that students can access and complete
+            {t("Manage live quizzes that students can access and complete")}
           </p>
         </div>
 
@@ -377,17 +379,17 @@ export default function PublishedQuizzes({
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-white mb-1">
-                    Create New Quiz
+                    {t("Create New Quiz")}
                   </h2>
                   <p className="text-white/80 text-base">
-                    Start drafting a new quiz assessment
+                    {t("Start drafting a new quiz assessment")}
                   </p>
                 </div>
               </div>
               {/* Animated call-to-action indicator */}
               <div className="text-right group-hover:translate-x-2 transition-transform duration-300">
                 <div className="text-4xl font-bold mb-1">+</div>
-                <div className="text-sm opacity-80">Click to start</div>
+                <div className="text-sm opacity-80">{t("Click to start")}</div>
               </div>
             </div>
           </CardContent>
@@ -402,7 +404,7 @@ export default function PublishedQuizzes({
               <div className="w-10 h-10 bg-gradient-to-r from-gray-500 to-slate-600 rounded-xl flex items-center justify-center shadow-md">
                 <Search className="w-5 h-5 text-white" />
               </div>
-              Search & Filter
+              {t("Search & Filter")}
             </CardTitle>
           </CardHeader>
 
@@ -411,12 +413,12 @@ export default function PublishedQuizzes({
               {/* Search input field */}
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-gray-700">
-                  Search Quizzes
+                  {t("Search Quizzes")}
                 </label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <Input
-                    placeholder="Search by title or description..."
+                    placeholder={t("Search by title or description...")}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10 bg-white/70 border-gray-300/50 text-gray-900 placeholder-gray-500 focus:border-cyan-400 focus:ring-cyan-400/30 focus:ring-2 backdrop-blur-sm shadow-sm"
@@ -427,14 +429,14 @@ export default function PublishedQuizzes({
               {/* Time limit filter dropdown */}
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-gray-700">
-                  Time Limit
+                  {t("Time Limit")}
                 </label>
                 <Select value={timeFilter} onValueChange={setTimeFilter}>
                   <SelectTrigger className="bg-white/70 border-gray-300/50 text-gray-900 focus:border-cyan-400 focus:ring-cyan-400/30 backdrop-blur-sm shadow-sm">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-white/95 backdrop-blur-xl border-gray-200/50 shadow-xl">
-                    <SelectItem value="all">All Time Limits</SelectItem>
+                    <SelectItem value="all">{t("All Time Limits")}</SelectItem>
                     <SelectItem value="quick">
                       Quick (20 min or less)
                     </SelectItem>
@@ -451,18 +453,18 @@ export default function PublishedQuizzes({
               {/* Sort options dropdown */}
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-gray-700">
-                  Sort By
+                  {t("Sort By")}
                 </label>
                 <Select value={sortBy} onValueChange={setSortBy}>
                   <SelectTrigger className="bg-white/70 border-gray-300/50 text-gray-900 focus:border-cyan-400 focus:ring-cyan-400/30 backdrop-blur-sm shadow-sm">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-white/95 backdrop-blur-xl border-gray-200/50 shadow-xl">
-                    <SelectItem value="recent">Recently Published</SelectItem>
-                    <SelectItem value="title">Title (A-Z)</SelectItem>
-                    <SelectItem value="time">Time Limit</SelectItem>
-                    <SelectItem value="points">Total Points</SelectItem>
-                    <SelectItem value="popularity">Most Attempted</SelectItem>
+                    <SelectItem value="recent">{t("Recently Published")}</SelectItem>
+                    <SelectItem value="title">{t("Title")} (A-Z)</SelectItem>
+                    <SelectItem value="time">{t("Time Limit")}</SelectItem>
+                    <SelectItem value="points">{t("Total Points")}</SelectItem>
+                    <SelectItem value="popularity">{t("Most Attempted")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -470,13 +472,13 @@ export default function PublishedQuizzes({
               {/* Results counter display */}
               <div className="space-y-2">
                 <label className="text-sm font-semibold text-gray-700">
-                  Total Published
+                  {t("Total Published")}
                 </label>
                 <div className="h-10 px-3 py-2 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200/50 rounded-md flex items-center">
                   <span className="text-lg font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
                     {filteredQuizzes.length}
                   </span>
-                  <span className="text-sm text-gray-600 ml-2">quizzes</span>
+                  <span className="text-sm text-gray-600 ml-2">{t("quizzes")}</span>
                 </div>
               </div>
             </div>
@@ -519,7 +521,7 @@ export default function PublishedQuizzes({
                   <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-20">
                     <div className="flex items-center gap-3 text-gray-700">
                       <Loader2 className="w-6 h-6 animate-spin" />
-                      <span className="font-medium">Deleting quiz...</span>
+                      <span className="font-medium">{t("Deleting quiz...")}</span>
                     </div>
                   </div>
                 )}
@@ -550,7 +552,7 @@ export default function PublishedQuizzes({
                           </Badge>
                           <Badge className="bg-green-100 text-green-700 border-green-200 hover:bg-green-200 hover:text-green-800 font-medium text-xs hover:scale-105 transition-all duration-200">
                             <CheckCircle className="w-3 h-3 mr-1" />
-                            Published
+                            {t("Published ")}
                           </Badge>
                         </div>
                       </div>
@@ -567,67 +569,74 @@ export default function PublishedQuizzes({
                     </p>
 
                     {/* Quiz metadata grid (2x2 layout) */}
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 gap-3">
                       {/* Total points display */}
-                      <div className="flex items-center gap-2">
-                        <Trophy className="w-4 h-4 text-orange-500" />
-                        <span className="text-sm font-medium text-gray-700">
-                          {quiz.totalPoints} points
-                        </span>
-                      </div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Trophy className="w-4 h-4 text-orange-500" />
+                          <span className="text-sm font-medium text-gray-700">
+                            {quiz.totalPoints} {t("points")}
+                          </span>
+                        </div>
 
-                      {/* Time limit display */}
-                      <div className="flex items-center gap-2">
-                        <Timer className="w-4 h-4 text-blue-500" />
-                        <span className="text-sm font-medium text-gray-700">
-                          {quiz.timeLimit} min
-                        </span>
+                        {/* Time limit display */}
+                        <div className="flex items-center gap-2">
+                          <Timer className="w-4 h-4 text-blue-500" />
+                          <span className="text-sm font-medium text-gray-700">
+                            {quiz.timeLimit} {t("min")}
+                          </span>
+                        </div>
                       </div>
 
                       {/* Question count display */}
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <FileQuestion className="w-4 h-4 text-green-500" />
+                          <span className="text-sm font-medium text-gray-700">
+                            {quiz.totalQuestions} {t("questions")}
+                          </span>
+                        </div>
+
+                        {/* User engagement metrics */}
+                        <div className="flex items-center gap-2">
+                          <Users className="w-4 h-4 text-purple-500" />
+                          <span className="text-sm font-medium text-gray-700">
+                            {quiz.statistics.usersAttempted} {t("attempts")}
+                          </span>
+                        </div>
+                      </div>
+                      
+
+                      {/* Statistics and performance metrics row */}
+                      <div className="flex items-center justify-between">
+                        {/* Average score display */}
+                        <div className="flex items-center gap-2">
+                          <TrendingUp className="w-4 h-4 text-indigo-500" />
+                          <span className="text-sm font-medium text-gray-700">
+                            {t("Avg")}: {quiz.statistics.averageScore.toFixed(1)}%
+                          </span>
+                        </div>
+                        {/* Pass rate with color-coded badge */}
+                        <div className="flex items-center gap-2">
+                          <TrendingUp className="w-4 h-4 text-green-500" />
+                          <Badge
+                          variant="outline"
+                          className={`text-xs font-medium ${getPassRateStyle(
+                            quiz.statistics.passRate
+                          )}`}
+                        >
+                          {quiz.statistics.passRate.toFixed(0)}% {t("pass rate")}
+                        </Badge>
+                        </div>
+                      </div>
+                      {/* Due date display */}
                       <div className="flex items-center gap-2">
-                        <FileQuestion className="w-4 h-4 text-green-500" />
+                        <Calendar className="w-4 h-4 text-red-500" />
                         <span className="text-sm font-medium text-gray-700">
-                          {quiz.totalQuestions} questions
+                          {t("Due")}: {new Date(quiz.dueDate).toLocaleDateString()}
                         </span>
                       </div>
-
-                      {/* User engagement metrics */}
-                      <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4 text-purple-500" />
-                        <span className="text-sm font-medium text-gray-700">
-                          {quiz.statistics.usersAttempted} attempts
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Statistics and performance metrics row */}
-                    <div className="flex items-center justify-between">
-                      {/* Average score display */}
-                      <div className="flex items-center gap-2">
-                        <TrendingUp className="w-4 h-4 text-indigo-500" />
-                        <span className="text-sm font-medium text-gray-700">
-                          Avg: {quiz.statistics.averageScore.toFixed(1)}%
-                        </span>
-                      </div>
-
-                      {/* Pass rate with color-coded badge */}
-                      <Badge
-                        variant="outline"
-                        className={`text-xs font-medium ${getPassRateStyle(
-                          quiz.statistics.passRate
-                        )}`}
-                      >
-                        {quiz.statistics.passRate.toFixed(0)}% pass rate
-                      </Badge>
-                    </div>
-
-                    {/* Due date display */}
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-red-500" />
-                      <span className="text-sm font-medium text-gray-700">
-                        Due: {new Date(quiz.dueDate).toLocaleDateString()}
-                      </span>
                     </div>
 
                     {/* Quiz Features Display */}
@@ -652,7 +661,7 @@ export default function PublishedQuizzes({
                             variant="outline"
                             className="text-xs bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100 hover:text-gray-700 transition-all duration-200"
                           >
-                            +{features.length - 3} more
+                            +{features.length - 3} {t("more")}
                           </Badge>
                         )}
                       </div>
@@ -667,7 +676,7 @@ export default function PublishedQuizzes({
                         disabled={isDeleting}
                       >
                         <Eye className="w-4 h-4 mr-2" />
-                        View Details
+                        {t("View Details")}
                       </Button>
 
                       {/* Delete button with loading state */}
@@ -677,7 +686,7 @@ export default function PublishedQuizzes({
                         onClick={(e) => handleDeleteQuiz(quiz, e)}
                         className="border-red-200 text-red-700 hover:bg-red-50 bg-white/80 rounded-lg hover:scale-105 transition-all duration-300 shadow-sm disabled:opacity-50"
                         disabled={isDeleting}
-                        title="Delete this published quiz"
+                        title={t("Delete this published quiz")}
                       >
                         {isDeleting ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
@@ -705,12 +714,12 @@ export default function PublishedQuizzes({
 
               {/* Empty state message */}
               <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                No Published Quizzes Found
+                {t("No Published Quizzes Found")}
               </h3>
               <p className="text-gray-600 mb-6">
                 {searchQuery || timeFilter !== "all"
-                  ? "Try adjusting your search criteria or filters."
-                  : "You haven't published any quizzes yet. Create and publish your first quiz!"}
+                  ? t("Try adjusting your search criteria or filters.")
+                  : t("You haven't published any quizzes yet. Create and publish your first quiz!")}
               </p>
 
               {/* Call-to-action button */}
@@ -719,7 +728,7 @@ export default function PublishedQuizzes({
                 className="bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-600 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg px-6 py-3 font-medium hover:scale-105"
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Create New Quiz
+                {t("Create New Quiz")}
               </Button>
             </CardContent>
           </Card>

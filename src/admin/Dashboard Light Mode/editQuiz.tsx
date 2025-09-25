@@ -861,7 +861,7 @@ export default function EditQuiz({
                       className="text-sm text-gray-700 flex items-center gap-2"
                     >
                       <Trophy className="w-4 h-4 text-yellow-500" />
-                      t{("Allow multiple attempts")}
+                      {t("Allow multiple attempts")}
                     </Label>
                   </div>
                 </div>

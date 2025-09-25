@@ -67,6 +67,7 @@ export default function CreateQuiz() {
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [timeLimit, setTimeLimit] = useState("");
+  const {t} = useTranslation();
 
   // Quiz configuration settings state
   const [sendNotifications, setSendNotifications] = useState(true);
@@ -76,13 +77,11 @@ export default function CreateQuiz() {
 
   // Quiz instructions array - starts with default instructions
   const [instructions, setInstructions] = useState<string[]>([
-    "This quiz contains multiple-choice questions",
-    "Each question has only one correct answer",
-    "You can flag questions for review and return to them later",
-    "Make sure to submit your quiz before the due date",
+    t("This quiz contains multiple-choice questions"),
+    t("Each question has only one correct answer"),
+    t("Make sure to submit your quiz before the timer ends"),
+    t("The quiz will auto-submit when the timer ends")
   ]);
-  
-  const {t} = useTranslation();
 
   // Quiz questions array - starts with one empty question
   const [questions, setQuestions] = useState<QuizQuestion[]>([
@@ -293,10 +292,9 @@ export default function CreateQuiz() {
 
     // Reset to default instructions
     setInstructions([
-      "This quiz contains multiple-choice questions",
-      "Each question has only one correct answer",
-      "You can flag questions for review and return to them later",
-      "Make sure to submit your quiz before the due date",
+      t("This quiz contains multiple-choice questions"),
+      t("Each question has only one correct answer"),
+      t("Make sure to submit your quiz before the due date"),
     ]);
 
     // Reset to single empty question
@@ -350,7 +348,7 @@ export default function CreateQuiz() {
       // Set new notification with slight delay for smooth transition
       setTimeout(() => {
         setNotificationMessage(
-          result.message || "Quiz saved as draft successfully!"
+          result.message || t("Quiz saved as draft successfully!")
         );
         setNotificationType("draft");
         setShowNotification(true);
@@ -374,7 +372,7 @@ export default function CreateQuiz() {
       // Set success notification and reset form
       setTimeout(() => {
         setNotificationMessage(
-          result.message || "Quiz published successfully!"
+          result.message || t("Quiz published successfully!")
         );
         setNotificationType("success");
         setShowNotification(true);
@@ -391,14 +389,14 @@ export default function CreateQuiz() {
   const handleClearDraft = () => {
     if (
       confirm(
-        "Are you sure you want to start over? This will clear your current draft and all unsaved changes."
+        t("Are you sure you want to start over? This will clear your current draft and all unsaved changes.")
       )
     ) {
       resetForm();
       setShowNotification(false);
       setTimeout(() => {
         setNotificationMessage(
-          "Draft cleared. You can start creating a new quiz."
+          t("Draft cleared. You can start creating a new quiz.")
         );
         setNotificationType("draft");
         setShowNotification(true);
@@ -421,23 +419,21 @@ export default function CreateQuiz() {
         <div className="space-y-3">
           <div className="flex items-center gap-3">
             <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 via-cyan-600 to-emerald-600 bg-clip-text text-transparent flex items-center gap-3">
-              Create New Quiz
+              {t("Create New Quiz")}
               <Sparkles className="w-8 h-8 text-cyan-500 animate-pulse" />
             </h1>
             {/* Show draft badge when user has saved draft */}
             {hasDraft && (
               <Badge className="bg-amber-100 text-amber-800 border-amber-300 px-3 py-1 text-sm font-medium">
-                Draft Saved
+                {t("Draft Saved")}
               </Badge>
             )}
           </div>
           <p className="text-lg text-gray-600">
-            Design engaging quizzes to test and assess student knowledge
+            {t("Design engaging quizzes to test and assess student knowledge")}
             {/* Additional guidance when draft exists */}
             {hasDraft && (
-              <span className="block text-sm text-amber-600 mt-1">
-                You have an unsaved draft. Click "Publish Draft" to make it live
-                or "Update Draft" to save changes.
+              <span className="block text-sm text-amber-600 mt-1">{t("You have an unsaved draft. Click 'Publish Draft' to make it live or 'Update Draft' to save changes.")}
               </span>
             )}
           </p>
@@ -455,7 +451,7 @@ export default function CreateQuiz() {
                 <div className="w-10 h-10 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md">
                   <BookOpen className="w-5 h-5 text-white" />
                 </div>
-                Quiz Details
+                {t("Quiz Details")}
               </CardTitle>
             </CardHeader>
 
@@ -468,7 +464,7 @@ export default function CreateQuiz() {
                     className="text-gray-700 font-semibold flex items-center gap-2"
                   >
                     <Target className="w-4 h-4 text-cyan-500" />
-                    Quiz Title
+                    {t("Quiz Title")}
                   </Label>
                   <Input
                     id="title"
@@ -485,7 +481,7 @@ export default function CreateQuiz() {
                     className="text-gray-700 font-semibold flex items-center gap-2"
                   >
                     <Timer className="w-4 h-4 text-purple-500" />
-                    Time Limit (minutes)
+                    {t("Time Limit")} ({t("minutes")})
                   </Label>
                   <Input
                     id="timeLimit"
@@ -504,13 +500,13 @@ export default function CreateQuiz() {
                   htmlFor="description"
                   className="text-gray-700 font-semibold"
                 >
-                  Description
+                  {t("Description")}
                 </Label>
                 <Textarea
                   id="description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Brief description of the quiz content and purpose..."
+                  placeholder={t("Brief description of the quiz content and purpose...")}
                   rows={3}
                   className="bg-white/70 border-gray-300/50 text-gray-900 placeholder-gray-500 focus:border-cyan-400 focus:ring-cyan-400/30 focus:ring-2 resize-none backdrop-blur-sm shadow-sm"
                 />
@@ -523,7 +519,7 @@ export default function CreateQuiz() {
                   className="text-gray-700 font-semibold flex items-center gap-2"
                 >
                   <Clock className="w-4 h-4 text-blue-500" />
-                  Due Date
+                  {t("Due Date")}
                 </Label>
                 <Input
                   id="dueDate"
@@ -545,7 +541,7 @@ export default function CreateQuiz() {
                 <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl flex items-center justify-center shadow-md">
                   <Settings className="w-5 h-5 text-white" />
                 </div>
-                Quiz Settings
+                {t("Quiz Settings")}
               </CardTitle>
             </CardHeader>
 
@@ -581,7 +577,7 @@ export default function CreateQuiz() {
                       className="text-sm text-gray-700 flex items-center gap-2"
                     >
                       <Zap className="w-4 h-4 text-orange-500" />
-                      Randomize question order
+                      {t("Randomize question order")}
                     </Label>
                   </div>
                 </div>
@@ -599,7 +595,7 @@ export default function CreateQuiz() {
                       className="text-sm text-gray-700 flex items-center gap-2"
                     >
                       <Eye className="w-4 h-4 text-blue-500" />
-                      Show results immediately
+                      {t("Show results immediately")}
                     </Label>
                   </div>
 
@@ -615,7 +611,7 @@ export default function CreateQuiz() {
                       className="text-sm text-gray-700 flex items-center gap-2"
                     >
                       <Trophy className="w-4 h-4 text-yellow-500" />
-                      Allow multiple attempts
+                      {t("Allow multiple attempts")}
                     </Label>
                   </div>
                 </div>
@@ -633,7 +629,7 @@ export default function CreateQuiz() {
                   <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-md">
                     <FileText className="w-5 h-5 text-white" />
                   </div>
-                  Quiz Instructions
+                  {t("Quiz Instructions")}
                 </CardTitle>
                 <Button
                   onClick={addInstruction}
@@ -642,7 +638,7 @@ export default function CreateQuiz() {
                   className="border-green-200 text-green-700 hover:bg-green-50 bg-white/80 rounded-lg font-medium hover:scale-105 transition-all duration-300 shadow-sm"
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  Add Instruction
+                  {t("Add Instruction")}
                 </Button>
               </div>
             </CardHeader>
@@ -654,7 +650,7 @@ export default function CreateQuiz() {
                   <Input
                     value={instruction}
                     onChange={(e) => updateInstruction(index, e.target.value)}
-                    placeholder="Enter instruction..."
+                    placeholder={t("Enter instruction...")}
                     className="flex-1 bg-white/70 border-gray-300/50 text-gray-900 placeholder-gray-500 focus:border-cyan-400 focus:ring-cyan-400/30 focus:ring-2 backdrop-blur-sm shadow-sm"
                   />
                   {/* Only show delete button if more than one instruction exists */}
@@ -683,7 +679,7 @@ export default function CreateQuiz() {
                   <div className="w-10 h-10 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-md">
                     <HelpCircle className="w-5 h-5 text-white" />
                   </div>
-                  Quiz Questions
+                  {t("Quiz Questions")}
                 </CardTitle>
                 <Button
                   onClick={addQuestion}
@@ -692,7 +688,7 @@ export default function CreateQuiz() {
                   className="border-purple-200 text-purple-700 hover:bg-purple-50 bg-white/80 rounded-lg font-medium hover:scale-105 transition-all duration-300 shadow-sm"
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  Add Question
+                  {t("Add Question")}
                 </Button>
               </div>
             </CardHeader>
@@ -709,7 +705,7 @@ export default function CreateQuiz() {
                       {/* Question header with badge and delete button */}
                       <div className="flex items-center justify-between mb-4">
                         <Badge className="bg-purple-100 text-purple-700 border-purple-200 hover:bg-purple-200 font-medium transition-colors duration-200">
-                          Question {index + 1}
+                          {t("Question")} {index + 1}
                         </Badge>
                         {/* Only show delete button if more than one question exists */}
                         {questions.length > 1 && (
@@ -728,7 +724,7 @@ export default function CreateQuiz() {
                         {/* Question text field */}
                         <div className="space-y-2">
                           <Label className="text-gray-700 font-semibold">
-                            Question Text
+                            {t("Question Text")}
                           </Label>
                           <Textarea
                             value={question.question_text}
@@ -739,7 +735,7 @@ export default function CreateQuiz() {
                                 e.target.value
                               )
                             }
-                            placeholder="Enter the question..."
+                            placeholder={t("Enter the question...")}
                             rows={3}
                             className="bg-white/70 border-gray-300/50 text-gray-900 placeholder-gray-500 focus:border-cyan-400 focus:ring-cyan-400/30 focus:ring-2 resize-none backdrop-blur-sm shadow-sm"
                           />
@@ -749,7 +745,7 @@ export default function CreateQuiz() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="space-y-2">
                             <Label className="text-gray-700 font-semibold">
-                              Option A
+                              {t("Option")} A
                             </Label>
                             <Input
                               value={question.option_a}
@@ -760,14 +756,14 @@ export default function CreateQuiz() {
                                   e.target.value
                                 )
                               }
-                              placeholder="Enter option A..."
+                              placeholder={`${t("Enter option")} A...`}
                               className="bg-white/70 border-gray-300/50 text-gray-900 placeholder-gray-500 focus:border-cyan-400 focus:ring-cyan-400/30 focus:ring-2 backdrop-blur-sm shadow-sm"
                             />
                           </div>
 
                           <div className="space-y-2">
                             <Label className="text-gray-700 font-semibold">
-                              Option B
+                              {t("Option")} B
                             </Label>
                             <Input
                               value={question.option_b}
@@ -778,14 +774,14 @@ export default function CreateQuiz() {
                                   e.target.value
                                 )
                               }
-                              placeholder="Enter option B..."
+                              placeholder={`${t("Enter option")} B...`}
                               className="bg-white/70 border-gray-300/50 text-gray-900 placeholder-gray-500 focus:border-cyan-400 focus:ring-cyan-400/30 focus:ring-2 backdrop-blur-sm shadow-sm"
                             />
                           </div>
 
                           <div className="space-y-2">
                             <Label className="text-gray-700 font-semibold">
-                              Option C
+                              {t("Option")} C
                             </Label>
                             <Input
                               value={question.option_c}
@@ -796,14 +792,14 @@ export default function CreateQuiz() {
                                   e.target.value
                                 )
                               }
-                              placeholder="Enter option C..."
+                              placeholder={`${t("Enter option")} C...`}
                               className="bg-white/70 border-gray-300/50 text-gray-900 placeholder-gray-500 focus:border-cyan-400 focus:ring-cyan-400/30 focus:ring-2 backdrop-blur-sm shadow-sm"
                             />
                           </div>
 
                           <div className="space-y-2">
                             <Label className="text-gray-700 font-semibold">
-                              Option D
+                              {t("Option")} D
                             </Label>
                             <Input
                               value={question.option_d}
@@ -814,7 +810,7 @@ export default function CreateQuiz() {
                                   e.target.value
                                 )
                               }
-                              placeholder="Enter option D..."
+                              placeholder={`${t("Enter option")} D...`}
                               className="bg-white/70 border-gray-300/50 text-gray-900 placeholder-gray-500 focus:border-cyan-400 focus:ring-cyan-400/30 focus:ring-2 backdrop-blur-sm shadow-sm"
                             />
                           </div>
@@ -824,7 +820,7 @@ export default function CreateQuiz() {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div className="space-y-2">
                             <Label className="text-gray-700 font-semibold">
-                              Correct Answer
+                              {t("Correct Answer")}
                             </Label>
                             <Select
                               value={question.correct_answer}
@@ -837,32 +833,32 @@ export default function CreateQuiz() {
                               }
                             >
                               <SelectTrigger className="bg-white/70 border-gray-300/50 text-gray-900 focus:border-cyan-400 focus:ring-cyan-400/30 backdrop-blur-sm shadow-sm">
-                                <SelectValue placeholder="Select correct answer" />
+                                <SelectValue placeholder={t("Select correct answer")} />
                               </SelectTrigger>
                               <SelectContent className="bg-white/95 backdrop-blur-xl border-gray-200/50 shadow-xl">
                                 <SelectItem
                                   value="A"
                                   className="text-gray-900 hover:bg-green-50"
                                 >
-                                  Option A
+                                  {t("Option")} A
                                 </SelectItem>
                                 <SelectItem
                                   value="B"
                                   className="text-gray-900 hover:bg-green-50"
                                 >
-                                  Option B
+                                  {t("Option")} B
                                 </SelectItem>
                                 <SelectItem
                                   value="C"
                                   className="text-gray-900 hover:bg-green-50"
                                 >
-                                  Option C
+                                  {t("Option")} C
                                 </SelectItem>
                                 <SelectItem
                                   value="D"
                                   className="text-gray-900 hover:bg-green-50"
                                 >
-                                  Option D
+                                  {t("Option")} D
                                 </SelectItem>
                               </SelectContent>
                             </Select>
@@ -870,7 +866,7 @@ export default function CreateQuiz() {
 
                           <div className="space-y-2">
                             <Label className="text-gray-700 font-semibold">
-                              Points Weight
+                              {t("Points Weight")}
                             </Label>
                             <Input
                               type="number"
@@ -891,7 +887,7 @@ export default function CreateQuiz() {
                         {/* Explanation field */}
                         <div className="space-y-2">
                           <Label className="text-gray-700 font-semibold">
-                            Explanation
+                            {t("Explanation")}
                           </Label>
                           <Input
                             value={question.explanation}
@@ -902,7 +898,7 @@ export default function CreateQuiz() {
                                 e.target.value
                               )
                             }
-                            placeholder="Brief explanation of the correct answer..."
+                            placeholder={t("Brief explanation of the correct answer...")}
                             className="bg-white/70 border-gray-300/50 text-gray-900 placeholder-gray-500 focus:border-cyan-400 focus:ring-cyan-400/30 focus:ring-2 backdrop-blur-sm shadow-sm"
                           />
                         </div>
@@ -925,10 +921,10 @@ export default function CreateQuiz() {
             >
               <Save className="w-4 h-4 mr-2" />
               {isSubmitting
-                ? "Saving..."
+                ? t("Saving...")
                 : hasDraft
-                ? "Update Draft"
-                : "Save as Draft"}
+                ? t("Update Draft")
+                : t("Save as Draft")}
             </Button>
 
             {/* Publish button */}
@@ -939,10 +935,10 @@ export default function CreateQuiz() {
             >
               <Send className="w-4 h-4 mr-2" />
               {isSubmitting
-                ? "Publishing..."
+                ? t("Publishing...")
                 : hasDraft
-                ? "Publish Draft"
-                : "Publish Quiz"}
+                ? t("Publish Draft")
+                : t("Publish Quiz")}
             </Button>
 
             {/* Clear Draft button - only shown when draft exists */}
@@ -954,7 +950,7 @@ export default function CreateQuiz() {
                 disabled={isSubmitting}
               >
                 <X className="w-4 h-4 mr-2" />
-                Clear Draft
+                {t("Clear Draft")}
               </Button>
             )}
           </div>
